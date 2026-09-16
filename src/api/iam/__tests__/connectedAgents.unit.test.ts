@@ -12,6 +12,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import {
   disconnectAgent,
+  disconnectEveryAgent,
+  disconnectEveryAgentInTeam,
   isCimdClientId,
   listConnectedAgents,
 } from '../connectedAgents';
@@ -117,6 +119,50 @@ describe('IAM connected agents API', () => {
     expect(request).toHaveBeenCalledWith(
       expect.objectContaining({
         url: 'https://iam.test/api/iam/v1/oauth/connected-agents/01GRANT',
+        method: 'DELETE',
+      }),
+    );
+  });
+
+  it('signs out everywhere at the collection, not one grant at a time', async () => {
+    // Also how a forced re-consent is done: a grant *is* the consent, so
+    // ending them all sends the next authorization through the approval
+    // screen. There is no second "ask again" flag to keep in step.
+    const request = vi
+      .spyOn(DatalayerApi, 'requestDatalayerAPI')
+      .mockResolvedValue({ success: true, revoked: 3 } as never);
+
+    const answer = await disconnectEveryAgent('token', 'https://iam.test');
+
+    expect(answer.revoked).toBe(3);
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://iam.test/api/iam/v1/oauth/connected-agents',
+        method: 'DELETE',
+      }),
+    );
+  });
+
+  it('reads a missing count as none rather than undefined', async () => {
+    // The toast says a number. `undefined` there reads as a broken page.
+    vi.spyOn(DatalayerApi, 'requestDatalayerAPI').mockResolvedValue({
+      success: true,
+    } as never);
+    expect(
+      (await disconnectEveryAgent('token', 'https://iam.test')).revoked,
+    ).toBe(0);
+  });
+
+  it('ends one team’s agents at that team’s own route', async () => {
+    const request = vi
+      .spyOn(DatalayerApi, 'requestDatalayerAPI')
+      .mockResolvedValue({ success: true, revoked: 2 } as never);
+
+    await disconnectEveryAgentInTeam('token', '01TEAM', 'https://iam.test');
+
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://iam.test/api/iam/v1/oauth/teams/01TEAM/connected-agents',
         method: 'DELETE',
       }),
     );

@@ -72,6 +72,8 @@ import {
 } from '../api/mcp';
 import {
   disconnectAgent,
+  disconnectEveryAgent,
+  disconnectEveryAgentInTeam,
   listConnectedAgents,
   type ConnectedAgent,
 } from '../api/iam/connectedAgents';
@@ -495,6 +497,53 @@ export const useDisconnectAgent = () => {
   const iamUrl = useIamUrl();
   return useMutation<{ success: boolean; message?: string }, Error, string>({
     mutationFn: grantUid => disconnectAgent(token ?? '', grantUid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.connectedAgents(),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
+    },
+  });
+};
+
+/**
+ * Disconnect every agent of this person — and so force the next
+ * authorization through the consent screen.
+ *
+ * The grant *is* the consent, so there is no separate "ask again" to keep in
+ * step: ending them all is what forcing re-consent means.
+ */
+export const useDisconnectEveryAgent = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<
+    { success: boolean; revoked: number; message?: string },
+    Error,
+    void
+  >({
+    mutationFn: () => disconnectEveryAgent(token ?? '', iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.connectedAgents(),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
+    },
+  });
+};
+
+/** The same for one team's agents, for whoever may manage that team. */
+export const useDisconnectEveryAgentInTeam = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<
+    { success: boolean; revoked: number; message?: string },
+    Error,
+    string
+  >({
+    mutationFn: teamUid =>
+      disconnectEveryAgentInTeam(token ?? '', teamUid, iamUrl),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.mcp.connectedAgents(),

@@ -52,7 +52,11 @@ import {
   McpErrorBlankslate,
   ScopeList,
 } from '../../components/mcp';
-import { useConnectedAgents, useDisconnectAgent } from '../../hooks/useMcp';
+import {
+  useConnectedAgents,
+  useDisconnectAgent,
+  useDisconnectEveryAgent,
+} from '../../hooks/useMcp';
 import { useNavigate, useToast } from '../../hooks';
 import type { ConnectedAgent } from '../../api/iam/connectedAgents';
 import { type McpErrorStateFn, type McpRoutes } from './types';
@@ -83,7 +87,9 @@ export const ConnectedAgents = ({
   const { enqueueToast } = useToast();
   const agents = useConnectedAgents();
   const disconnect = useDisconnectAgent();
+  const disconnectEvery = useDisconnectEveryAgent();
   const [disconnecting, setDisconnecting] = useState<AgentRow | null>(null);
+  const [disconnectingEvery, setDisconnectingEvery] = useState(false);
   // Primer 37 types Dialog's focus refs with React 18's non-nullable
   // `RefObject<HTMLElement>`. React 19's `useRef(null)` is nullable, and this
   // ref is only handed to Dialog, so narrow it once here.
@@ -95,6 +101,26 @@ export const ConnectedAgents = ({
     () => (agents.data ?? []).map(agent => ({ ...agent, id: agent.uid })),
     [agents.data],
   );
+
+  const confirmDisconnectEvery = () => {
+    disconnectEvery.mutate(undefined, {
+      onSuccess: answer => {
+        enqueueToast(
+          answer.revoked === 1
+            ? '1 agent disconnected.'
+            : `${answer.revoked} agents disconnected.`,
+          { variant: 'success' },
+        );
+        setDisconnectingEvery(false);
+      },
+      onError: error => {
+        setDisconnectingEvery(false);
+        enqueueToast(`Could not disconnect: ${error.message}`, {
+          variant: 'error',
+        });
+      },
+    });
+  };
 
   const confirmDisconnect = () => {
     const agent = disconnecting;
@@ -241,14 +267,32 @@ export const ConnectedAgents = ({
   return (
     <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
       {showTitle && (
-        <Box>
-          <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
-            Connected Agents
-          </Heading>
-          <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
-            Every agent you have authorized, what it may do, and when it last
-            did it.
-          </Text>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'start',
+            justifyContent: 'space-between',
+            gap: 3,
+          }}
+        >
+          <Box>
+            <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
+              Connected Agents
+            </Heading>
+            <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
+              Every agent you have authorized, what it may do, and when it last
+              did it.
+            </Text>
+          </Box>
+          {!readOnly && rows.length > 0 && (
+            <Button
+              variant="danger"
+              onClick={() => setDisconnectingEvery(true)}
+              disabled={disconnectEvery.isPending}
+            >
+              Disconnect all
+            </Button>
+          )}
         </Box>
       )}
 
@@ -321,6 +365,39 @@ export const ConnectedAgents = ({
             at once and its next call is refused. An access token it still holds
             dies with its own short expiry. The other agents are untouched, and
             nothing this one already did is undone.
+          </Text>
+        </Dialog>
+      )}
+
+      {disconnectingEvery && (
+        <Dialog
+          title="Disconnect every agent?"
+          onClose={() => setDisconnectingEvery(false)}
+          returnFocusRef={returnFocusRef}
+          footerButtons={[
+            {
+              buttonType: 'default',
+              content: 'Keep them',
+              onClick: () => setDisconnectingEvery(false),
+            },
+            {
+              buttonType: 'danger',
+              content: 'Disconnect all',
+              onClick: confirmDisconnectEvery,
+              disabled: disconnectEvery.isPending,
+            },
+          ]}
+        >
+          <Text sx={{ fontSize: 1 }}>
+            Every agent you have authorized loses its grant at once — signing
+            out everywhere. Each will ask again the next time you connect it,
+            and this time it goes through the approval screen rather than being
+            answered from what you agreed before, so this is also how you force
+            a fresh approval.
+          </Text>
+          <Text as="p" sx={{ fontSize: 1, color: 'fg.muted', mt: 2, mb: 0 }}>
+            Yours only. Nobody else&rsquo;s sessions end, in this organization
+            or any other, and nothing any agent already did is undone.
           </Text>
         </Dialog>
       )}

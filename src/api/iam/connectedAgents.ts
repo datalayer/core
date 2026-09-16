@@ -113,3 +113,55 @@ export const disconnectAgent = async (
     method: 'DELETE',
     token,
   });
+
+/**
+ * Disconnect every agent this person has connected — sign out everywhere.
+ *
+ * **This is also how a forced re-consent is done.** A grant *is* the consent,
+ * so ending them all sends the next authorization through the consent screen
+ * rather than letting it be answered from what was agreed before; there is no
+ * separate "ask again" flag to keep in step with this one.
+ *
+ * Always the caller's own. A person cannot end somebody else's sessions here
+ * — an organization taking back what it granted is deprovisioning, which runs
+ * when a membership ends.
+ */
+export const disconnectEveryAgent = async (
+  token: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
+): Promise<{ success: boolean; revoked: number; message?: string }> => {
+  const response = await requestDatalayerAPI<{
+    success: boolean;
+    revoked?: number;
+    message?: string;
+  }>({
+    url: connectedAgentsUrl(baseUrl),
+    method: 'DELETE',
+    token,
+  });
+  return { ...response, revoked: response.revoked ?? 0 };
+};
+
+/**
+ * Disconnect every agent connected while acting for one team.
+ *
+ * For the people who may manage that team: ending a team's sessions is the
+ * same kind of authority as removing somebody from it. It never touches a
+ * personal agent or another team's — the same narrowness deprovisioning has.
+ */
+export const disconnectEveryAgentInTeam = async (
+  token: string,
+  teamUid: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
+): Promise<{ success: boolean; revoked: number; message?: string }> => {
+  const response = await requestDatalayerAPI<{
+    success: boolean;
+    revoked?: number;
+    message?: string;
+  }>({
+    url: `${baseUrl}${API_BASE_PATHS.IAM}/oauth/teams/${encodeURIComponent(teamUid)}/connected-agents`,
+    method: 'DELETE',
+    token,
+  });
+  return { ...response, revoked: response.revoked ?? 0 };
+};
