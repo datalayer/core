@@ -76,8 +76,8 @@ def test_the_facade_offers_every_operation_the_cli_has() -> None:
 
 
 def test_the_gateway_origin_is_the_resource_without_its_path() -> None:
-    assert mcp_gateway_origin("https://mcp.datalayer.run/mcp") == "https://mcp.datalayer.run"
-    assert mcp_gateway_origin("https://mcp.datalayer.run/mcp/") == "https://mcp.datalayer.run"
+    assert mcp_gateway_origin("https://r1.datalayer.run/mcp") == "https://r1.datalayer.run"
+    assert mcp_gateway_origin("https://r1.datalayer.run/mcp/") == "https://r1.datalayer.run"
     assert mcp_gateway_origin("http://localhost:4404") == "http://localhost:4404"
 
 
@@ -197,14 +197,14 @@ def test_spans_become_a_tree_roots_first_siblings_by_start() -> None:
 
 
 def test_scopes_are_named_in_the_url() -> None:
-    assert mcp_endpoint_url("https://mcp.datalayer.run/mcp") == "https://mcp.datalayer.run/mcp"
+    assert mcp_endpoint_url("https://r1.datalayer.run/mcp") == "https://r1.datalayer.run/mcp"
     assert (
-        mcp_endpoint_url("https://mcp.datalayer.run/mcp", ["notebooks:read", " code:execute "])
-        == "https://mcp.datalayer.run/mcp?scopes=notebooks:read,code:execute"
+        mcp_endpoint_url("https://r1.datalayer.run/mcp", ["notebooks:read", " code:execute "])
+        == "https://r1.datalayer.run/mcp?scopes=notebooks:read,code:execute"
     )
 
 
-URL = "https://mcp.datalayer.run/mcp"
+URL = "https://r1.datalayer.run/mcp"
 
 
 @pytest.mark.parametrize("client", MCP_CLIENT_IDS)

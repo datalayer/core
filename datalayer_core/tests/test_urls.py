@@ -54,3 +54,19 @@ def test_an_explicit_contents_url_still_wins(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setenv("DATALAYER_CONTENTS_URL", "https://contents.example")
 
     assert DatalayerURLs.from_environment().contents_url == "https://contents.example"
+
+
+def test_ai_and_mcp_services_default_to_the_runtimes_plane(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Dedicated r1 services must not inherit the IAM/control-plane host."""
+    monkeypatch.setenv("DATALAYER_IAM_URL", "https://iam.example")
+    monkeypatch.delenv("DATALAYER_AI_AGENTS_URL", raising=False)
+    monkeypatch.delenv("DATALAYER_AI_INFERENCE_URL", raising=False)
+    monkeypatch.delenv("DATALAYER_JUPYTER_MCP_SERVER_URL", raising=False)
+
+    urls = DatalayerURLs.from_environment()
+
+    assert urls.ai_agents_url == "https://r1.datalayer.run"
+    assert urls.ai_inference_url == "https://r1.datalayer.run"
+    assert urls.jupyter_mcp_server_url == "https://mcp.datalayer.run/mcp"

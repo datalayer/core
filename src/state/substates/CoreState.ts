@@ -26,7 +26,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
   schedulerUrl: 'https://r1.datalayer.run',
   libraryUrl: 'https://prod1.datalayer.run',
   spacerUrl: 'https://prod1.datalayer.run',
-  aiAgentsUrl: 'https://prod1.datalayer.run',
+  aiAgentsUrl: 'https://r1.datalayer.run',
   aiInferenceUrl: 'https://r1.datalayer.run',
   jupyterMcpServerUrl: 'https://mcp.datalayer.run/mcp',
   otelUrl: 'https://prod1.datalayer.run',

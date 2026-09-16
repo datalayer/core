@@ -30,7 +30,7 @@ DEFAULT_DATALAYER_LIBRARY_URL = DEFAULT_DATALAYER_SERVICE_URL
 
 DEFAULT_DATALAYER_MANAGER_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_SERVICE_URL
+DEFAULT_DATALAYER_AI_AGENTS_URL = "https://r1.datalayer.run"
 
 DEFAULT_DATALAYER_AI_INFERENCE_URL = "https://r1.datalayer.run"
 
@@ -251,13 +251,11 @@ class DatalayerURLs:
         resolved_ai_agents_url = (
             ai_agents_url
             or os.environ.get("DATALAYER_AI_AGENTS_URL")
-            or base_url_for_services
             or DEFAULT_DATALAYER_AI_AGENTS_URL
         )
         resolved_ai_inference_url = (
             ai_inference_url
             or os.environ.get("DATALAYER_AI_INFERENCE_URL")
-            or base_url_for_services
             or DEFAULT_DATALAYER_AI_INFERENCE_URL
         )
         resolved_otel_url = (

@@ -283,7 +283,8 @@ class _ExtensionHost:
     group with its own: agent-runtimes' ``agents`` took ``datalayer agents
     discover`` away the moment it registered. Such a group joins the one
     already here instead — its commands and subgroups are added to it, one
-    whose name is taken keeps this application's (and says so), and the
+    whose name is taken keeps this application's (and records that at debug
+    level), and the
     extension's group callback is not run, the group here having its own.
     Everything else reaches the application unchanged.
     """
@@ -308,7 +309,7 @@ class _ExtensionHost:
         taken |= {_group_name(info) for info in host.registered_groups}
         for command in typer_instance.registered_commands:
             if _command_name(command) in taken:
-                logger.warning(
+                logger.debug(
                     "The extension's `%s %s` is not registered: this application has its own.",
                     name,
                     _command_name(command),
@@ -317,7 +318,7 @@ class _ExtensionHost:
             host.registered_commands.append(command)
         for group in typer_instance.registered_groups:
             if _group_name(group) in taken:
-                logger.warning(
+                logger.debug(
                     "The extension's `%s %s` is not registered: this application has its own.",
                     name,
                     _group_name(group),

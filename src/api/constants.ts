@@ -22,7 +22,7 @@ export const API_BASE_PATHS = {
  */
 export const DEFAULT_SERVICE_URLS = {
   /** Default URL for AI Agents (durable agent management) service */
-  AI_AGENTS: 'https://prod1.datalayer.run',
+  AI_AGENTS: 'https://r1.datalayer.run',
   /**
    * Default URL for the Contents service.
    *

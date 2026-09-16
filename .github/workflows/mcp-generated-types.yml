@@ -32,5 +32,5 @@ jobs:
 
       - name: Check src/api/mcp/generated.ts is current
         env:
-          DATALAYER_JUPYTER_MCP_OPENAPI: ${{ vars.DATALAYER_JUPYTER_MCP_OPENAPI || 'https://mcp.datalayer.run/api/mcp/v1/openapi.json' }}
+          DATALAYER_JUPYTER_MCP_OPENAPI: ${{ vars.DATALAYER_JUPYTER_MCP_OPENAPI || 'https://r1.datalayer.run/api/mcp/v1/openapi.json' }}
         run: python scripts/generate-mcp-types.py --check
