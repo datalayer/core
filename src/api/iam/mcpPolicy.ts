@@ -71,6 +71,27 @@ export interface McpPolicyRules {
   maxCreditsPerDay?: number;
   /** Sandboxes at once. Counted per scope — a team's counts the team's. */
   maxConcurrentSandboxes?: number;
+  /**
+   * How long a connection may go on being refreshed before the person signs
+   * in and consents again. Hours, because that is the unit it is set in.
+   *
+   * Enforced by **IAM**, at its token endpoint, rather than by the gateway:
+   * a session's age is a fact about the grant, and the grant is IAM's. The
+   * gateway never sees it.
+   */
+  sessionMaxHours?: number;
+  /**
+   * Whether this organization's own identity provider may stand in for the
+   * consent screen, for a client it already admits.
+   *
+   * Narrow by construction, and off unless turned on: it applies only to a
+   * session that came through one of this organization's own enabled
+   * providers, only for a client named on `allowedClients`, and only when
+   * that list is not empty. Every other session still sees the screen.
+   *
+   * Not "require SSO": it does not stop anybody signing in another way.
+   */
+  ssoAdmitsWithoutConsent?: boolean;
 }
 
 /** A stored layer, with the version a write must carry back. */
@@ -98,6 +119,8 @@ export const MCP_POLICY_RULES = [
   'maxCallsPerMinute',
   'maxCreditsPerDay',
   'maxConcurrentSandboxes',
+  'sessionMaxHours',
+  'ssoAdmitsWithoutConsent',
 ] as const;
 
 /** Raised when the policy changed between the read and the write. */
@@ -205,7 +228,10 @@ export const deleteMcpPolicy = async (
 };
 
 const statusOf = (error: unknown): number | undefined => {
-  const candidate = error as { status?: number; response?: { status?: number } };
+  const candidate = error as {
+    status?: number;
+    response?: { status?: number };
+  };
   return candidate?.status ?? candidate?.response?.status;
 };
 

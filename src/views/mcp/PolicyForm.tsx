@@ -26,7 +26,13 @@
  */
 
 import type { JSX } from 'react';
-import { FormControl, TextInput, Textarea, Text } from '@primer/react';
+import {
+  FormControl,
+  TextInput,
+  Textarea,
+  Text,
+  ToggleSwitch,
+} from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import type { McpPolicyRules } from '../../api/iam/mcpPolicy';
 
@@ -38,6 +44,9 @@ export type PolicyDraft = {
   maxCallsPerMinute: string;
   maxCreditsPerDay: string;
   maxConcurrentSandboxes: string;
+  sessionMaxHours: string;
+  /** A checkbox, held as `'true'`/`''` so every field stays a string. */
+  ssoAdmitsWithoutConsent: string;
 };
 
 export const EMPTY_POLICY_DRAFT: PolicyDraft = {
@@ -47,6 +56,8 @@ export const EMPTY_POLICY_DRAFT: PolicyDraft = {
   maxCallsPerMinute: '',
   maxCreditsPerDay: '',
   maxConcurrentSandboxes: '',
+  sessionMaxHours: '',
+  ssoAdmitsWithoutConsent: '',
 };
 
 /** A stored list as the textarea shows it: one entry a line. */
@@ -91,6 +102,8 @@ export const draftOf = (
   maxCallsPerMinute: textOf(rules?.maxCallsPerMinute),
   maxCreditsPerDay: textOf(rules?.maxCreditsPerDay),
   maxConcurrentSandboxes: textOf(rules?.maxConcurrentSandboxes),
+  sessionMaxHours: textOf(rules?.sessionMaxHours),
+  ssoAdmitsWithoutConsent: rules?.ssoAdmitsWithoutConsent ? 'true' : '',
 });
 
 /**
@@ -105,6 +118,7 @@ export const rulesFrom = (draft: PolicyDraft): McpPolicyRules | string => {
     ['maxCallsPerMinute', 'Calls per minute'],
     ['maxCreditsPerDay', 'Credits per day'],
     ['maxConcurrentSandboxes', 'Sandboxes at once'],
+    ['sessionMaxHours', 'Session at most'],
   ];
   for (const [key, label] of numbers) {
     const typed = draft[key].trim();
@@ -130,6 +144,12 @@ export const rulesFrom = (draft: PolicyDraft): McpPolicyRules | string => {
     maxCallsPerMinute: numberFrom(draft.maxCallsPerMinute),
     maxCreditsPerDay: numberFrom(draft.maxCreditsPerDay),
     maxConcurrentSandboxes: numberFrom(draft.maxConcurrentSandboxes),
+    sessionMaxHours: numberFrom(draft.sessionMaxHours),
+    // `undefined` rather than `false` when it is off, so an organization that
+    // never touched it stores no rule at all — the same distinction the lists
+    // draw between "not set" and "set to nothing".
+    ssoAdmitsWithoutConsent:
+      draft.ssoAdmitsWithoutConsent === 'true' ? true : undefined,
   };
 };
 
@@ -278,6 +298,69 @@ export const PolicyForm = ({
           Counted across the layer that set it.
         </FormControl.Caption>
         <Note>{notes.maxConcurrentSandboxes}</Note>
+      </FormControl>
+    </Box>
+
+    {/* Enforced by IAM at its token endpoint rather than by the gateway at a
+        tool call: a session's age and how it began are facts about the grant,
+        and the grant is IAM's. Drawn apart from the caps above for that
+        reason — they are the same page, not the same enforcement point. */}
+    <Box
+      sx={{
+        display: 'grid',
+        gap: 3,
+        gridTemplateColumns: ['1fr', '1fr 1fr'],
+      }}
+    >
+      <FormControl>
+        <FormControl.Label>Session at most</FormControl.Label>
+        <TextInput
+          block
+          type="number"
+          min={1}
+          disabled={disabled}
+          value={draft.sessionMaxHours}
+          onChange={event => onChange('sessionMaxHours', event.target.value)}
+        />
+        <FormControl.Caption>
+          Hours before a person signs in and consents again. It bites at the
+          refresh: a token already minted lives out its own short life, and the
+          connection ends when the client next tries to extend it. Empty for no
+          limit.
+        </FormControl.Caption>
+        <Note>{notes.sessionMaxHours}</Note>
+      </FormControl>
+
+      <FormControl>
+        <FormControl.Label>
+          Your directory may stand in for the consent screen
+        </FormControl.Label>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+          <ToggleSwitch
+            size="small"
+            checked={draft.ssoAdmitsWithoutConsent === 'true'}
+            disabled={disabled}
+            aria-labelledby="sso-admits-without-consent-label"
+            onClick={() =>
+              onChange(
+                'ssoAdmitsWithoutConsent',
+                draft.ssoAdmitsWithoutConsent === 'true' ? '' : 'true',
+              )
+            }
+          />
+          <Text id="sso-admits-without-consent-label" sx={{ fontSize: 1 }}>
+            Skip it for clients you already admit
+          </Text>
+        </Box>
+        <FormControl.Caption>
+          Only for somebody who signed in through one of{' '}
+          <strong>your own</strong> enabled identity providers, and only for a
+          client named in <strong>Admitted clients</strong> above — which must
+          not be empty. Every other session still sees the screen. This does not
+          require anyone to sign in through your directory; it only says the
+          screen adds nothing when they did.
+        </FormControl.Caption>
+        <Note>{notes.ssoAdmitsWithoutConsent}</Note>
       </FormControl>
     </Box>
   </Box>

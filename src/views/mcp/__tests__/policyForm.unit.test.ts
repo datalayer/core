@@ -17,6 +17,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { MCP_POLICY_RULES } from '../../../api/iam/mcpPolicy';
 import {
   EMPTY_POLICY_DRAFT,
   draftOf,
@@ -69,27 +70,33 @@ describe('a policy field, read back', () => {
 
 describe('a draft, turned back into rules', () => {
   it('refuses a cap of zero, and says what to do instead', () => {
-    const refusal = rulesFrom({ ...EMPTY_POLICY_DRAFT, maxCallsPerMinute: '0' });
+    const refusal = rulesFrom({
+      ...EMPTY_POLICY_DRAFT,
+      maxCallsPerMinute: '0',
+    });
     expect(typeof refusal).toBe('string');
     expect(refusal).toContain('revoke');
   });
 
   it('refuses a negative cap for the same reason', () => {
-    expect(typeof rulesFrom({ ...EMPTY_POLICY_DRAFT, maxCreditsPerDay: '-5' })).toBe(
-      'string',
-    );
+    expect(
+      typeof rulesFrom({ ...EMPTY_POLICY_DRAFT, maxCreditsPerDay: '-5' }),
+    ).toBe('string');
   });
 
   it('refuses a limit that is not a number', () => {
     expect(
-      typeof rulesFrom({ ...EMPTY_POLICY_DRAFT, maxConcurrentSandboxes: 'many' }),
+      typeof rulesFrom({
+        ...EMPTY_POLICY_DRAFT,
+        maxConcurrentSandboxes: 'many',
+      }),
     ).toBe('string');
   });
 
   it('names the field it is refusing', () => {
-    expect(rulesFrom({ ...EMPTY_POLICY_DRAFT, maxCreditsPerDay: '0' })).toContain(
-      'Credits per day',
-    );
+    expect(
+      rulesFrom({ ...EMPTY_POLICY_DRAFT, maxCreditsPerDay: '0' }),
+    ).toContain('Credits per day');
   });
 
   it('lets an empty draft through as a layer that narrows nothing', () => {
@@ -122,10 +129,58 @@ describe('a stored layer, shown in the form', () => {
   });
 
   it('notices a change in any field', () => {
-    for (const key of Object.keys(EMPTY_POLICY_DRAFT) as (keyof typeof EMPTY_POLICY_DRAFT)[]) {
+    for (const key of Object.keys(
+      EMPTY_POLICY_DRAFT,
+    ) as (keyof typeof EMPTY_POLICY_DRAFT)[]) {
       expect(
-        policyChanged({ ...EMPTY_POLICY_DRAFT, [key]: 'x' }, EMPTY_POLICY_DRAFT),
+        policyChanged(
+          { ...EMPTY_POLICY_DRAFT, [key]: 'x' },
+          EMPTY_POLICY_DRAFT,
+        ),
       ).toBe(true);
     }
+  });
+});
+
+describe('the rules the form can actually set', () => {
+  it('has a field for every rule the model names', () => {
+    // The drift that goes unnoticed. A rule rendered here and unknown to IAM
+    // is refused at the write, loudly. A rule IAM stores and this form has no
+    // field for is silent: an administrator cannot set it, and nothing says
+    // so. `sessionMaxHours` was exactly that — enforced at IAM's token
+    // endpoint from the day it shipped, settable nowhere.
+    const settable = Object.keys(EMPTY_POLICY_DRAFT).sort();
+    expect([...MCP_POLICY_RULES].sort()).toEqual(settable);
+  });
+
+  it('carries the session limit and the consent rule through a round trip', () => {
+    const draft = draftOf({
+      sessionMaxHours: 12,
+      ssoAdmitsWithoutConsent: true,
+    });
+    expect(draft.sessionMaxHours).toBe('12');
+    expect(draft.ssoAdmitsWithoutConsent).toBe('true');
+    expect(rulesFrom(draft)).toMatchObject({
+      sessionMaxHours: 12,
+      ssoAdmitsWithoutConsent: true,
+    });
+  });
+
+  it('stores no consent rule at all when it is off', () => {
+    // `undefined`, never `false`: an organization that never touched it has
+    // not set a rule, which is the same distinction the lists draw between
+    // "not set" and "set to nothing".
+    const rules = rulesFrom({ ...EMPTY_POLICY_DRAFT });
+    expect(
+      (rules as Record<string, unknown>).ssoAdmitsWithoutConsent,
+    ).toBeUndefined();
+  });
+
+  it('refuses a session limit of zero the way it refuses the other caps', () => {
+    // Zero reads as "no limit" to code that treats a falsy cap as absent, so
+    // somebody typing it to end sessions would lift the limit instead.
+    const refusal = rulesFrom({ ...EMPTY_POLICY_DRAFT, sessionMaxHours: '0' });
+    expect(typeof refusal).toBe('string');
+    expect(refusal).toMatch(/Session at most/);
   });
 });

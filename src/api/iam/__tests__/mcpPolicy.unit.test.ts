@@ -103,7 +103,14 @@ describe('the MCP policy layer', () => {
       .spyOn(DatalayerApi, 'requestDatalayerAPI')
       .mockResolvedValue({ success: true, policy: {} } as never);
 
-    await setMcpPolicy('token', 'organization', ORG, {}, { expectedVersion: 7 }, IAM);
+    await setMcpPolicy(
+      'token',
+      'organization',
+      ORG,
+      {},
+      { expectedVersion: 7 },
+      IAM,
+    );
 
     expect(request.mock.calls[0][0].url).toContain('expected_version=7');
   });
@@ -127,7 +134,14 @@ describe('the MCP policy layer', () => {
       .spyOn(DatalayerApi, 'requestDatalayerAPI')
       .mockResolvedValue({ success: true, policy: {} } as never);
 
-    await setMcpPolicy('token', 'organization', ORG, {}, { expectedVersion: 0 }, IAM);
+    await setMcpPolicy(
+      'token',
+      'organization',
+      ORG,
+      {},
+      { expectedVersion: 0 },
+      IAM,
+    );
 
     expect(request.mock.calls[0][0].url).toContain('expected_version=0');
   });
@@ -138,7 +152,14 @@ describe('the MCP policy layer', () => {
     );
 
     await expect(
-      setMcpPolicy('token', 'organization', ORG, {}, { expectedVersion: 7 }, IAM),
+      setMcpPolicy(
+        'token',
+        'organization',
+        ORG,
+        {},
+        { expectedVersion: 7 },
+        IAM,
+      ),
     ).rejects.toBeInstanceOf(McpPolicyConflict);
   });
 
@@ -149,7 +170,9 @@ describe('the MCP policy layer', () => {
     class Shaped extends Error {
       response = { status: 404 };
     }
-    vi.spyOn(DatalayerApi, 'requestDatalayerAPI').mockRejectedValue(new Shaped());
+    vi.spyOn(DatalayerApi, 'requestDatalayerAPI').mockRejectedValue(
+      new Shaped(),
+    );
 
     expect(await getMcpPolicy('token', 'organization', ORG, IAM)).toBeNull();
   });
@@ -180,12 +203,21 @@ describe('the MCP policy layer', () => {
     // `personal`, not `user`. IAM refuses an unknown scope with a 422, so
     // this is not a subtle mis-scoping: it is every read and every write of
     // that layer failing. It shipped wrong once.
-    expect([...MCP_POLICY_SCOPES]).toEqual(['organization', 'team', 'personal']);
+    expect([...MCP_POLICY_SCOPES]).toEqual([
+      'organization',
+      'team',
+      'personal',
+    ]);
   });
 
-  it('names only the rules the gateway enforces', () => {
+  it('names only rules IAM will store, and says which end enforces each', () => {
     // A rule rendered in a form and unknown to IAM is refused at the write,
     // which reads to whoever filled it in as the page being broken.
+    //
+    // Two enforcement points, one list. The gateway checks the first six on
+    // the way to a tool call. IAM checks the last two at its own token
+    // endpoint, because a session's age and how it began are facts about the
+    // *grant* — the gateway never sees one.
     expect(MCP_POLICY_RULES).toEqual([
       'toolDenylist',
       'toolAllowlist',
@@ -193,6 +225,8 @@ describe('the MCP policy layer', () => {
       'maxCallsPerMinute',
       'maxCreditsPerDay',
       'maxConcurrentSandboxes',
+      'sessionMaxHours',
+      'ssoAdmitsWithoutConsent',
     ]);
   });
 });
