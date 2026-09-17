@@ -4,7 +4,6 @@
 from typing import Any
 
 from datalayer_core.models.secret import SecretVariant
-from datalayer_core.utils import btoa
 
 
 class SecretsCreateMixin:
@@ -36,11 +35,19 @@ class SecretsCreateMixin:
         dict
             A dictionary containing the created secret and its details.
         """
+        # The value is sent as it is, and says so. It used to be base64, which
+        # nothing on the other side undid: a build secret resolved for a build
+        # arrived encoded and was mounted that way, so a key created here
+        # opened nothing (PLAN_ENVS.md E3-05, found 2026-09-17). `encoding`
+        # tells IAM which it is, rather than leaving a reader to guess from the
+        # bytes — a raw value can be valid base64 too, and guessing wrong on a
+        # credential is worse than not guessing.
         body = {
             "name": name,
             "description": description,
             "variant": secret_type,
-            "value": btoa(value),
+            "value": value,
+            "encoding": "plain",
         }
         try:
             response = self._fetch(  # type: ignore
