@@ -17,6 +17,7 @@
 export const ItemTypes = {
   NOTEBOOK: 'notebook',
   LEXICAL: 'document',
+  DECK: 'deck',
   EXERCISE: 'exercise',
   CELL: 'cell',
   SPACE: 'space',

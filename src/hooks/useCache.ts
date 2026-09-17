@@ -77,6 +77,7 @@ type IAssignment = any;
 type ICell = any;
 type ICourse = any;
 type IDocument = any;
+type IDeck = any;
 type IEnvironment = any;
 type IExercise = any;
 type ILesson = any;
@@ -518,6 +519,17 @@ export const queryKeys = {
       [...queryKeys.documents.detail(documentId), 'model'] as const,
   },
 
+  // Decks
+  decks: {
+    all: () => ['decks'] as const,
+    details: () => [...queryKeys.decks.all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.decks.details(), id] as const,
+    bySpace: (spaceId: string) =>
+      [...queryKeys.decks.all(), 'space', spaceId] as const,
+    model: (deckId: string) =>
+      [...queryKeys.decks.detail(deckId), 'model'] as const,
+  },
+
   // Cells
   cells: {
     all: () => ['cells'] as const,
@@ -782,6 +794,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   } = useUploadForm(
     `${coreStore.configuration.spacerUrl}/api/spacer/v1/lexicals`,
   );
+
+  // Hook for deck upload/creation
+  const {
+    isLoading: deckUploadLoading,
+    uploadAndSubmit: uploadDeck,
+    progress: deckUploadProgress,
+    reset: resetDeckUpload,
+  } = useUploadForm(`${coreStore.configuration.spacerUrl}/api/spacer/v1/decks`);
 
   // ============================================================================
   // Transformation Functions (kept from original useCache)
@@ -1252,6 +1272,34 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       organization: {
         id: raw_notebook.organization_uid_s,
         handle: raw_notebook.organization_handle_s,
+      },
+    };
+  };
+
+  const toDeck = (raw: any): IDeck => {
+    const owner = toItemOwner(raw);
+    return {
+      id: raw.uid,
+      type: 'deck',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      spec: raw.model_s ? JSON.parse(raw.model_s) : undefined,
+      public: raw.is_public_b ?? false,
+      creationDate: new Date(raw.creation_ts_dt),
+      lastUpdateDate: raw.last_update_ts_dt
+        ? new Date(raw.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      owner,
+      space: {
+        handle: raw.handle_s,
+      },
+      organization: {
+        id: raw.organization_uid_s,
+        handle: raw.organization_handle_s,
       },
     };
   };
@@ -2855,6 +2903,180 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Get a deck by id, its specification inlined as `spec`.
+   */
+  const useDeck = (deckId: string) => {
+    return useQuery({
+      queryKey: queryKeys.decks.detail(deckId),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/decks/${deckId}`,
+          method: 'GET',
+        });
+        if (resp.success && resp.deck) {
+          return toDeck(resp.deck);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(resp.message || 'Not authorized to access this deck');
+        }
+        throw new Error(resp.message || 'Failed to fetch deck');
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!deckId,
+    });
+  };
+
+  /**
+   * Get decks by space
+   */
+  const useDecksBySpace = (spaceId: string) => {
+    return useQuery({
+      queryKey: queryKeys.decks.bySpace(spaceId),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/deck`,
+          method: 'GET',
+        });
+        if (resp.success && resp.items) {
+          return resp.items.map((raw: unknown) => {
+            const deck = toDeck(raw);
+            queryClient.setQueryData(queryKeys.decks.detail(deck.id), deck);
+            return deck;
+          });
+        }
+        return [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!spaceId,
+    });
+  };
+
+  /**
+   * Create a deck — from an uploaded specification, or the starter one.
+   */
+  const useCreateDeck = () => {
+    return useMutation({
+      mutationFn: async ({
+        spaceId,
+        name,
+        description,
+        deckType = 'deck',
+        file,
+      }: {
+        spaceId: string;
+        name: string;
+        description?: string;
+        deckType?: string;
+        file?: File;
+      }) => {
+        const formData = new FormData();
+        formData.append('space_id', spaceId);
+        // Backward compatibility for endpoints still expecting camelCase.
+        formData.append('spaceId', spaceId);
+        formData.append('deckType', deckType);
+        formData.append('name', name);
+        formData.append('description', description || '');
+        if (file) {
+          formData.append('file', file);
+        }
+        return uploadDeck(formData);
+      },
+      onSuccess: resp => {
+        if (resp.success && resp.deck) {
+          const deck = toDeck(resp.deck);
+          queryClient.setQueryData(queryKeys.decks.detail(deck.id), deck);
+          queryClient.refetchQueries({ queryKey: queryKeys.decks.all() });
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
+        }
+      },
+    });
+  };
+
+  /**
+   * Update a deck's name and description
+   */
+  const useUpdateDeck = () => {
+    return useMutation({
+      mutationFn: async ({
+        id,
+        name,
+        description,
+      }: {
+        id: string;
+        name: string;
+        description: string;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/decks/${id}`,
+          method: 'PUT',
+          body: { name, description },
+        });
+      },
+      onSuccess: (resp, deck) => {
+        if (resp.success) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.decks.detail(deck.id),
+          });
+          queryClient.invalidateQueries({ queryKey: queryKeys.decks.all() });
+        }
+      },
+    });
+  };
+
+  /**
+   * Replace a deck's specification, whole.
+   */
+  const useUpdateDeckModel = () => {
+    return useMutation({
+      mutationFn: async ({
+        deckId,
+        spec,
+      }: {
+        deckId: string;
+        spec: unknown;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/decks/${deckId}/model`,
+          method: 'PUT',
+          body: { spec },
+        });
+      },
+      onSuccess: (_, variables) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.decks.detail(variables.deckId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.decks.model(variables.deckId),
+        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.decks.all() });
+      },
+    });
+  };
+
+  /**
+   * Clone a deck into the caller's library (or a space they may change).
+   * The spacer writes the specification again under the new uid.
+   */
+  const useCloneDeck = () => {
+    return useMutation({
+      mutationFn: async (deckId: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/decks/${deckId}/clone`,
+          method: 'POST',
+        });
+      },
+      onSuccess: resp => {
+        if (resp.success && resp.deck) {
+          const deck = toDeck(resp.deck);
+          queryClient.setQueryData(queryKeys.decks.detail(deck.id), deck);
+          queryClient.refetchQueries({ queryKey: queryKeys.decks.all() });
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
+        }
+      },
+    });
+  };
+
+  /**
    * Clone notebook
    */
   const useCloneNotebook = () => {
@@ -3438,6 +3660,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.removeQueries({
           queryKey: queryKeys.documents.detail(itemId),
         });
+        queryClient.removeQueries({ queryKey: queryKeys.decks.detail(itemId) });
         queryClient.removeQueries({ queryKey: queryKeys.cells.detail(itemId) });
         queryClient.removeQueries({
           queryKey: queryKeys.lessons.detail(itemId),
@@ -3452,6 +3675,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         // Invalidate all artifact type queries
         queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.decks.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.cells.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.exercises.all() });
@@ -8117,6 +8341,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     for (const namespace of [
       queryKeys.notebooks.all(),
       queryKeys.documents.all(),
+      queryKeys.decks.all(),
       queryKeys.cells.all(),
       queryKeys.lessons.all(),
       queryKeys.exercises.all(),
@@ -10152,6 +10377,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useRefreshNotebook,
     useRefreshSpaceNotebooks,
 
+    // Decks
+    useDeck,
+    useDecksBySpace,
+    useCreateDeck,
+    useUpdateDeck,
+    useUpdateDeckModel,
+    useCloneDeck,
+
     // Documents
     useDocument,
     useDocumentsBySpace,
@@ -10350,6 +10583,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     documentUploadLoading,
     documentUploadProgress,
     resetDocumentUpload,
+    deckUploadLoading,
+    deckUploadProgress,
+    resetDeckUpload,
   };
 };
 
