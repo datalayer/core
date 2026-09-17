@@ -50,6 +50,7 @@ import {
 } from '../../hooks/useMcp';
 import { useToast } from '../../hooks';
 import { McpPolicyConflict } from '../../api/iam/mcpPolicy';
+import { AdmittedClients } from './AdmittedClients';
 import { PolicyHistory } from './PolicyHistory';
 import {
   EMPTY_POLICY_DRAFT,
@@ -214,7 +215,18 @@ export const OrganizationPolicy = ({
         </Flash>
       )}
 
-      <PolicyForm draft={draft} onChange={set} disabled={readOnly} />
+      <PolicyForm
+        draft={draft}
+        onChange={set}
+        disabled={readOnly}
+        belowAllowedClients={
+          <AdmittedClients
+            scope="organization"
+            subjectUid={orgUid}
+            edited={draft.allowedClients !== stored.allowedClients}
+          />
+        }
+      />
 
       {!readOnly && (
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>

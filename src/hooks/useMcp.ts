@@ -118,8 +118,10 @@ import {
 import type { MintedScimToken, ScimToken } from '../api/iam/scimTokens';
 import {
   deleteMcpPolicy,
+  getAdmittedClients,
   getMcpPolicy,
   setMcpPolicy,
+  type AdmittedClients,
   type McpPolicy,
   type McpPolicyRules,
   type McpPolicyScope,
@@ -801,6 +803,34 @@ export const useSetIdentityProviderEnabled = (orgUid: string) => {
         queryKey: queryKeys.mcp.identityProviders(orgUid),
       });
     },
+  });
+};
+
+/**
+ * What one layer's `allowedClients` entries actually name.
+ *
+ * Deliberately *not* folded into `useMcpPolicyLayer`. That query is read
+ * whenever a policy form mounts; this one may make the server fetch a client
+ * document per entry, and an editor typing in a textarea must not set that
+ * off on every keystroke — so it is fetched from what is **stored**, and goes
+ * stale until the draft is saved.
+ */
+export const useAdmittedClients = (
+  scope: McpPolicyScope,
+  subjectUid: string,
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQuery<AdmittedClients>({
+    queryKey: queryKeys.mcp.admittedClients(scope, subjectUid),
+    queryFn: () => getAdmittedClients(token ?? '', scope, subjectUid, iamUrl),
+    enabled:
+      Boolean(token && iamUrl && subjectUid) && (options.enabled ?? true),
+    // Longer than the policy layer's: a client document is cached by the
+    // server for as long as its own headers say, and re-asking on every
+    // focus would make a console page a source of outbound traffic.
+    staleTime: 300_000,
   });
 };
 

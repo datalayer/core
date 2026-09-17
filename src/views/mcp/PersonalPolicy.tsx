@@ -50,6 +50,7 @@ import {
   McpPolicyConflict,
   type McpPolicyRules,
 } from '../../api/iam/mcpPolicy';
+import { AdmittedClients } from './AdmittedClients';
 import {
   EMPTY_POLICY_DRAFT,
   PolicyForm,
@@ -263,7 +264,18 @@ export const PersonalPolicy = ({
         </Flash>
       )}
 
-      <PolicyForm draft={draft} onChange={set} notes={notes} />
+      <PolicyForm
+        draft={draft}
+        onChange={set}
+        notes={notes}
+        belowAllowedClients={
+          <AdmittedClients
+            scope="personal"
+            subjectUid={userUid}
+            edited={draft.allowedClients !== stored.allowedClients}
+          />
+        }
+      />
 
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
         <Button

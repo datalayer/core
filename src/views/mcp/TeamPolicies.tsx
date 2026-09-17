@@ -48,6 +48,7 @@ import {
 } from '../../hooks/useMcp';
 import { useToast } from '../../hooks';
 import { McpPolicyConflict } from '../../api/iam/mcpPolicy';
+import { AdmittedClients } from './AdmittedClients';
 import { PolicyHistory } from './PolicyHistory';
 import {
   EMPTY_POLICY_DRAFT,
@@ -170,6 +171,13 @@ const TeamPolicyForm = ({
             '— so another team being busy never uses up this limit. The ' +
             "organization's cap still applies on top.",
         }}
+        belowAllowedClients={
+          <AdmittedClients
+            scope="team"
+            subjectUid={teamUid}
+            edited={draft.allowedClients !== stored.allowedClients}
+          />
+        }
       />
 
       {!readOnly && (

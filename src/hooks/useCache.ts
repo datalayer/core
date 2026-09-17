@@ -368,6 +368,11 @@ export const queryKeys = {
       [...queryKeys.mcp.all(), 'identity-providers', orgUid] as const,
     scimTokens: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'scim-tokens', orgUid] as const,
+    // Keyed by scope *and* subject, like `policyLayer`: an organization's
+    // admitted clients and a team's are different lists, and a shared entry
+    // would show one under the other's name.
+    admittedClients: (scope: string, subjectUid: string) =>
+      [...queryKeys.mcp.all(), 'admitted-clients', scope, subjectUid] as const,
     forwarding: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'audit-forwarding', orgUid] as const,
     auditSettings: (orgUid: string) =>

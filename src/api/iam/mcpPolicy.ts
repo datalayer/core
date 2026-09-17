@@ -146,14 +146,15 @@ export class McpPolicyConflict extends Error {
   }
 }
 
+/** `suffix` is appended verbatim: a query string, or a further path segment. */
 const policyUrl = (
   baseUrl: string,
   scope: McpPolicyScope,
   subjectUid: string,
-  query = '',
+  suffix = '',
 ): string =>
   `${baseUrl}${API_BASE_PATHS.IAM}/mcp-policies/${encodeURIComponent(scope)}` +
-  `/${encodeURIComponent(subjectUid)}${query}`;
+  `/${encodeURIComponent(subjectUid)}${suffix}`;
 
 /**
  * One layer's rules, or `null` where nobody has written it.
@@ -253,3 +254,104 @@ const statusOf = (error: unknown): number | undefined => {
 const isNotFound = (error: unknown): boolean => statusOf(error) === 404;
 
 const isConflict = (error: unknown): boolean => statusOf(error) === 409;
+
+/**
+ * One `allowedClients` entry, as the server can describe it.
+ *
+ * Three states, kept apart deliberately — collapsing any two of them is the
+ * mistake this shape exists to prevent.
+ */
+export interface AdmittedClient {
+  /** Exactly as it is stored, so somebody can find the line they typed. */
+  entry: string;
+  /**
+   * `hostname` admits every client that host publishes and has no document
+   * to read. `url` names one client document. `unusable` matches nothing —
+   * almost always a URL pasted without its scheme.
+   */
+  kind: 'hostname' | 'url' | 'unusable';
+  hostname?: string;
+  /**
+   * Only for `url`. `false` means the document could not be read, which is
+   * an entry that silently admits nobody — and reads to the vendor whose
+   * agent is refused as a deliberate decision.
+   */
+  resolved?: boolean;
+  clientName?: string;
+  clientHostname?: string;
+  clientUri?: string;
+  /** Every redirect goes to the reader's own machine. */
+  localhostOnly?: boolean;
+  /** Why it cannot be read, or what a hostname entry admits. */
+  detail?: string;
+}
+
+export interface AdmittedClients {
+  /**
+   * Whether this layer names an allowlist **at all**.
+   *
+   * `false` for an absent or empty list, and it is not a detail: an empty
+   * list is not an allowlist, and the gateway admits every client through a
+   * layer that has not filled one in. A page rendering "0 clients admitted"
+   * over `false` would state the opposite of what is enforced.
+   */
+  allowlisted: boolean;
+  clients: AdmittedClient[];
+  detail?: string;
+}
+
+interface WireAdmittedClient {
+  entry?: string;
+  kind?: string;
+  hostname?: string;
+  resolved?: boolean;
+  client_name?: string;
+  client_hostname?: string;
+  client_uri?: string;
+  localhost_only?: boolean;
+  detail?: string;
+}
+
+const admittedFromWire = (wire: WireAdmittedClient): AdmittedClient => ({
+  entry: wire.entry ?? '',
+  kind:
+    wire.kind === 'hostname' || wire.kind === 'url' ? wire.kind : 'unusable',
+  hostname: wire.hostname || undefined,
+  resolved: wire.resolved,
+  clientName: wire.client_name || undefined,
+  clientHostname: wire.client_hostname || undefined,
+  clientUri: wire.client_uri || undefined,
+  localhostOnly: wire.localhost_only,
+  detail: wire.detail || undefined,
+});
+
+/**
+ * What this layer's admitted-client entries actually name.
+ *
+ * Its own call rather than part of `getMcpPolicy`, because that one is what
+ * the gateway reads on every uncached tool call and this may fetch a client
+ * document per entry — which is exactly what must never happen on the
+ * enforcement path.
+ */
+export const getAdmittedClients = async (
+  token: string,
+  scope: McpPolicyScope,
+  subjectUid: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
+): Promise<AdmittedClients> => {
+  const response = await requestDatalayerAPI<{
+    success: boolean;
+    allowlisted?: boolean;
+    clients?: WireAdmittedClient[];
+    detail?: string;
+  }>({
+    url: policyUrl(baseUrl, scope, subjectUid, '/admitted-clients'),
+    method: 'GET',
+    token,
+  });
+  return {
+    allowlisted: response.allowlisted === true,
+    clients: (response.clients ?? []).map(admittedFromWire),
+    detail: response.detail || undefined,
+  };
+};

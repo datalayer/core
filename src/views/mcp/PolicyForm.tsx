@@ -175,6 +175,17 @@ export interface PolicyFormProps {
    * needs to know while their hands are on it, not after they save.
    */
   notes?: Partial<Record<keyof PolicyDraft, React.ReactNode>>;
+  /**
+   * Rendered under the admitted-clients field: what the stored entries
+   * actually name.
+   *
+   * Passed in rather than fetched here, because it needs the scope and
+   * subject this form is editing and the form is deliberately presentational
+   * — organization, team and personal all render it, and each knows its own
+   * layer. Not a `note`: those are one warning line in attention colour, and
+   * this is a list.
+   */
+  belowAllowedClients?: React.ReactNode;
 }
 
 const Note = ({
@@ -193,6 +204,7 @@ export const PolicyForm = ({
   onChange,
   disabled = false,
   notes = {},
+  belowAllowedClients,
 }: PolicyFormProps): JSX.Element => (
   <Box sx={{ display: 'grid', gap: 3 }}>
     <FormControl>
@@ -248,6 +260,7 @@ export const PolicyForm = ({
         allowlist, for the same reason as above.
       </FormControl.Caption>
       <Note>{notes.allowedClients}</Note>
+      {belowAllowedClients && <Box sx={{ mt: 2 }}>{belowAllowedClients}</Box>}
     </FormControl>
 
     <Box
