@@ -86,6 +86,20 @@ export interface McpPolicyRules {
    */
   gpuHoursPerMonth?: number;
   /**
+   * Bytes stored. Refuses **every** launch when reached, not only one that
+   * attaches content — every sandbox can write, so unlike the GPU-hour limit
+   * there is nothing to condition on.
+   *
+   * In **bytes**, not gigabytes. A number whose unit is implied is one
+   * somebody eventually reads as the other, and this is compared against a
+   * figure Contents reports in bytes; a form converts for the reader.
+   *
+   * Counted over every live object *version* rather than every object: an
+   * object's recorded size is its current version's, and a scope keeping a
+   * hundred versions of a one-gigabyte file stores a hundred gigabytes.
+   */
+  storageBytes?: number;
+  /**
    * How long a connection may go on being refreshed before the person signs
    * in and consents again. Hours, because that is the unit it is set in.
    *
@@ -134,6 +148,7 @@ export const MCP_POLICY_RULES = [
   'maxCreditsPerDay',
   'maxConcurrentSandboxes',
   'gpuHoursPerMonth',
+  'storageBytes',
   'sessionMaxHours',
   'ssoAdmitsWithoutConsent',
 ] as const;

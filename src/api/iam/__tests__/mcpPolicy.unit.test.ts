@@ -214,7 +214,7 @@ describe('the MCP policy layer', () => {
     // A rule rendered in a form and unknown to IAM is refused at the write,
     // which reads to whoever filled it in as the page being broken.
     //
-    // Two enforcement points, one list. The gateway checks the first seven
+    // Two enforcement points, one list. The gateway checks the first eight
     // on the way to a tool call — `gpuHoursPerMonth` at a launch, and only
     // one onto an environment that has a GPU. IAM checks the last two at its
     // own token endpoint, because a session's age and how it began are facts
@@ -227,6 +227,7 @@ describe('the MCP policy layer', () => {
       'maxCreditsPerDay',
       'maxConcurrentSandboxes',
       'gpuHoursPerMonth',
+      'storageBytes',
       'sessionMaxHours',
       'ssoAdmitsWithoutConsent',
     ]);

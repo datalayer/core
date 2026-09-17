@@ -212,3 +212,35 @@ describe('the GPU-hour limit', () => {
     expect(draftOf({ gpuHoursPerMonth: 40 }).gpuHoursPerMonth).toBe('40');
   });
 });
+
+describe('the storage limit', () => {
+  it('is a whole number of bytes, not a rounded gigabyte', () => {
+    // Stored in bytes on purpose: a number whose unit is implied is one
+    // somebody eventually reads as the other, and this is compared against a
+    // figure Contents reports in bytes.
+    const rules = rulesFrom({
+      ...EMPTY_POLICY_DRAFT,
+      storageBytes: '1073741824',
+    });
+    expect(rules).toMatchObject({ storageBytes: 1073741824 });
+  });
+
+  it('refuses a zero, and says what to do instead', () => {
+    const refusal = rulesFrom({ ...EMPTY_POLICY_DRAFT, storageBytes: '0' });
+    expect(typeof refusal).toBe('string');
+    expect(refusal).toMatch(/Storage/);
+  });
+
+  it('stores nothing when it is left blank', () => {
+    expect(
+      (rulesFrom({ ...EMPTY_POLICY_DRAFT }) as Record<string, unknown>)
+        .storageBytes,
+    ).toBeUndefined();
+  });
+
+  it('reads a stored limit back into the form', () => {
+    expect(draftOf({ storageBytes: 1073741824 }).storageBytes).toBe(
+      '1073741824',
+    );
+  });
+});

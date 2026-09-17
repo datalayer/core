@@ -45,6 +45,7 @@ export type PolicyDraft = {
   maxCreditsPerDay: string;
   maxConcurrentSandboxes: string;
   gpuHoursPerMonth: string;
+  storageBytes: string;
   sessionMaxHours: string;
   /** A checkbox, held as `'true'`/`''` so every field stays a string. */
   ssoAdmitsWithoutConsent: string;
@@ -58,6 +59,7 @@ export const EMPTY_POLICY_DRAFT: PolicyDraft = {
   maxCreditsPerDay: '',
   maxConcurrentSandboxes: '',
   gpuHoursPerMonth: '',
+  storageBytes: '',
   sessionMaxHours: '',
   ssoAdmitsWithoutConsent: '',
 };
@@ -105,6 +107,7 @@ export const draftOf = (
   maxCreditsPerDay: textOf(rules?.maxCreditsPerDay),
   maxConcurrentSandboxes: textOf(rules?.maxConcurrentSandboxes),
   gpuHoursPerMonth: textOf(rules?.gpuHoursPerMonth),
+  storageBytes: textOf(rules?.storageBytes),
   sessionMaxHours: textOf(rules?.sessionMaxHours),
   ssoAdmitsWithoutConsent: rules?.ssoAdmitsWithoutConsent ? 'true' : '',
 });
@@ -122,6 +125,7 @@ export const rulesFrom = (draft: PolicyDraft): McpPolicyRules | string => {
     ['maxCreditsPerDay', 'Credits per day'],
     ['maxConcurrentSandboxes', 'Sandboxes at once'],
     ['gpuHoursPerMonth', 'GPU-hours per month'],
+    ['storageBytes', 'Storage'],
     ['sessionMaxHours', 'Session at most'],
   ];
   for (const [key, label] of numbers) {
@@ -149,6 +153,7 @@ export const rulesFrom = (draft: PolicyDraft): McpPolicyRules | string => {
     maxCreditsPerDay: numberFrom(draft.maxCreditsPerDay),
     maxConcurrentSandboxes: numberFrom(draft.maxConcurrentSandboxes),
     gpuHoursPerMonth: numberFrom(draft.gpuHoursPerMonth),
+    storageBytes: numberFrom(draft.storageBytes),
     sessionMaxHours: numberFrom(draft.sessionMaxHours),
     // `undefined` rather than `false` when it is off, so an organization that
     // never touched it stores no rule at all — the same distinction the lists
@@ -349,6 +354,36 @@ export const PolicyForm = ({
         — a notebook somebody ran by hand is in this number too.
       </FormControl.Caption>
       <Note>{notes.gpuHoursPerMonth}</Note>
+    </FormControl>
+
+    {/* Its own row too, for the same reason as the GPU limit: the two things
+        somebody will otherwise discover from a refusal do not fit in a
+        third-of-a-row caption. */}
+    <FormControl>
+      <FormControl.Label>Storage</FormControl.Label>
+      <TextInput
+        block
+        type="number"
+        min={0}
+        step={1}
+        disabled={disabled}
+        value={draft.storageBytes}
+        onChange={event => onChange('storageBytes', event.target.value)}
+        trailingVisual="bytes"
+      />
+      <FormControl.Caption>
+        Empty for no limit. In <strong>bytes</strong> — 1 GB is 1073741824, 1 TB
+        is 1099511627776. A number whose unit is implied is one somebody
+        eventually reads as the other, and this is compared against a figure
+        reported in bytes.
+        <br />
+        Checked on <strong>every</strong> launch, not only one that attaches
+        content: every sandbox can write.{' '}
+        <strong>Every kept version counts</strong> — an object&rsquo;s size is
+        its newest version&rsquo;s, so a hundred versions of a 1&nbsp;GB file
+        are 100&nbsp;GB, and deleting the newest frees none of the rest.
+      </FormControl.Caption>
+      <Note>{notes.storageBytes}</Note>
     </FormControl>
 
     {/* Enforced by IAM at its token endpoint rather than by the gateway at a
