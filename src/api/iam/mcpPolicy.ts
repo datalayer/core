@@ -72,6 +72,20 @@ export interface McpPolicyRules {
   /** Sandboxes at once. Counted per scope — a team's counts the team's. */
   maxConcurrentSandboxes?: number;
   /**
+   * GPU-hours over the last 30 days. Refuses a launch on a **GPU**
+   * environment; a CPU sandbox is unaffected.
+   *
+   * Not expressible as credits: the credits a GPU hour costs differ per
+   * environment, so neither number can be derived from the other.
+   *
+   * A trailing 30 days, not a calendar month — a limit that resets on the
+   * 1st can be spent twice inside 48 hours, once each side of the reset.
+   * And it counts **every** GPU-hour billed to the scope, agents' or not:
+   * the agent dimension lives on a child document in the ledger and cannot
+   * be a clause of the sum. A form must say both.
+   */
+  gpuHoursPerMonth?: number;
+  /**
    * How long a connection may go on being refreshed before the person signs
    * in and consents again. Hours, because that is the unit it is set in.
    *
@@ -119,6 +133,7 @@ export const MCP_POLICY_RULES = [
   'maxCallsPerMinute',
   'maxCreditsPerDay',
   'maxConcurrentSandboxes',
+  'gpuHoursPerMonth',
   'sessionMaxHours',
   'ssoAdmitsWithoutConsent',
 ] as const;

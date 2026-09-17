@@ -184,3 +184,31 @@ describe('the rules the form can actually set', () => {
     expect(refusal).toMatch(/Session at most/);
   });
 });
+
+describe('the GPU-hour limit', () => {
+  it('keeps a fraction, because half an hour on one card is 0.5', () => {
+    // Rounded to a whole number the smallest meaningful limit would be an
+    // hour, and an organization buying a few hours a month could not
+    // express what it bought.
+    const rules = rulesFrom({ ...EMPTY_POLICY_DRAFT, gpuHoursPerMonth: '2.5' });
+    expect(rules).toMatchObject({ gpuHoursPerMonth: 2.5 });
+  });
+
+  it('refuses a zero, and says what to do instead', () => {
+    // The same trap as every cap here and the one whose stored meaning is
+    // the opposite of its plain reading: the gateway skips a non-positive
+    // limit, so a zero written to stop GPU use lifts the limit instead.
+    const refusal = rulesFrom({ ...EMPTY_POLICY_DRAFT, gpuHoursPerMonth: '0' });
+    expect(typeof refusal).toBe('string');
+    expect(refusal).toMatch(/GPU-hours per month/);
+  });
+
+  it('stores nothing when it is left blank', () => {
+    const rules = rulesFrom({ ...EMPTY_POLICY_DRAFT });
+    expect((rules as Record<string, unknown>).gpuHoursPerMonth).toBeUndefined();
+  });
+
+  it('reads a stored limit back into the form', () => {
+    expect(draftOf({ gpuHoursPerMonth: 40 }).gpuHoursPerMonth).toBe('40');
+  });
+});

@@ -44,6 +44,7 @@ export type PolicyDraft = {
   maxCallsPerMinute: string;
   maxCreditsPerDay: string;
   maxConcurrentSandboxes: string;
+  gpuHoursPerMonth: string;
   sessionMaxHours: string;
   /** A checkbox, held as `'true'`/`''` so every field stays a string. */
   ssoAdmitsWithoutConsent: string;
@@ -56,6 +57,7 @@ export const EMPTY_POLICY_DRAFT: PolicyDraft = {
   maxCallsPerMinute: '',
   maxCreditsPerDay: '',
   maxConcurrentSandboxes: '',
+  gpuHoursPerMonth: '',
   sessionMaxHours: '',
   ssoAdmitsWithoutConsent: '',
 };
@@ -102,6 +104,7 @@ export const draftOf = (
   maxCallsPerMinute: textOf(rules?.maxCallsPerMinute),
   maxCreditsPerDay: textOf(rules?.maxCreditsPerDay),
   maxConcurrentSandboxes: textOf(rules?.maxConcurrentSandboxes),
+  gpuHoursPerMonth: textOf(rules?.gpuHoursPerMonth),
   sessionMaxHours: textOf(rules?.sessionMaxHours),
   ssoAdmitsWithoutConsent: rules?.ssoAdmitsWithoutConsent ? 'true' : '',
 });
@@ -118,6 +121,7 @@ export const rulesFrom = (draft: PolicyDraft): McpPolicyRules | string => {
     ['maxCallsPerMinute', 'Calls per minute'],
     ['maxCreditsPerDay', 'Credits per day'],
     ['maxConcurrentSandboxes', 'Sandboxes at once'],
+    ['gpuHoursPerMonth', 'GPU-hours per month'],
     ['sessionMaxHours', 'Session at most'],
   ];
   for (const [key, label] of numbers) {
@@ -144,6 +148,7 @@ export const rulesFrom = (draft: PolicyDraft): McpPolicyRules | string => {
     maxCallsPerMinute: numberFrom(draft.maxCallsPerMinute),
     maxCreditsPerDay: numberFrom(draft.maxCreditsPerDay),
     maxConcurrentSandboxes: numberFrom(draft.maxConcurrentSandboxes),
+    gpuHoursPerMonth: numberFrom(draft.gpuHoursPerMonth),
     sessionMaxHours: numberFrom(draft.sessionMaxHours),
     // `undefined` rather than `false` when it is off, so an organization that
     // never touched it stores no rule at all — the same distinction the lists
@@ -300,6 +305,38 @@ export const PolicyForm = ({
         <Note>{notes.maxConcurrentSandboxes}</Note>
       </FormControl>
     </Box>
+
+    {/* Its own row, and not because it did not fit. The three caps above are
+        read the way they read; this one has two properties somebody setting
+        it will otherwise discover from a refusal, and a caption squeezed into
+        a third of a row cannot say them. */}
+    <FormControl>
+      <FormControl.Label>GPU-hours per month</FormControl.Label>
+      <TextInput
+        block
+        type="number"
+        min={0}
+        step="any"
+        disabled={disabled}
+        value={draft.gpuHoursPerMonth}
+        onChange={event => onChange('gpuHoursPerMonth', event.target.value)}
+      />
+      <FormControl.Caption>
+        Empty for no limit. Refuses a launch on an environment that{' '}
+        <strong>has a GPU</strong> — a CPU sandbox is never affected, whatever
+        this reads. Fractions are allowed: half an hour on one card is 0.5.
+        <br />
+        Over the <strong>last 30 days</strong>, not the calendar month, so a
+        limit cannot be spent twice across a reset — which means it will not
+        line up with an invoice period.{' '}
+        <strong>
+          Every GPU-hour billed to this scope counts, not only your
+          agents&rsquo;
+        </strong>{' '}
+        — a notebook somebody ran by hand is in this number too.
+      </FormControl.Caption>
+      <Note>{notes.gpuHoursPerMonth}</Note>
+    </FormControl>
 
     {/* Enforced by IAM at its token endpoint rather than by the gateway at a
         tool call: a session's age and how it began are facts about the grant,
