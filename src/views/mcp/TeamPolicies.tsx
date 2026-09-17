@@ -33,13 +33,14 @@
  */
 
 import type { JSX } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Flash, Heading, Select, Spinner, Text } from '@primer/react';
-import { Blankslate } from '@primer/react/experimental';
+import { Blankslate, Dialog } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { PeopleIcon } from '@primer/octicons-react';
 import { McpErrorBlankslate } from '../../components/mcp';
 import {
+  useDisconnectEveryAgentInTeam,
   useMcpPolicyLayer,
   useOrganizationTeams,
   useSetMcpPolicyLayer,
@@ -210,6 +211,8 @@ const TeamPolicyForm = ({
         </Box>
       )}
 
+      {!readOnly && <TeamSessions teamUid={teamUid} teamName={teamName} />}
+
       <Box
         sx={{
           borderTop: '1px solid',
@@ -230,6 +233,122 @@ const TeamPolicyForm = ({
         Permitting a tool the organization denies does nothing, and a cap above
         the organization&rsquo;s leaves the organization&rsquo;s in force.
       </Text>
+    </Box>
+  );
+};
+
+/**
+ * Ending every session consented in one team.
+ *
+ * On the team's own page rather than on Connected agents, because that page
+ * is a person's list of their own grants — "disconnect all" there means
+ * *yours*, and a control that quietly meant a whole team's would be the same
+ * word doing two very different things one click apart.
+ *
+ * It is the team's counterpart of the personal one, and the same authority
+ * as removing somebody from the team: IAM asks `_can_manage_team`, so a team
+ * owner or the organization's owner may do it and nobody else. Narrow in the
+ * way deprovisioning is — no personal agent and no other team's grant is
+ * touched.
+ *
+ * **Not a policy rule, and kept out of the form above on purpose.** Saving a
+ * policy is reversible and takes effect on the next call; this ends live
+ * sessions now. Folding it into the same Save button would make somebody
+ * adjusting a cap sign every one of their team's agents out.
+ */
+const TeamSessions = ({
+  teamUid,
+  teamName,
+}: {
+  teamUid: string;
+  teamName: string;
+}): JSX.Element => {
+  const { enqueueToast } = useToast();
+  const disconnect = useDisconnectEveryAgentInTeam();
+  const [asking, setAsking] = useState(false);
+  const returnFocusRef = useRef<HTMLElement>(
+    null,
+  ) as React.RefObject<HTMLElement>;
+
+  const confirm = () => {
+    disconnect.mutate(teamUid, {
+      onSuccess: answer => {
+        enqueueToast(
+          answer.revoked === 1
+            ? `1 session ended for ${teamName}.`
+            : `${answer.revoked} sessions ended for ${teamName}.`,
+          { variant: 'success' },
+        );
+        setAsking(false);
+      },
+      onError: error => {
+        setAsking(false);
+        enqueueToast(`Could not end sessions: ${error.message}`, {
+          variant: 'error',
+        });
+      },
+    });
+  };
+
+  return (
+    <Box
+      sx={{
+        borderTop: '1px solid',
+        borderColor: 'border.muted',
+        pt: 3,
+        display: 'grid',
+        gap: 2,
+      }}
+    >
+      <Text as="h3" sx={{ fontSize: 1, fontWeight: 'semibold', m: 0 }}>
+        Sessions
+      </Text>
+      <Text as="p" sx={{ fontSize: 1, color: 'fg.muted', m: 0 }}>
+        Every agent connected while acting for {teamName} loses its grant at
+        once. Each asks again the next time somebody connects it, and goes
+        through the approval screen rather than being answered from what was
+        agreed before &mdash; so this is also how a fresh approval is forced.
+      </Text>
+      <Box>
+        <Button
+          variant="danger"
+          ref={returnFocusRef as React.RefObject<HTMLButtonElement>}
+          onClick={() => setAsking(true)}
+          disabled={disconnect.isPending}
+        >
+          End {teamName}&rsquo;s sessions
+        </Button>
+      </Box>
+
+      {asking && (
+        <Dialog
+          title={`End every session in ${teamName}?`}
+          onClose={() => setAsking(false)}
+          returnFocusRef={returnFocusRef}
+          footerButtons={[
+            {
+              buttonType: 'default',
+              content: 'Keep them',
+              onClick: () => setAsking(false),
+            },
+            {
+              buttonType: 'danger',
+              content: 'End them',
+              onClick: confirm,
+              disabled: disconnect.isPending,
+            },
+          ]}
+        >
+          <Text sx={{ fontSize: 1 }}>
+            Every grant consented in {teamName} ends now, whoever holds it. Work
+            an agent is in the middle of stops where it is.
+          </Text>
+          <Text as="p" sx={{ fontSize: 1, color: 'fg.muted', mt: 2, mb: 0 }}>
+            This team only. Nobody&rsquo;s personal agents end, no other
+            team&rsquo;s do, and nothing any agent already did is undone.
+          </Text>
+        </Dialog>
+      )}
     </Box>
   );
 };
