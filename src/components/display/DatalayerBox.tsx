@@ -6,7 +6,6 @@
 import { Link, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { ArrowRightIcon } from '@primer/octicons-react';
-import type { PropsWithChildren, ReactNode } from 'react';
 import { useNavigate } from '../../hooks';
 
 type DatalayerBoxProps = {
@@ -19,11 +18,13 @@ type DatalayerBoxProps = {
    *
    * The link on the trailing edge leads somewhere; this stays here.
    */
-  titleAction?: ReactNode;
+  titleAction?: React.ReactNode;
 };
 
-export const DatalayerBox = (props: PropsWithChildren<DatalayerBoxProps>) => {
-  const { title, titleAction, linkLabel, linkRoute, children } = props;
+export const DatalayerBox = (
+  props: React.PropsWithChildren<DatalayerBoxProps>,
+) => {
+  const { title, linkLabel, linkRoute, titleAction, children } = props;
   const navigate = useNavigate();
   return (
     <>
@@ -36,7 +37,10 @@ export const DatalayerBox = (props: PropsWithChildren<DatalayerBoxProps>) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Text as="h2" sx={{ borderLeft: '6px solid #28b899', paddingLeft: 2 }}>
+          <Text
+            as="h2"
+            sx={{ borderLeft: '6px solid #28b899', paddingLeft: 2 }}
+          >
             {title}
           </Text>
           {titleAction}

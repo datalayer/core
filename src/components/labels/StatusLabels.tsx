@@ -15,8 +15,7 @@
  * @module components/labels/StatusLabels
  */
 
-import type { JSX } from 'react';
-import type { ReactNode } from 'react';
+import type { JSX, ReactNode } from 'react';
 import { Label } from '@primer/react';
 
 /** The tones a status pill is read in. */
@@ -72,24 +71,7 @@ export function StatusLabel(
       sx={{
         textTransform: 'lowercase',
         lineHeight: 1.2,
-        /*
-         * The tone, under a doubled selector.
-         *
-         * Primer ships `NavList` and `ActionList` as CSS modules, and the
-         * colour they set on the contents of an item ties with the one Emotion
-         * generates for `sx` — so the same label came out in the colour of the
-         * navigation in one place and in its own colour in another, depending
-         * on which stylesheet happened to come last. `&&` raises the
-         * specificity enough that the tone always lands, wherever the label is
-         * put.
-         */
-        '&&': {
-          ...TONES[tone],
-          // The navigation of Primer colours the contents of its items, and
-          // its stylesheet is loaded after ours: a doubled selector was not
-          // enough on its own, so the colour of the tone is stated as final.
-          color: `${TONES[tone].color} !important`,
-        },
+        ...TONES[tone],
         ...sx,
       }}
     >
@@ -134,14 +116,7 @@ export function DefaultLabel(props: StatusLabelProps = {}): JSX.Element {
   );
 }
 
-/**
- * Something announced and not there yet.
- *
- * A tone of its own, and deliberately not the accent an alpha wears: one says
- * "you may try this, it may bite", the other "there is nothing to try". Read
- * side by side in a navigation, two labels of one colour say the same thing
- * about two entries that mean different things.
- */
+/** "soon": what is announced but not yet there. */
 export function SoonLabel(props: StatusLabelProps = {}): JSX.Element {
   const { children = 'soon', ...rest } = props;
   return (
