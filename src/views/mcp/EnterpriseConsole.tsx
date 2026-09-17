@@ -78,6 +78,7 @@ import {
 } from './McpObservability';
 import { AlertRules } from './AlertRules';
 import { IdentityProviders } from './IdentityProviders';
+import { ScimProvisioning } from './ScimProvisioning';
 import { TeamPolicies } from './TeamPolicies';
 import { OrganizationUsage } from './OrganizationUsage';
 import { OrganizationPolicy } from './OrganizationPolicy';
@@ -586,11 +587,22 @@ export const EnterpriseConsole = ({
       )}
 
       {current === 'identity-providers' && (
-        <IdentityProviders
-          errorState={errorState}
-          orgUid={organization.uid}
-          readOnly={!roles.includes('organization_owner')}
-        />
+        <Box sx={{ display: 'grid', gap: 5, minWidth: 0 }}>
+          <IdentityProviders
+            errorState={errorState}
+            orgUid={organization.uid}
+            readOnly={!roles.includes('organization_owner')}
+          />
+          {/* On the same page as the directory that signs people in, because
+              they are two halves of one integration and the second is the
+              one an organization actually needs: sign-in can only act on
+              somebody who turns up, and the person who left does not. */}
+          <ScimProvisioning
+            errorState={errorState}
+            orgUid={organization.uid}
+            readOnly={!roles.includes('organization_owner')}
+          />
+        </Box>
       )}
 
       {current === 'alerts' && (

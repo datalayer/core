@@ -110,6 +110,13 @@ import {
   type IdentityProviderDraft,
 } from '../api/iam/identityProviders';
 import {
+  createScimToken,
+  listScimTokens,
+  revokeScimToken,
+  rotateScimToken,
+} from '../api/iam/scimTokens';
+import type { MintedScimToken, ScimToken } from '../api/iam/scimTokens';
+import {
   deleteMcpPolicy,
   getMcpPolicy,
   setMcpPolicy,
@@ -792,6 +799,79 @@ export const useSetIdentityProviderEnabled = (orgUid: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.mcp.identityProviders(orgUid),
+      });
+    },
+  });
+};
+
+// -- SCIM provisioning credentials (IAM) ------------------------------------
+
+/**
+ * One organization's SCIM tokens, revoked ones included.
+ *
+ * Revoked ones are *not* filtered out here. A console that hid them would
+ * make an organization whose every token is revoked look identical to one
+ * that never had any — and those are different problems with different
+ * fixes, only one of which is "nobody is being deprovisioned right now".
+ */
+export const useScimTokens = (
+  orgUid: string,
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQuery<ScimToken[]>({
+    queryKey: queryKeys.mcp.scimTokens(orgUid),
+    queryFn: () => listScimTokens(token ?? '', orgUid, iamUrl),
+    enabled: Boolean(token && iamUrl && orgUid) && (options.enabled ?? true),
+    staleTime: 30_000,
+  });
+};
+
+/**
+ * Mint one. The secret is in the result and nowhere else, ever again.
+ *
+ * The mutation result is deliberately not written into the query cache: a
+ * secret that lived in a cache would be re-rendered on every refetch of the
+ * list, and outlive the dialog it was shown in.
+ */
+export const useCreateScimToken = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<MintedScimToken, Error, string>({
+    mutationFn: name => createScimToken(token ?? '', orgUid, name, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.scimTokens(orgUid),
+      });
+    },
+  });
+};
+
+export const useRotateScimToken = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<MintedScimToken, Error, string>({
+    mutationFn: uid => rotateScimToken(token ?? '', orgUid, uid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.scimTokens(orgUid),
+      });
+    },
+  });
+};
+
+export const useRevokeScimToken = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<ScimToken, Error, string>({
+    mutationFn: uid => revokeScimToken(token ?? '', orgUid, uid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.scimTokens(orgUid),
       });
     },
   });

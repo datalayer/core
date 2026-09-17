@@ -366,6 +366,8 @@ export const queryKeys = {
       [...queryKeys.mcp.all(), 'alert-rules', orgUid] as const,
     identityProviders: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'identity-providers', orgUid] as const,
+    scimTokens: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'scim-tokens', orgUid] as const,
     forwarding: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'audit-forwarding', orgUid] as const,
     auditSettings: (orgUid: string) =>
