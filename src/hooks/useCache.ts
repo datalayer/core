@@ -1283,6 +1283,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
+  /**
+   * Put a deck in the detail cache — but only a whole one.
+   *
+   * A listing answers with the space's items, and an item carries no
+   * `model_s`: the specification lives in S3 and only `GET /decks/{uid}`
+   * inlines it. Seeding the detail cache from such a row left `useDeck`
+   * answering instantly with a deck whose `spec` is undefined — and since
+   * these queries stay fresh for five minutes and do not refetch on mount,
+   * an editor opened from the table drew nothing until the tab was reloaded.
+   * A deck without its specification is not the deck this cache promises.
+   */
+  const seedDeckDetail = (deck: IDeck): void => {
+    if ((deck as any)?.spec) {
+      queryClient.setQueryData(queryKeys.decks.detail(deck.id), deck);
+    }
+  };
+
   const toDeck = (raw: any): IDeck => {
     const owner = toItemOwner(raw);
     return {
@@ -1618,6 +1635,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         };
       }
+      // Without this the mapper answered `{}` for a deck: the card then
+      // read no type and no name, and drew itself as a nameless notebook.
+      case 'deck':
+        return toDeck(item);
       case 'document':
         return toDocument(item);
       case 'exercise':
@@ -2947,7 +2968,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (resp.success && resp.items) {
           return resp.items.map((raw: unknown) => {
             const deck = toDeck(raw);
-            queryClient.setQueryData(queryKeys.decks.detail(deck.id), deck);
+            seedDeckDetail(deck);
             return deck;
           });
         }
@@ -2991,7 +3012,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: resp => {
         if (resp.success && resp.deck) {
           const deck = toDeck(resp.deck);
-          queryClient.setQueryData(queryKeys.decks.detail(deck.id), deck);
+          seedDeckDetail(deck);
           queryClient.refetchQueries({ queryKey: queryKeys.decks.all() });
           queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
@@ -3075,7 +3096,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: resp => {
         if (resp.success && resp.deck) {
           const deck = toDeck(resp.deck);
-          queryClient.setQueryData(queryKeys.decks.detail(deck.id), deck);
+          seedDeckDetail(deck);
           queryClient.refetchQueries({ queryKey: queryKeys.decks.all() });
           queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
