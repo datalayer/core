@@ -104,6 +104,21 @@ LOCAL_BRIDGE_KIND = "local-bridge"
 #: credential expires, so the Secret it names is re-minted before it does.
 CLOUD_STORAGE_KIND = "cloud-storage"
 
+#: A Dataset revision, fetched onto the node and bound read-only.
+#:
+#: Not a bucket mount, which is what "mount a Dataset" sounds like and cannot
+#: be: a Dataset's bytes are managed objects keyed
+#: `…/objects/{path}/versions/{version_uid}`, so one revision is a *set* of
+#: version keys rather than a prefix, and a filesystem over them would show
+#: every file as a directory named after its path holding a file named after
+#: a uid. There is nothing to scope an STS policy to. So the content is
+#: produced on the node, like a Git checkout.
+#:
+#: It shares the node cache better than a checkout does: a revision is
+#: immutable by construction, so what was fetched can never be stale, and the
+#: tenth sandbox to ask for it binds what the first one paid for.
+DATASET_KIND = "dataset"
+
 #: Bind a directory the agent already reaches beneath the shared filesystem.
 DELIVERY_BIND = "bind"
 
@@ -127,6 +142,7 @@ KIND_DELIVERIES = {
     GIT_KIND: DELIVERY_MATERIALIZE,
     LOCAL_BRIDGE_KIND: DELIVERY_PROCESS,
     CLOUD_STORAGE_KIND: DELIVERY_PROCESS,
+    DATASET_KIND: DELIVERY_MATERIALIZE,
 }
 
 #: States the node agent reports.
@@ -201,6 +217,11 @@ def clean_source(value: Any, kind: Any = "") -> str:
     delivery = delivery_of(kind)
     if delivery == DELIVERY_FILESYSTEM:
         return _clean_export(value)
+    if kind == DATASET_KIND:
+        # Named by uid, not by URL. The node asks Contents for the revision,
+        # so what the grant carries is which Dataset — and running a uid
+        # through the repository rule would refuse every one of them.
+        return _clean_uid(value)
     if delivery == DELIVERY_MATERIALIZE:
         return _clean_repository(value)
     return _clean_relative(value)
@@ -248,6 +269,23 @@ def _clean_repository(value: Any) -> str:
             ERROR_INVALID_SOURCE,
             f"source '{raw}' is not a repository this gateway will clone; "
             "it should read 'https://host/org/repo' or 'git@host:org/repo'",
+        )
+    return raw
+
+
+#: A platform uid: the alphabet a ULID uses, and nothing that could be a path
+#: separator, a scheme or a traversal.
+_UID_RE = re.compile(r"^[A-Za-z0-9]{8,64}$")
+
+
+def _clean_uid(value: Any) -> str:
+    """The uid of the content a materialized grant names."""
+    raw = str(value or "").strip()
+    if not _UID_RE.match(raw):
+        raise NodeMountGatewayError(
+            ERROR_INVALID_SOURCE,
+            f"source '{raw}' is not a content uid; a dataset grant names the "
+            "source it mounts, and the revision pins which version of it",
         )
     return raw
 

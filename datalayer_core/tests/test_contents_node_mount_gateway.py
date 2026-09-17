@@ -19,11 +19,15 @@ import json
 import pytest
 
 from datalayer_core.contents_node_mount_gateway import (
+    DATASET_KIND,
+    DELIVERY_MATERIALIZE,
     ERROR_INVALID_SOURCE,
     ERROR_INVALID_TARGET,
     ERROR_SECRET_REFUSED,
     STATE_DEGRADED,
     STATE_FAILED,
+    GIT_KIND,
+    KIND_DELIVERIES,
     STATE_READY,
     NodeMountGatewayError,
     clean_secret,
@@ -77,6 +81,62 @@ class TestWhatMayBeGranted:
             with pytest.raises(NodeMountGatewayError) as raised:
                 clean_secret(bad)
             assert raised.value.code == ERROR_SECRET_REFUSED
+
+
+class TestADatasetIsMaterialized:
+    """A Dataset revision, produced on the node rather than mounted.
+
+    "Mount a Dataset" sounds like a bucket mount and cannot be one. A
+    Dataset's bytes are managed objects keyed
+    `…/objects/{path}/versions/{version_uid}`, so one revision is a *set* of
+    version keys and not a prefix — a filesystem over them would show every
+    file as a directory holding a file named after a uid, and there would be
+    nothing to scope a session credential to. So it is materialized, the way
+    a Git checkout is.
+    """
+
+    def test_it_is_produced_on_the_node(self):
+        assert KIND_DELIVERIES[DATASET_KIND] == DELIVERY_MATERIALIZE
+
+    def test_it_is_named_by_uid_and_pinned_by_revision(self):
+        made = grant(
+            source="01M27Z7KTZ629XA9H26BJFNJ5H",
+            target="titanic",
+            mode="ro",
+            uid="ca-1",
+            kind=DATASET_KIND,
+            revision="01M27Z7MP9Y8H1MF5PA2RF6J0H",
+            allow_exec=False,
+        )
+        assert made["source"] == "01M27Z7KTZ629XA9H26BJFNJ5H"
+        assert made["revision"] == "01M27Z7MP9Y8H1MF5PA2RF6J0H"
+
+    def test_a_uid_is_not_run_through_the_repository_rule(self):
+        """The rule materialize used to have for everything. A uid is not a
+        URL, and refusing every Dataset is what sharing it would do."""
+        assert clean_source("01M27Z7KTZ629XA9H26BJFNJ5H", DATASET_KIND) == (
+            "01M27Z7KTZ629XA9H26BJFNJ5H"
+        )
+
+    def test_an_unpinned_dataset_is_refused(self):
+        """Already true of every materialized grant, asserted for this one
+        because it is the whole reason a Dataset attachment exists: a Dataset
+        that changes under a running analysis is not a Dataset."""
+        with pytest.raises(NodeMountGatewayError) as raised:
+            grant(source="01M27Z7KTZ629XA9H26BJFNJ5H", target="t", kind=DATASET_KIND)
+        assert raised.value.code == ERROR_INVALID_SOURCE
+
+    def test_a_source_that_is_not_a_uid_is_refused(self):
+        for bad in ("../../etc", "https://example.com/repo", "a/b", "", "sh ort", "x" * 65):
+            with pytest.raises(NodeMountGatewayError) as raised:
+                clean_source(bad, DATASET_KIND)
+            assert raised.value.code == ERROR_INVALID_SOURCE, bad
+
+    def test_a_git_source_is_still_a_url(self):
+        """The branch is on the kind, not on the delivery, so widening it for
+        Datasets must not have widened it for checkouts."""
+        with pytest.raises(NodeMountGatewayError):
+            clean_source("01M27Z7KTZ629XA9H26BJFNJ5H", GIT_KIND)
 
 
 class TestTheNameOfAMountSet:
