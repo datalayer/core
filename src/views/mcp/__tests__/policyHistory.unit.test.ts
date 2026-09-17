@@ -19,7 +19,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { POLICY_AUDIT_METHODS, describeChange } from '../PolicyHistory';
+import {
+  POLICY_AUDIT_METHODS,
+  actedThrough,
+  describeChange,
+} from '../PolicyHistory';
 import type { McpAuditEvent } from '../../../models/McpAuditEvent';
 
 const event = (overrides: Partial<McpAuditEvent> = {}): McpAuditEvent =>
@@ -85,5 +89,43 @@ describe('a policy change, described', () => {
       'mcp.policy.set',
       'mcp.policy.remove',
     ]);
+  });
+});
+
+describe('what a change was made through', () => {
+  it('is empty for somebody editing in their own browser', () => {
+    // A session carries neither claim, so this reads the same as it did
+    // before agents could reach the route at all.
+    expect(actedThrough(event())).toBe('');
+  });
+
+  it('names the agent when one wrote the policy', () => {
+    // The row this drawer exists for. An agent that can reach the policy
+    // route can narrow -- or widen -- what every other agent in the
+    // organization may do, and a row naming only the person tells the
+    // administrator who finds it that they wrote it themselves.
+    expect(actedThrough(event({ agentUid: '01AGENT' }))).toBe('01AGENT');
+  });
+
+  it('falls back to the client when there is no service agent', () => {
+    expect(actedThrough(event({ clientId: 'https://claude.ai/c.json' }))).toBe(
+      'https://claude.ai/c.json',
+    );
+  });
+
+  it('prefers the agent over the client it ran in', () => {
+    // A service agent is a named thing somebody can go and look at; a client
+    // id is the software it happened to run in.
+    expect(
+      actedThrough(
+        event({ agentUid: '01AGENT', clientId: 'https://x/c.json' }),
+      ),
+    ).toBe('01AGENT');
+  });
+
+  it('treats null the way the wire sends it', () => {
+    // The model types both as `string | null`, and `null` must read as
+    // absent rather than as the text "null" beside somebody's name.
+    expect(actedThrough(event({ agentUid: null, clientId: null }))).toBe('');
   });
 });

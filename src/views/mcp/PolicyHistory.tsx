@@ -60,6 +60,21 @@ export interface PolicyHistoryProps {
   limit?: number;
 }
 
+/**
+ * What a change was made *through*, or `''` for somebody's own browser.
+ *
+ * The row names the person either way — an agent acts with exactly the
+ * access of whoever authorized it, so the person is accountable for what it
+ * did. What the row must not do is stop there: this drawer exists for the
+ * administrator who finds a denylist they did not write, and a row naming
+ * only them tells them they wrote it.
+ *
+ * The agent's own uid wins over the client id. A service agent is a named
+ * thing somebody can go and look at; a client id is the software it ran in.
+ */
+export const actedThrough = (event: McpAuditEvent): string =>
+  String(event.agentUid || event.clientId || '');
+
 /** What one row says about a change, in the words of the page it is on. */
 export const describeChange = (event: McpAuditEvent): string => {
   const info = (event.clientInfo ?? {}) as Record<string, unknown>;
@@ -157,6 +172,11 @@ export const PolicyHistory = ({
           <Text sx={{ fontWeight: 'semibold' }}>
             {event.userUid || 'unknown'}
           </Text>
+          {actedThrough(event) && (
+            <Label size="small" variant="attention">
+              through {actedThrough(event)}
+            </Label>
+          )}
           <Text>{describeChange(event)}</Text>
           {String(
             (event.clientInfo as Record<string, unknown>)?.version ?? '',
