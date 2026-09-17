@@ -35,19 +35,16 @@ class SecretsCreateMixin:
         dict
             A dictionary containing the created secret and its details.
         """
-        # The value is sent as it is, and says so. It used to be base64, which
-        # nothing on the other side undid: a build secret resolved for a build
-        # arrived encoded and was mounted that way, so a key created here
-        # opened nothing (PLAN_ENVS.md E3-05, found 2026-09-17). `encoding`
-        # tells IAM which it is, rather than leaving a reader to guess from the
-        # bytes — a raw value can be valid base64 too, and guessing wrong on a
-        # credential is worse than not guessing.
+        # A secret's value travels and is stored as it is. It used to be
+        # base64 and nothing on the other side undid it, so a build secret
+        # arrived at its build still encoded and opened nothing (PLAN_ENVS.md
+        # E3-05, found 2026-09-17). There is one representation now — no
+        # marker, no encoding to agree on, nothing for a reader to guess.
         body = {
             "name": name,
             "description": description,
             "variant": secret_type,
             "value": value,
-            "encoding": "plain",
         }
         try:
             response = self._fetch(  # type: ignore

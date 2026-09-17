@@ -78,7 +78,8 @@ export const SecretEdit = ({
         name: secret.name || '',
         nameConfirm: '',
         description: secret.description || '',
-        value: secret.value ? atob(secret.value) : '',
+        // `secret.value` is already what its owner wrote (E3-05).
+        value: secret.value ?? '',
       });
     }
   }, [secretQuery.data]);
@@ -138,7 +139,7 @@ export const SecretEdit = ({
     runStore.layout().showBackdrop('Updating the secret...');
     secret!.name = formValues.name;
     secret!.description = formValues.description;
-    secret!.value = btoa(formValues.value);
+    secret!.value = formValues.value;
     updateSecretMutation.mutate(secret!, {
       onSuccess: (resp: any) => {
         if (resp.success) {

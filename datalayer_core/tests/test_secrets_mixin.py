@@ -47,21 +47,19 @@ def test_the_value_is_sent_as_it_is() -> None:
     assert body["variant"] == "generic"
 
 
-def test_it_says_which_encoding_that_is() -> None:
-    """A reader is never left to guess from the bytes.
+def test_a_value_that_is_itself_base64_goes_out_untouched() -> None:
+    """There is one representation, so nothing inspects the bytes.
 
-    A raw value can be valid base64 too, and guessing wrong on a credential is
-    worse than not guessing — so the client says, and a secret written before
-    this simply carries no marker.
+    A value that happens to be valid base64 is a value, not an encoding, and
+    no reader is left to tell the difference.
     """
     client = _Client()
     client._create_secret(
         name="K", description="d", value="dGhpcyBpcyBiYXNlNjQ=", secret_type="generic"
     )
     body = client.sent["json"]
-    assert body["encoding"] == "plain"
-    # Even a value that *is* valid base64 goes out untouched.
     assert body["value"] == "dGhpcyBpcyBiYXNlNjQ="
+    assert "encoding" not in body
 
 
 def test_it_posts_to_the_secrets_route() -> None:

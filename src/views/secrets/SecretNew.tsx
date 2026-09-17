@@ -124,7 +124,11 @@ export const SecretNew = ({
         variant: formValues.variant,
         name: formValues.name!,
         description: formValues.description!,
-        value: btoa(formValues.value!),
+        // As it is: a secret has one representation end to end
+        // (PLAN_ENVS.md E3-05). This used to `btoa` and nothing on the read
+        // side undid it, so a build secret arrived at its build encoded and
+        // opened nothing.
+        value: formValues.value!,
       },
       {
         onSuccess: (resp: any) => {
