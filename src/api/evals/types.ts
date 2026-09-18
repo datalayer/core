@@ -236,6 +236,14 @@ export interface EvalTaskResult {
   notebook_uid: string;
   /** The investigation opened on this task, once one is (B3-02). */
   investigation_uid?: string;
+  /**
+   * The root execution this task was delegated as — a team subject only; empty
+   * for an agentspec or a model, which are one call and no tree. Absent from a
+   * service older than the field.
+   */
+  execution_id?: string;
+  /** The trace that execution runs under (the W3C trace id), when there is one. */
+  trace_id?: string;
   artifact_uids: string[];
   cost_credits: number | null;
   duration_ms: number | null;
