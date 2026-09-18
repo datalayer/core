@@ -33,6 +33,7 @@ import { Box } from '@datalayer/primer-addons';
 import { useCache } from '../../hooks/useCache';
 import { useSelectedPrincipal } from '../../hooks/useSelectedPrincipal';
 import { useIAMStore } from '../../state';
+import { isBillingEntityEligible } from './eligibility';
 
 export type BillingEntityType = 'user' | 'organization' | 'team';
 
@@ -314,18 +315,28 @@ export function BillingEntitySelect({
       const hasPositiveWallet =
         Number.isFinite(walletBalance) && walletBalance > 0;
 
-      const isEligible =
-        accountType === 'team'
-          ? hasPositiveWallet
-          : typeof details?.is_eligible === 'boolean'
-            ? details.is_eligible ||
-              (accountType === 'user' && hasPositiveWallet)
-            : Boolean(eligible);
-
       const sourceOrganizationUid =
         accountType === 'team'
           ? String(details?.plan_source_account_uid || '').trim() || undefined
           : undefined;
+      // A team inherits it from the organization that pays for it.
+      const isAwsBilled =
+        awsBilledUids.has(account.accountUid) ||
+        Boolean(
+          sourceOrganizationUid && awsBilledUids.has(sourceOrganizationUid),
+        ) ||
+        isAwsBillingProvider(details?.subscription?.billing_provider);
+
+      const isEligible = isBillingEntityEligible({
+        accountType,
+        iamEligible:
+          typeof details?.is_eligible === 'boolean'
+            ? details.is_eligible
+            : undefined,
+        isAwsBilled,
+        hasPositiveWallet,
+        listedEligible: Boolean(eligible),
+      });
       const sourceOrgDetails = sourceOrganizationUid
         ? detailsByUid.get(sourceOrganizationUid)
         : undefined;
@@ -350,13 +361,7 @@ export function BillingEntitySelect({
         planName,
         isEligible,
         isPaidPlan: resolveBillingPlanTier(planName || 'free') === 'pro',
-        // A team inherits it from the organization that pays for it.
-        isAwsBilled:
-          awsBilledUids.has(account.accountUid) ||
-          Boolean(
-            sourceOrganizationUid && awsBilledUids.has(sourceOrganizationUid),
-          ) ||
-          isAwsBillingProvider(details?.subscription?.billing_provider),
+        isAwsBilled,
         sourceOrganizationUid,
         sourceOrganizationHandle,
         teamHandle: accountType === 'team' ? accountHandle : undefined,
