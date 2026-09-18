@@ -37,7 +37,11 @@ from datalayer_core.cli.commands.orchestration_common import (
     output_option,
 )
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.displays.orchestration import artifacts_table, event_line, execution_table
+from datalayer_core.displays.orchestration import (
+    artifacts_table,
+    event_line,
+    execution_table,
+)
 from datalayer_core.mixins.orchestration import Receipt
 from datalayer_core.orchestration import (
     AgentBinding,
@@ -49,7 +53,10 @@ from datalayer_core.orchestration import (
     ExecutionsCancel,
     ExecutionsCollect,
     ExecutionsDelegate,
+    ExecutionsPause,
+    ExecutionsResume,
     ExecutionsSteer,
+    ExecutionsTerminate,
     MutatingCommand,
     Objective,
     Policy,
@@ -60,7 +67,7 @@ from datalayer_core.orchestration import (
 
 app = typer.Typer(
     name="executions",
-    help="Executions: work delegated to agents over A2A and ACP — run, watch, steer, cancel, collect.",
+    help="Executions: work delegated to agents over A2A and ACP — run, watch, steer, pause, resume, cancel, terminate, collect.",
     no_args_is_help=True,
 )
 
@@ -302,6 +309,83 @@ def cancel(
         else "Nothing was left running to cancel."
     )
     console.print(words, markup=False, highlight=False)
+
+
+@app.command("pause")
+@orchestration_command
+def pause(
+    execution_id: str = typer.Argument(..., help="The execution to pause."),
+    reason: Optional[str] = typer.Option(None, "--reason", help="Why, kept on the execution."),
+    idempotency_key: Optional[str] = typer.Option(
+        None, "--idempotency-key", help="The key of this pause; derived from what it asks when omitted."
+    ),
+    account: Optional[str] = account_option(),
+    output: OutputFormat = output_option(),
+) -> None:
+    """Ask an execution's worker to stop at its next checkpoint; nothing it did is lost."""
+    command = call(lambda: ExecutionsPause(idempotency_key=_PENDING_KEY, execution_id=execution_id, reason=reason))
+    receipt: Receipt = call(lambda: client().pause_execution(keyed(command, idempotency_key), account_uid=account))
+    show_receipt(
+        receipt,
+        output,
+        delivered="Received, and the worker was asked to pause.",
+        undelivered="Received; the worker was not asked yet.",
+    )
+
+
+@app.command("resume")
+@orchestration_command
+def resume(
+    execution_id: str = typer.Argument(..., help="The execution to resume."),
+    checkpoint: Optional[str] = typer.Option(
+        None, "--checkpoint", help="The checkpoint to go on from; where it paused when omitted."
+    ),
+    idempotency_key: Optional[str] = typer.Option(
+        None, "--idempotency-key", help="The key of this resume; derived from what it asks when omitted."
+    ),
+    account: Optional[str] = account_option(),
+    output: OutputFormat = output_option(),
+) -> None:
+    """Let a paused execution go on, from where it stopped or from a checkpoint it kept."""
+    command = call(
+        lambda: ExecutionsResume(idempotency_key=_PENDING_KEY, execution_id=execution_id, checkpoint_id=checkpoint)
+    )
+    receipt: Receipt = call(lambda: client().resume_execution(keyed(command, idempotency_key), account_uid=account))
+    show_receipt(
+        receipt,
+        output,
+        delivered="Received, and the execution goes on.",
+        undelivered="Received; it has not gone on yet.",
+    )
+
+
+@app.command("terminate")
+@orchestration_command
+def terminate(
+    execution_id: str = typer.Argument(..., help="The execution to terminate."),
+    reason: Optional[str] = typer.Option(None, "--reason", help="Why, kept on the execution."),
+    release_worker: bool = typer.Option(
+        True, "--release-worker/--keep-worker", help="Release its worker or session too, where that is permitted."
+    ),
+    idempotency_key: Optional[str] = typer.Option(
+        None, "--idempotency-key", help="The key of this terminate; derived from what it asks when omitted."
+    ),
+    account: Optional[str] = account_option(),
+    output: OutputFormat = output_option(),
+) -> None:
+    """End an execution for good and release its worker; `cancel` stops it and keeps the worker."""
+    command = call(
+        lambda: ExecutionsTerminate(
+            idempotency_key=_PENDING_KEY, execution_id=execution_id, reason=reason, release_worker=release_worker
+        )
+    )
+    receipt: Receipt = call(lambda: client().terminate_execution(keyed(command, idempotency_key), account_uid=account))
+    show_receipt(
+        receipt,
+        output,
+        delivered="Received, and the execution is being ended.",
+        undelivered="Received; it has not been ended yet.",
+    )
 
 
 @app.command("artifacts")

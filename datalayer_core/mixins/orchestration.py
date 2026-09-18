@@ -40,8 +40,11 @@ from datalayer_core.orchestration import (
     ExecutionsCancel,
     ExecutionsCollect,
     ExecutionsDelegate,
+    ExecutionsPause,
+    ExecutionsResume,
     ExecutionsSteer,
     ExecutionState,
+    ExecutionsTerminate,
 )
 from datalayer_core.utils.sse import read_server_sent_events
 
@@ -208,6 +211,18 @@ class OrchestrationMixin:
     def cancel_execution(self, command: ExecutionsCancel, *, account_uid: str | None = None) -> Receipt:
         """``executions.cancel``: stop the work, and by default everything below it."""
         return _receipt(self._orchestration_call("executions.cancel", body=command.to_wire(), account_uid=account_uid))
+
+    def pause_execution(self, command: ExecutionsPause, *, account_uid: str | None = None) -> Receipt:
+        """``executions.pause``: ask the worker to stop at its next checkpoint, keeping what it has."""
+        return _receipt(self._orchestration_call("executions.pause", body=command.to_wire(), account_uid=account_uid))
+
+    def resume_execution(self, command: ExecutionsResume, *, account_uid: str | None = None) -> Receipt:
+        """``executions.resume``: go on from where it paused, or from a checkpoint it kept."""
+        return _receipt(self._orchestration_call("executions.resume", body=command.to_wire(), account_uid=account_uid))
+
+    def terminate_execution(self, command: ExecutionsTerminate, *, account_uid: str | None = None) -> Receipt:
+        """``executions.terminate``: end it and release its worker, where that is permitted."""
+        return _receipt(self._orchestration_call("executions.terminate", body=command.to_wire(), account_uid=account_uid))
 
     def collect_execution(self, command: ExecutionsCollect, *, account_uid: str | None = None) -> Collection:
         """``executions.collect``: the artifacts of an execution, and of its children."""

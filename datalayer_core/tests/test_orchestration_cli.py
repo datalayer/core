@@ -91,6 +91,18 @@ class Client:
         RECORDED["steered"] = command
         return a_receipt(CommandName.EXECUTIONS_STEER, delivered=True)
 
+    def pause_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+        RECORDED["paused"] = command
+        return a_receipt(CommandName.EXECUTIONS_PAUSE, delivered=True)
+
+    def resume_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+        RECORDED["resumed"] = command
+        return a_receipt(CommandName.EXECUTIONS_RESUME, delivered=True)
+
+    def terminate_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+        RECORDED["terminated"] = command
+        return a_receipt(CommandName.EXECUTIONS_TERMINATE, delivered=False)
+
     def cancel_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
         RECORDED["cancelled"] = command
         return a_receipt(
@@ -219,6 +231,19 @@ class TestSteerCancelAndArtifacts:
         cancelled = RECORDED["cancelled"]
         assert (cancelled.execution_id, cancelled.reason, cancelled.cascade) == ("exec_1", "The question changed", False)
         assert "Cancelled 2 executions: exec_1, exec_2." in plain(result.stdout)
+
+    def test_pause_resume_and_terminate_carry_what_they_ask(self) -> None:
+        paused = invoke("executions", "pause", "exec_1", "--reason", "Waiting for the data owner")
+        assert paused.exit_code == 0, paused.output
+        assert (RECORDED["paused"].execution_id, RECORDED["paused"].reason) == ("exec_1", "Waiting for the data owner")
+        assert RECORDED["paused"].idempotency_key.startswith("cmd-")
+        assert "the worker was asked to pause" in plain(paused.stdout)
+        assert invoke("executions", "resume", "exec_1", "--checkpoint", "ckpt_2").exit_code == 0
+        assert RECORDED["resumed"].checkpoint_id == "ckpt_2"
+        ended = invoke("executions", "terminate", "exec_1", "--keep-worker")
+        assert ended.exit_code == 0, ended.output
+        assert RECORDED["terminated"].release_worker is False
+        assert "it has not been ended yet" in plain(ended.stdout)
 
     def test_artifacts_lists_what_was_registered_with_its_children_by_default(self) -> None:
         table = invoke("executions", "artifacts", "exec_1")

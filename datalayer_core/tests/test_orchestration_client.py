@@ -17,7 +17,11 @@ from typing import Any, Iterator
 import pytest
 import requests
 
-from datalayer_core.mixins.orchestration import OrchestrationMixin, SubscriptionDropped, operation_path
+from datalayer_core.mixins.orchestration import (
+    OrchestrationMixin,
+    SubscriptionDropped,
+    operation_path,
+)
 from datalayer_core.orchestration import (
     Acknowledgement,
     AcknowledgementKind,
@@ -29,9 +33,12 @@ from datalayer_core.orchestration import (
     Execution,
     ExecutionEvent,
     ExecutionEventType,
-    ExecutionState,
     ExecutionsDelegate,
+    ExecutionsPause,
+    ExecutionsResume,
     ExecutionsSteer,
+    ExecutionState,
+    ExecutionsTerminate,
     Objective,
     ProtocolEndpoint,
     binding_for,
@@ -186,6 +193,23 @@ class TestTheCalls:
         )
         assert receipt.delivered is True
         assert client.calls[0][0] == "https://agents.test/api/ai-agents/v1/orchestration/executions/steer"
+
+    def test_pause_resume_and_terminate_reach_their_own_routes(self) -> None:
+        answers = [
+            Answer({"execution": an_execution().to_wire(), "acknowledgement": an_acknowledgement(name).to_wire(), "delivered": delivered})
+            for name, delivered in (
+                (CommandName.EXECUTIONS_PAUSE, True),
+                (CommandName.EXECUTIONS_RESUME, True),
+                (CommandName.EXECUTIONS_TERMINATE, False),
+            )
+        ]
+        client = Client(*answers)
+        assert client.pause_execution(ExecutionsPause(idempotency_key="k-p", execution_id="exec_1", reason="later")).delivered is True
+        assert client.resume_execution(ExecutionsResume(idempotency_key="k-r", execution_id="exec_1", checkpoint_id="ckpt_1")).delivered is True
+        assert client.terminate_execution(ExecutionsTerminate(idempotency_key="k-t", execution_id="exec_1")).delivered is False
+        assert [url.rsplit("/", 1)[1] for url, _ in client.calls] == ["pause", "resume", "terminate"]
+        assert client.calls[1][1]["json"]["checkpointId"] == "ckpt_1"
+        assert client.calls[2][1]["json"]["releaseWorker"] is True
 
     def test_a_list_asks_by_state_and_a_read_answers_attempts_and_milestones(self) -> None:
         client = Client(
