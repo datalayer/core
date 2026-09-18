@@ -1070,6 +1070,37 @@ export interface EvalRunNetwork {
   tasksOmitted: number;
 }
 
+/** One message of a run's network, in full: more parts, each a summary. */
+export interface RunNetworkMessageResponse {
+  success: boolean;
+  message: {
+    id: string;
+    parts: Array<{ label: string; summary: EvalNetworkSummary }>;
+  };
+}
+
+/** A launch's runs, each as one line of its own network. */
+export interface EvalLaunchNetwork {
+  launchId: string;
+  status: string;
+  counts: Record<EvalNetworkTask['status'], number>;
+  runs: Array<{
+    runId: string;
+    experimentId: string;
+    status: EvalRunNetwork['run']['status'];
+    subject: { kind: string; ref: string };
+    counts: Record<EvalNetworkTask['status'], number>;
+    tasks: number;
+    startedAt: string;
+    endedAt: string;
+  }>;
+}
+
+export interface LaunchNetworkResponse {
+  success: boolean;
+  network: EvalLaunchNetwork;
+}
+
 export interface RunNetworkResponse {
   success: boolean;
   network: EvalRunNetwork;

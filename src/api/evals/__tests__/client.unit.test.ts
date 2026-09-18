@@ -369,6 +369,18 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/runs/r1/network',
     ],
     [
+      'getRunNetworkMessage',
+      () => client.getRunNetworkMessage(options, 'r1', 'case 1:exec_1:answer'),
+      'GET',
+      '/api/ai-agents/v1/evals/runs/r1/network/messages/case%201%3Aexec_1%3Aanswer',
+    ],
+    [
+      'getLaunchNetwork',
+      () => client.getLaunchNetwork(options, 'l1'),
+      'GET',
+      '/api/ai-agents/v1/evals/launches/l1/network',
+    ],
+    [
       'reviewCaseResult',
       () => client.reviewCaseResult(options, 'r1', 'c1', { status: 'passed' }),
       'PATCH',

@@ -65,6 +65,8 @@ import type {
   CaseResultListResponse,
   CaseResultResponse,
   RunNetworkResponse,
+  RunNetworkMessageResponse,
+  LaunchNetworkResponse,
   CreateLaunchRequest,
   LaunchCancelResponse,
   LaunchListResponse,
@@ -740,6 +742,31 @@ export const getRunNetwork = (
   evalsRequest<RunNetworkResponse>(options, `/runs/${segment(runId)}/network`, {
     query,
   });
+
+/**
+ * One message of a run's network, in full. The id is the service's own and
+ * holds colons, which the route reads as a path: each segment is encoded, the
+ * separators are kept.
+ */
+export const getRunNetworkMessage = (
+  options: EvalsClientOptions,
+  runId: string,
+  messageId: string,
+) =>
+  evalsRequest<RunNetworkMessageResponse>(
+    options,
+    `/runs/${segment(runId)}/network/messages/${messageId.split('/').map(segment).join('/')}`,
+  );
+
+/** A launch's runs, each as one line of its own network. */
+export const getLaunchNetwork = (
+  options: EvalsClientOptions,
+  launchId: string,
+) =>
+  evalsRequest<LaunchNetworkResponse>(
+    options,
+    `/launches/${segment(launchId)}/network`,
+  );
 
 export const reviewCaseResult = (
   options: EvalsClientOptions,
