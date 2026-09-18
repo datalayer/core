@@ -794,7 +794,11 @@ export type ProductEvent =
   | 'task.opened'
   | 'question.asked'
   | 'cell.executed'
-  | 'evidence.added';
+  | 'evidence.added'
+  | 'network.viewed'
+  | 'network.node_selected'
+  | 'network.message_opened'
+  | 'network.investigate_clicked';
 
 /**
  * Count one of those.
