@@ -64,6 +64,7 @@ import type {
   ImportEvalsetResponse,
   CaseResultListResponse,
   CaseResultResponse,
+  RunNetworkResponse,
   CreateLaunchRequest,
   LaunchCancelResponse,
   LaunchListResponse,
@@ -725,6 +726,20 @@ export const getCaseResult = (
     options,
     `/runs/${segment(runId)}/cases/${segment(caseId)}`,
   );
+
+/**
+ * The run as the network of agents that worked on it. `budget` is how many
+ * tasks' messages to answer: every task that did not pass, then passed ones
+ * while there is room.
+ */
+export const getRunNetwork = (
+  options: EvalsClientOptions,
+  runId: string,
+  query: { budget?: number } = {},
+) =>
+  evalsRequest<RunNetworkResponse>(options, `/runs/${segment(runId)}/network`, {
+    query,
+  });
 
 export const reviewCaseResult = (
   options: EvalsClientOptions,

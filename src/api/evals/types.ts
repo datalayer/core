@@ -979,6 +979,102 @@ export interface CaseResultListResponse {
   cases: EvalTaskResult[];
 }
 
+/** What a message of a run's network says: never its payload. */
+export interface EvalNetworkSummary {
+  kind: 'text' | 'object' | 'list' | 'empty';
+  /** One scrubbed line of text. */
+  preview: string;
+  /** An object's field names, never their values. */
+  fields: string[];
+  items?: number;
+  bytes: number;
+  /** What was taken out, in words. */
+  redactions: string[];
+}
+
+export interface EvalNetworkMessage {
+  id: string;
+  from: string;
+  to: string;
+  type: 'delegation' | 'request' | 'result' | 'review' | 'evaluation';
+  taskId: string;
+  /** Milliseconds from the run's start. */
+  atMs: number;
+  durationMs: number;
+  status: 'delivered' | 'in-transit' | 'queued' | 'failed';
+  summary: EvalNetworkSummary;
+  toolCalls: Array<{ name: string }>;
+  links: Record<string, string>;
+  correlation: {
+    traceId?: string;
+    executionId?: string;
+    parentMessageId?: string;
+    protocolTaskId?: string;
+  };
+}
+
+export interface EvalNetworkTask {
+  id: string;
+  title: string;
+  category: string;
+  status: 'passed' | 'review' | 'running' | 'failed' | 'queued';
+  agentId: string;
+  startedMs: number;
+  endedMs: number;
+  tokens: number;
+  costUsd: number;
+  /** What the platform charged, which is credits and not dollars. */
+  costCredits: number;
+  failureMode?: string;
+  finding?: string;
+  links: Record<string, string>;
+}
+
+export interface EvalNetworkAgent {
+  id: string;
+  role: 'runner' | 'analyst' | 'reviewer' | 'evaluator' | 'agent';
+  name: string;
+  detail?: string;
+  protocol?: 'a2a' | 'acp' | 'datalayer';
+}
+
+/**
+ * A run as the network of agents that worked on it: who asked whom, about
+ * which task, when — with summaries and never payloads. Aggregated to a
+ * `budget` by the service, which says what it left out.
+ */
+export interface EvalRunNetwork {
+  run: {
+    id: string;
+    label: string;
+    benchmark: string;
+    demo: boolean;
+    status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+    counts: Record<EvalNetworkTask['status'], number>;
+    startedAt: string;
+    durationMs: number;
+    tokens: number;
+    costUsd: number;
+    costCredits: number;
+  };
+  agents: EvalNetworkAgent[];
+  tasks: EvalNetworkTask[];
+  messages: EvalNetworkMessage[];
+  subject: { kind: string; ref: string };
+  /** A team's tasks that name no execution: stored before the field existed. */
+  untraced: number;
+  budget: number;
+  /** Messages of passed tasks left out to stay within the budget. */
+  messagesOmitted: number;
+  /** Tasks past the most a network reads. */
+  tasksOmitted: number;
+}
+
+export interface RunNetworkResponse {
+  success: boolean;
+  network: EvalRunNetwork;
+}
+
 export interface CaseResultResponse {
   success: boolean;
   case: EvalTaskResult;

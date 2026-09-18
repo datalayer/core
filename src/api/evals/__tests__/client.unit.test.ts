@@ -363,6 +363,12 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/runs/r1/cases/c1',
     ],
     [
+      'getRunNetwork',
+      () => client.getRunNetwork(options, 'r1', { budget: 24 }),
+      'GET',
+      '/api/ai-agents/v1/evals/runs/r1/network',
+    ],
+    [
       'reviewCaseResult',
       () => client.reviewCaseResult(options, 'r1', 'c1', { status: 'passed' }),
       'PATCH',
