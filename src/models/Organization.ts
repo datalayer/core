@@ -9,6 +9,86 @@ import { ITeam } from './Team';
 import { ISchool } from './School';
 import { IOrganizationMember } from './OrganizationMember';
 
+const AWS_LICENSE_STATUSES: readonly IAwsMarketplaceLicenseStatus[] = [
+  'active',
+  'ending',
+  'ended',
+];
+
+function asOptionalDate(value: unknown): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function asOptionalString(value: unknown): string | undefined {
+  const text = String(value ?? '').trim();
+  return text || undefined;
+}
+
+/**
+ * The agreements (AWS calls each a licence) of an AWS Marketplace organization.
+ *
+ * Read from `aws_licenses_s`, the JSON string IAM keeps on the organization
+ * document: a list of `{arn, status, agreement_id, offer_id, first_seen,
+ * deprovisioned_at, ended_at}`. Anything that does not parse is dropped
+ * rather than thrown on, and every ARN of `licenseArns` the JSON does not
+ * name is appended as an `active` agreement — which is what an organization
+ * written before the field existed holds, and what is left when the JSON is
+ * invalid. The same reading the services make, so the page and the API never
+ * disagree about which agreements exist.
+ */
+export function asAwsMarketplaceLicenses(
+  raw: unknown,
+  licenseArns: string[] = [],
+): IAwsMarketplaceLicense[] {
+  let parsed: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      parsed = raw.trim() ? JSON.parse(raw) : [];
+    } catch {
+      parsed = [];
+    }
+  }
+  const licenses: IAwsMarketplaceLicense[] = [];
+  const known = new Set<string>();
+  for (const entry of Array.isArray(parsed) ? parsed : []) {
+    if (!entry || typeof entry !== 'object') {
+      continue;
+    }
+    const record = entry as Record<string, unknown>;
+    const arn = String(record.arn ?? '').trim();
+    if (!arn || known.has(arn)) {
+      continue;
+    }
+    known.add(arn);
+    const status = String(record.status ?? '')
+      .trim()
+      .toLowerCase() as IAwsMarketplaceLicenseStatus;
+    licenses.push({
+      arn,
+      status: AWS_LICENSE_STATUSES.includes(status) ? status : 'active',
+      agreementId: asOptionalString(record.agreement_id ?? record.agreementId),
+      offerId: asOptionalString(record.offer_id ?? record.offerId),
+      firstSeen: asOptionalDate(record.first_seen ?? record.firstSeen),
+      deprovisionedAt: asOptionalDate(
+        record.deprovisioned_at ?? record.deprovisionedAt,
+      ),
+      endedAt: asOptionalDate(record.ended_at ?? record.endedAt),
+    });
+  }
+  for (const value of licenseArns) {
+    const arn = String(value ?? '').trim();
+    if (arn && !known.has(arn)) {
+      known.add(arn);
+      licenses.push({ arn, status: 'active' });
+    }
+  }
+  return licenses;
+}
+
 /**
  * Convert the raw user object to {@link IOrganization}.
  *
@@ -45,6 +125,12 @@ export function asOrganization(org: any): IOrganization {
           // Every agreement (licence ARN) seen for this subscription. A
           // subscription may carry several concurrent agreements.
           licenseArns: asArray(org.aws_license_arns_ss ?? []),
+          // The same agreements with what is known of each — status,
+          // agreement id, dates — read defensively from the JSON IAM keeps.
+          licenses: asAwsMarketplaceLicenses(
+            org.aws_licenses_s,
+            asArray(org.aws_license_arns_ss ?? []),
+          ),
           subscriptionStatus: org.aws_subscription_status_s ?? 'pending',
           freeTrial: Boolean(org.aws_free_trial_b),
           dimensions: asArray(org.aws_dimensions_ss ?? []),
@@ -75,6 +161,28 @@ export type IAnyOrganization = IOrganization | ISchool;
  * and the API says so on every refused mutation. A subscription may carry
  * several concurrent agreements, each identified by a licence ARN.
  */
+/**
+ * Where an agreement stands: `active` while the buyer is entitled under it,
+ * `ending` from the moment AWS says it is deprovisioned — the hour AWS gives
+ * to report its last usage — and `ended` once that hour has passed.
+ */
+export type IAwsMarketplaceLicenseStatus = 'active' | 'ending' | 'ended';
+
+/** One agreement of an AWS Marketplace subscription; AWS calls it a licence. */
+export type IAwsMarketplaceLicense = {
+  /** The licence ARN, which is how AWS names the agreement. */
+  arn: string;
+  status: IAwsMarketplaceLicenseStatus;
+  agreementId?: string;
+  offerId?: string;
+  /** When the platform first saw the agreement. */
+  firstSeen?: Date;
+  /** When AWS said the agreement was deprovisioned. */
+  deprovisionedAt?: Date;
+  /** When the hour to report its last usage ran out. */
+  endedAt?: Date;
+};
+
 export type IOrganizationAwsMarketplace = {
   accountId: string;
   productCode: string;
@@ -84,6 +192,11 @@ export type IOrganizationAwsMarketplace = {
   offerId?: string;
   /** Every agreement (licence ARN) seen for this subscription. */
   licenseArns: string[];
+  /**
+   * Every agreement with its status and dates. An organization may hold
+   * several at once, and stays usable while at least one is `active`.
+   */
+  licenses: IAwsMarketplaceLicense[];
   subscriptionStatus:
     'pending' | 'active' | 'failed' | 'cancelling' | 'cancelled' | string;
   freeTrial: boolean;

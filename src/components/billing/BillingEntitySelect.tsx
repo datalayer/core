@@ -44,6 +44,12 @@ export type BillingEntity = {
   planName: string;
   isEligible: boolean;
   isPaidPlan: boolean;
+  /**
+   * Billed through the AWS Marketplace: an organization created from an AWS
+   * subscription, or one of its teams. Work started under it is metered and
+   * reaches the AWS bill; work started under any other entry never does.
+   */
+  isAwsBilled: boolean;
   sourceOrganizationUid?: string;
   sourceOrganizationHandle?: string;
   teamHandle?: string;
@@ -89,6 +95,33 @@ function writeBillingEntityCookie(value: string): void {
     `${BILLING_ENTITY_COOKIE}=${encodeURIComponent(value)};` +
     ` path=/; max-age=${BILLING_ENTITY_COOKIE_MAX_AGE}; SameSite=Lax`;
 }
+
+const AWS_ORIGIN_PREFIX = 'urn:dla:iam:ext::aws:';
+const AWS_BILLING_PROVIDER = 'aws-marketplace';
+
+/** Whether an origin URN names an AWS Marketplace subscription. */
+const isAwsOriginUrn = (origin: unknown): boolean =>
+  String(origin ?? '')
+    .trim()
+    .toLowerCase()
+    .startsWith(AWS_ORIGIN_PREFIX);
+
+/** Whether IAM names the AWS Marketplace as who bills an account. */
+const isAwsBillingProvider = (provider: unknown): boolean =>
+  String(provider ?? '')
+    .trim()
+    .toLowerCase() === AWS_BILLING_PROVIDER;
+
+/** The label beside an entry billed through the AWS Marketplace. */
+const AwsBilledLabel = (): JSX.Element => (
+  <Label
+    size="small"
+    variant="accent"
+    title="Billed through AWS Marketplace: work started here is reported to AWS"
+  >
+    AWS
+  </Label>
+);
 
 const planContains = (value: string, terms: string[]) =>
   terms.some(term => value.includes(term));
@@ -150,6 +183,9 @@ export function BillingEntitySelect({
         planName: String(
           entry?.subscription?.plan_name || entry?.plan?.plan_name || '',
         ).trim(),
+        isAwsBilled:
+          isAwsBillingProvider(entry?.billing_provider) ||
+          isAwsBillingProvider(entry?.plan?.billing_provider),
       })),
     [eligibleAccountsRaw],
   );
@@ -164,6 +200,7 @@ export function BillingEntitySelect({
         accountHandle: string;
         accountName: string;
         planName: string;
+        isAwsBilled: boolean;
       }
     >();
 
@@ -175,6 +212,7 @@ export function BillingEntitySelect({
         accountName:
           String((user as any)?.handle || '').trim() || personalAccountUid,
         planName: '',
+        isAwsBilled: false,
       });
     }
 
@@ -194,6 +232,9 @@ export function BillingEntitySelect({
             organization?.plan_name ||
             '',
         ).trim(),
+        isAwsBilled:
+          Boolean(organization?.awsMarketplace) ||
+          isAwsOriginUrn(organization?.origin ?? organization?.origin_s),
       });
     }
 
@@ -239,6 +280,13 @@ export function BillingEntitySelect({
 
     const merged = Array.from(accountMap.values());
     const mergedByUid = new Map(merged.map(a => [a.accountUid, a]));
+    // Either list may say it: the organizations carry their origin, and IAM
+    // names the billing provider on each eligible entry.
+    const awsBilledUids = new Set(
+      [...allContextAccounts, ...eligibleAccounts]
+        .filter(a => a.isAwsBilled)
+        .map(a => a.accountUid),
+    );
 
     return merged.map(account => {
       const eligible = eligibleAccountByUid.get(account.accountUid);
@@ -302,6 +350,13 @@ export function BillingEntitySelect({
         planName,
         isEligible,
         isPaidPlan: resolveBillingPlanTier(planName || 'free') === 'pro',
+        // A team inherits it from the organization that pays for it.
+        isAwsBilled:
+          awsBilledUids.has(account.accountUid) ||
+          Boolean(
+            sourceOrganizationUid && awsBilledUids.has(sourceOrganizationUid),
+          ) ||
+          isAwsBillingProvider(details?.subscription?.billing_provider),
         sourceOrganizationUid,
         sourceOrganizationHandle,
         teamHandle: accountType === 'team' ? accountHandle : undefined,
@@ -513,6 +568,7 @@ export function BillingEntitySelect({
                         <PersonIcon size={12} />
                       )}
                     </Label>
+                    {selectedAccount.isAwsBilled ? <AwsBilledLabel /> : null}
                     <Label
                       size="small"
                       variant={
@@ -546,6 +602,21 @@ export function BillingEntitySelect({
                 <Text sx={{ fontSize: 1, lineHeight: 1.5 }}>
                   {flashMessage}
                 </Text>
+                {accounts.some(account => account.isAwsBilled) ? (
+                  <Text
+                    sx={{
+                      display: 'block',
+                      fontSize: 1,
+                      lineHeight: 1.5,
+                      mt: 2,
+                    }}
+                  >
+                    Entries marked AWS are billed through AWS Marketplace: only
+                    work started under them is reported to AWS. Work started
+                    under any other entry is charged to the credits of that
+                    account and never reaches the AWS bill.
+                  </Text>
+                ) : null}
               </Box>
             </Box>
             <ActionList selectionVariant="single">
@@ -642,6 +713,7 @@ export function BillingEntitySelect({
                                   <PersonIcon size={12} />
                                 )}
                               </Label>
+                              {account.isAwsBilled ? <AwsBilledLabel /> : null}
                               {!account.isEligible &&
                                 account.accountType === 'team' && (
                                   <Label size="small" variant="attention">
@@ -660,7 +732,9 @@ export function BillingEntitySelect({
                           </Box>
                           <ActionList.Description variant="block">
                             {account.isEligible
-                              ? 'Eligible'
+                              ? account.isAwsBilled
+                                ? 'Eligible — billed through AWS Marketplace'
+                                : 'Eligible'
                               : account.accountType === 'team'
                                 ? 'Not eligible — no team credits allocated'
                                 : 'Not eligible — activate a plan or add credits to use this account'}
