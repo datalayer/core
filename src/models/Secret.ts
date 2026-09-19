@@ -188,21 +188,6 @@ export class SecretDTO {
     }
   }
 
-  private _decodeValue(encodedValue: string): string {
-    try {
-      if (typeof Buffer !== 'undefined') {
-        // Node.js environment
-        return Buffer.from(encodedValue, 'base64').toString();
-      } else {
-        // Browser environment
-        return atob(encodedValue);
-      }
-    } catch (error) {
-      console.error('Failed to decode secret value:', error);
-      return encodedValue; // Return as-is if decode fails
-    }
-  }
-
   // ========================================================================
   // Properties
   // ========================================================================
@@ -227,10 +212,10 @@ export class SecretDTO {
     return this._data.description_t;
   }
 
-  /** Returns decoded (plain text) secret value */
+  /** The value as its owner wrote it (PLAN_ENVS.md E3-05). */
   get value(): string {
     this._checkDeleted();
-    return this._decodeValue(this._data.value_s);
+    return this._data.value_s;
   }
 
   // ========================================================================

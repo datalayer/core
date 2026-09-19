@@ -1,0 +1,707 @@
+{
+  "AgentDescriptor": {
+    "agentId": "agent_notebook_validator",
+    "name": "Notebook Validator",
+    "description": "Runs a notebook from a clean sandbox and reports what broke.",
+    "version": "1.4.0",
+    "skills": [
+      {
+        "id": "notebook-validate",
+        "name": "Validate a notebook",
+        "description": "Execute every cell in order and compare the outputs.",
+        "tags": [
+          "notebook",
+          "jupyter",
+          "validation"
+        ],
+        "examples": [
+          "Validate the benchmark notebook from a clean sandbox"
+        ]
+      }
+    ],
+    "capabilities": [
+      "notebook.validate",
+      "notebook.execute"
+    ],
+    "endpoints": [
+      {
+        "protocol": "a2a",
+        "url": "https://agents.datalayer.run/api/v1/a2a/agents/notebook-validator",
+        "transport": "http",
+        "protocolVersion": "1.0"
+      }
+    ],
+    "inputContentTypes": [
+      "application/json",
+      "text/plain"
+    ],
+    "outputContentTypes": [
+      "application/json",
+      "application/x-ipynb+json"
+    ],
+    "supportedOperations": [
+      "delegate",
+      "cancel",
+      "collect",
+      "subscribe"
+    ],
+    "authentication": {
+      "schemes": [
+        "bearer"
+      ],
+      "audience": "https://agents.datalayer.run",
+      "scopes": [
+        "executions:run"
+      ]
+    },
+    "dataClassifications": [
+      "internal"
+    ],
+    "trustLevel": "verified",
+    "runtime": {
+      "cpu": 2.0,
+      "gpu": 0,
+      "memoryMb": 4096,
+      "region": "eu-west-1",
+      "environment": "python-cpu"
+    },
+    "cost": {
+      "currency": "USD",
+      "perExecution": 0.12,
+      "perInputToken": 3e-06,
+      "perOutputToken": 1.5e-05
+    },
+    "latency": {
+      "acceptanceP50Ms": 250,
+      "completionP50Ms": 42000,
+      "completionP95Ms": 180000
+    },
+    "availability": {
+      "maxConcurrentExecutions": 4,
+      "queueDepth": 1,
+      "available": true
+    }
+  },
+  "ContextManifest": {
+    "references": [
+      {
+        "uri": "datalayer:notebook/ntb-7f3a91@rev-42",
+        "access": "read-only",
+        "required": true,
+        "materialization": "snapshot",
+        "sharing": "tree",
+        "description": "The notebook under test, pinned to the revision that was benchmarked."
+      },
+      {
+        "uri": "datalayer:dataset/dst-51ce08@v3",
+        "access": "read-only",
+        "required": true,
+        "materialization": "snapshot",
+        "sharing": "tree",
+        "description": null
+      },
+      {
+        "uri": "datalayer:sandbox/sbx-0d19aa@snapshot-2",
+        "access": "writable",
+        "required": false,
+        "materialization": "live",
+        "sharing": "private",
+        "description": "The sandbox this worker runs in; nobody else writes to it."
+      }
+    ],
+    "scope": "orchestration:exec_8d21c4",
+    "expiresAt": "2026-09-09T11:30:00Z"
+  },
+  "Execution": {
+    "executionId": "exec_8d21c4",
+    "parentExecutionId": "exec_1a0b73",
+    "rootExecutionId": "exec_1a0b73",
+    "depth": 1,
+    "status": "running",
+    "statusMessage": "Executing cell 12 of 31.",
+    "agent": {
+      "agentId": "agent_notebook_validator",
+      "capability": "notebook.validate",
+      "protocol": "a2a",
+      "endpoint": "https://agents.datalayer.run/api/v1/a2a/agents/notebook-validator",
+      "sessionId": "a2a-context-6b2f"
+    },
+    "objective": {
+      "goal": "Validate the notebook from a clean sandbox.",
+      "acceptanceCriteria": [
+        "Every cell runs without raising.",
+        "The reported accuracy is within 0.5% of the recorded baseline."
+      ],
+      "instructions": "Report the first failing cell rather than stopping at the last."
+    },
+    "context": {
+      "references": [
+        {
+          "uri": "datalayer:notebook/ntb-7f3a91@rev-42",
+          "access": "read-only",
+          "required": true,
+          "materialization": "snapshot",
+          "sharing": "tree",
+          "description": "The notebook under test, pinned to the revision that was benchmarked."
+        },
+        {
+          "uri": "datalayer:dataset/dst-51ce08@v3",
+          "access": "read-only",
+          "required": true,
+          "materialization": "snapshot",
+          "sharing": "tree",
+          "description": null
+        },
+        {
+          "uri": "datalayer:sandbox/sbx-0d19aa@snapshot-2",
+          "access": "writable",
+          "required": false,
+          "materialization": "live",
+          "sharing": "private",
+          "description": "The sandbox this worker runs in; nobody else writes to it."
+        }
+      ],
+      "scope": "orchestration:exec_8d21c4",
+      "expiresAt": "2026-09-09T11:30:00Z"
+    },
+    "policy": {
+      "deadline": "2026-09-09T11:00:00Z",
+      "budget": {
+        "inputTokens": 400000,
+        "outputTokens": 80000,
+        "cost": 2.5,
+        "currency": "USD",
+        "wallClockSeconds": 1800,
+        "credits": null,
+        "executions": 8
+      },
+      "permissions": {
+        "tools": [
+          "notebook.execute",
+          "sandbox.snapshot"
+        ],
+        "agents": [
+          "agent_notebook_validator"
+        ],
+        "sandboxes": true,
+        "network": false
+      },
+      "dataClassification": "internal",
+      "limits": {
+        "maxDepth": 3,
+        "maxChildrenPerParent": 8,
+        "maxExecutionsPerTree": 32
+      },
+      "approvalRequired": false
+    },
+    "recovery": {
+      "retryPolicy": {
+        "maxRetries": 2,
+        "initialBackoffSeconds": 1.0,
+        "backoffMultiplier": 2.0,
+        "maxBackoffSeconds": 60.0
+      },
+      "checkpointRequired": true
+    },
+    "trace": {
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "tracestate": "datalayer=orchestration"
+    },
+    "currentAttemptId": "attempt_5f7e02",
+    "attemptCount": 2,
+    "createdAt": "2026-09-09T10:00:00Z",
+    "updatedAt": "2026-09-09T10:04:37Z",
+    "error": null
+  },
+  "Attempt": {
+    "attemptId": "attempt_5f7e02",
+    "executionId": "exec_8d21c4",
+    "number": 2,
+    "agentId": "agent_notebook_validator",
+    "protocol": "a2a",
+    "sessionId": "a2a-context-6b2f",
+    "protocolTaskId": "task_3b91de",
+    "resumedFrom": null,
+    "state": "running",
+    "startedAt": "2026-09-09T10:03:11Z",
+    "endedAt": null,
+    "leaseExpiresAt": "2026-09-09T10:08:11Z",
+    "error": null,
+    "usage": null
+  },
+  "Artifact": {
+    "artifactId": "art_9c2f10",
+    "type": "report",
+    "name": "notebook-validation-report",
+    "reference": "datalayer:artifact/art-9c2f10@v1",
+    "mediaType": "application/json",
+    "sizeBytes": 18422,
+    "status": "committed",
+    "committedBy": "attempt_2c40b8",
+    "supersededBy": null,
+    "provenance": [
+      {
+        "executionId": "exec_8d21c4",
+        "attemptId": "attempt_2c40b8",
+        "agentId": "agent_notebook_validator",
+        "producedAt": "2026-09-09T10:02:48Z",
+        "sourceReferences": [
+          "datalayer:notebook/ntb-7f3a91@rev-42",
+          "datalayer:dataset/dst-51ce08@v3"
+        ],
+        "contentHash": "sha256:0f1c2d3e4b5a69788796a5b4c3d2e1f00f1c2d3e4b5a69788796a5b4c3d2e1f0",
+        "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"
+      },
+      {
+        "executionId": "exec_8d21c4",
+        "attemptId": "attempt_5f7e02",
+        "agentId": "agent_notebook_validator",
+        "producedAt": "2026-09-09T10:04:36Z",
+        "sourceReferences": [
+          "datalayer:notebook/ntb-7f3a91@rev-42",
+          "datalayer:dataset/dst-51ce08@v3"
+        ],
+        "contentHash": "sha256:a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+        "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    ],
+    "summary": "31 cells executed, 1 warning, accuracy within tolerance."
+  },
+  "AgentsDiscover": {
+    "command": "agents.discover",
+    "issuedAt": "2026-09-09T09:59:58Z",
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    "capabilities": [
+      "notebook.validate"
+    ],
+    "protocols": [
+      "a2a",
+      "acp"
+    ],
+    "operations": [
+      "cancel",
+      "subscribe"
+    ],
+    "dataClassification": "internal",
+    "minimumTrustLevel": "verified",
+    "region": "eu-west-1",
+    "limit": 10
+  },
+  "ExecutionsDelegate": {
+    "command": "executions.delegate",
+    "issuedAt": "2026-09-09T10:00:00Z",
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    "idempotencyKey": "b0f1a2d3-4c5e-4f60-9a1b-2c3d4e5f6071",
+    "parentExecutionId": "exec_1a0b73",
+    "slot": null,
+    "agent": {
+      "agentId": "agent_notebook_validator",
+      "capability": "notebook.validate",
+      "protocol": "a2a",
+      "endpoint": "https://agents.datalayer.run/api/v1/a2a/agents/notebook-validator",
+      "sessionId": "a2a-context-6b2f"
+    },
+    "objective": {
+      "goal": "Validate the notebook from a clean sandbox.",
+      "acceptanceCriteria": [
+        "Every cell runs without raising.",
+        "The reported accuracy is within 0.5% of the recorded baseline."
+      ],
+      "instructions": "Report the first failing cell rather than stopping at the last."
+    },
+    "context": {
+      "references": [
+        {
+          "uri": "datalayer:notebook/ntb-7f3a91@rev-42",
+          "access": "read-only",
+          "required": true,
+          "materialization": "snapshot",
+          "sharing": "tree",
+          "description": "The notebook under test, pinned to the revision that was benchmarked."
+        },
+        {
+          "uri": "datalayer:dataset/dst-51ce08@v3",
+          "access": "read-only",
+          "required": true,
+          "materialization": "snapshot",
+          "sharing": "tree",
+          "description": null
+        },
+        {
+          "uri": "datalayer:sandbox/sbx-0d19aa@snapshot-2",
+          "access": "writable",
+          "required": false,
+          "materialization": "live",
+          "sharing": "private",
+          "description": "The sandbox this worker runs in; nobody else writes to it."
+        }
+      ],
+      "scope": "orchestration:exec_8d21c4",
+      "expiresAt": "2026-09-09T11:30:00Z"
+    },
+    "policy": {
+      "deadline": "2026-09-09T11:00:00Z",
+      "budget": {
+        "inputTokens": 400000,
+        "outputTokens": 80000,
+        "cost": 2.5,
+        "currency": "USD",
+        "wallClockSeconds": 1800,
+        "credits": null,
+        "executions": 8
+      },
+      "permissions": {
+        "tools": [
+          "notebook.execute",
+          "sandbox.snapshot"
+        ],
+        "agents": [
+          "agent_notebook_validator"
+        ],
+        "sandboxes": true,
+        "network": false
+      },
+      "dataClassification": "internal",
+      "limits": {
+        "maxDepth": 3,
+        "maxChildrenPerParent": 8,
+        "maxExecutionsPerTree": 32
+      },
+      "approvalRequired": false
+    },
+    "recovery": {
+      "retryPolicy": {
+        "maxRetries": 2,
+        "initialBackoffSeconds": 1.0,
+        "backoffMultiplier": 2.0,
+        "maxBackoffSeconds": 60.0
+      },
+      "checkpointRequired": true
+    },
+    "trace": {
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "tracestate": "datalayer=orchestration"
+    }
+  },
+  "Acknowledgement": {
+    "kind": "accepted",
+    "executionId": "exec_8d21c4",
+    "attemptId": "attempt_5f7e02",
+    "command": "executions.delegate",
+    "idempotencyKey": "b0f1a2d3-4c5e-4f60-9a1b-2c3d4e5f6071",
+    "acknowledgedAt": "2026-09-09T10:03:09Z",
+    "checkpointId": null,
+    "detail": "The worker took responsibility for the execution."
+  },
+  "ExecutionEvent": {
+    "eventId": "evt_0a4d7c",
+    "type": "execution.state_changed",
+    "sequence": 7,
+    "emittedAt": "2026-09-09T10:03:11Z",
+    "rootExecutionId": "exec_1a0b73",
+    "executionId": "exec_8d21c4",
+    "parentExecutionId": "exec_1a0b73",
+    "attemptId": "attempt_5f7e02",
+    "agentId": "agent_notebook_validator",
+    "sessionId": "a2a-context-6b2f",
+    "protocol": "a2a",
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    "state": "running",
+    "previousState": "retrying",
+    "lifecycleEvent": "start",
+    "acknowledgement": null,
+    "artifact": null,
+    "error": null,
+    "approvalUid": null,
+    "message": "The second attempt started.",
+    "data": {
+      "a2aTaskState": "working"
+    }
+  },
+  "OrchestrationError": {
+    "code": "lease_expired",
+    "message": "The worker stopped heartbeating; the remote task state is unknown.",
+    "retryable": true,
+    "source": "a2a-adapter",
+    "details": {
+      "attemptId": "attempt_2c40b8",
+      "leaseExpiredAt": "2026-09-09T10:02:59Z"
+    }
+  },
+  "ArtifactCommit": {
+    "executionId": "exec_8d21c4",
+    "attemptId": "attempt_5f7e02",
+    "winningAttemptId": "attempt_2c40b8",
+    "won": false,
+    "artifacts": [
+      {
+        "artifactId": "art_9c2f10",
+        "type": "report",
+        "name": "notebook-validation-report",
+        "reference": "datalayer:artifact/art-9c2f10@v1",
+        "mediaType": "application/json",
+        "sizeBytes": 18422,
+        "status": "committed",
+        "committedBy": "attempt_2c40b8",
+        "supersededBy": null,
+        "provenance": [
+          {
+            "executionId": "exec_8d21c4",
+            "attemptId": "attempt_2c40b8",
+            "agentId": "agent_notebook_validator",
+            "producedAt": "2026-09-09T10:02:48Z",
+            "sourceReferences": [
+              "datalayer:notebook/ntb-7f3a91@rev-42",
+              "datalayer:dataset/dst-51ce08@v3"
+            ],
+            "contentHash": "sha256:0f1c2d3e4b5a69788796a5b4c3d2e1f00f1c2d3e4b5a69788796a5b4c3d2e1f0",
+            "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"
+          },
+          {
+            "executionId": "exec_8d21c4",
+            "attemptId": "attempt_5f7e02",
+            "agentId": "agent_notebook_validator",
+            "producedAt": "2026-09-09T10:04:36Z",
+            "sourceReferences": [
+              "datalayer:notebook/ntb-7f3a91@rev-42",
+              "datalayer:dataset/dst-51ce08@v3"
+            ],
+            "contentHash": "sha256:a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+            "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"
+          }
+        ],
+        "summary": "31 cells executed, 1 warning, accuracy within tolerance."
+      },
+      {
+        "artifactId": "art_4e81b7",
+        "type": "report",
+        "name": "notebook-validation-report",
+        "reference": null,
+        "mediaType": "application/json",
+        "sizeBytes": 18504,
+        "status": "superseded",
+        "committedBy": null,
+        "supersededBy": "art_9c2f10",
+        "provenance": [
+          {
+            "executionId": "exec_8d21c4",
+            "attemptId": "attempt_5f7e02",
+            "agentId": "agent_notebook_validator",
+            "producedAt": "2026-09-09T10:04:36Z",
+            "sourceReferences": [
+              "datalayer:notebook/ntb-7f3a91@rev-42",
+              "datalayer:dataset/dst-51ce08@v3"
+            ],
+            "contentHash": "sha256:a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+            "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"
+          }
+        ],
+        "summary": "31 cells executed, 1 warning, accuracy within tolerance."
+      }
+    ]
+  },
+  "ManifestResolution": {
+    "references": [
+      {
+        "uri": "datalayer:notebook/ntb-7f3a91@rev-42",
+        "status": "resolved",
+        "resolvedVersion": "rev-42",
+        "contentHash": "sha256:6d1f0c8b7a5e4d3c2b1a09f8e7d6c5b46d1f0c8b7a5e4d3c2b1a09f8e7d6c5b4",
+        "mediaType": "application/x-ipynb+json",
+        "sizeBytes": 91204,
+        "resolvedAt": "2026-09-09T10:00:02Z",
+        "error": null
+      },
+      {
+        "uri": "datalayer:dataset/dst-51ce08@v3",
+        "status": "resolved",
+        "resolvedVersion": "v3",
+        "contentHash": null,
+        "mediaType": "text/csv",
+        "sizeBytes": 4812003,
+        "resolvedAt": "2026-09-09T10:00:02Z",
+        "error": null
+      },
+      {
+        "uri": "datalayer:sandbox/sbx-0d19aa@snapshot-2",
+        "status": "resolved",
+        "resolvedVersion": "snapshot-2",
+        "contentHash": null,
+        "mediaType": null,
+        "sizeBytes": null,
+        "resolvedAt": "2026-09-09T10:00:03Z",
+        "error": null
+      }
+    ],
+    "usable": true,
+    "errors": []
+  },
+  "DescriptorMapping": {
+    "source": "a2a-agent-card",
+    "descriptor": {
+      "agentId": "agent_notebook_validator",
+      "name": "Notebook Validator",
+      "description": "Runs a notebook from a clean sandbox and reports what broke.",
+      "version": "1.4.0",
+      "skills": [
+        {
+          "id": "notebook-validate",
+          "name": "Validate a notebook",
+          "description": "Execute every cell in order and compare the outputs.",
+          "tags": [
+            "notebook",
+            "jupyter",
+            "validation"
+          ],
+          "examples": [
+            "Validate the benchmark notebook from a clean sandbox"
+          ]
+        }
+      ],
+      "capabilities": [],
+      "endpoints": [
+        {
+          "protocol": "a2a",
+          "url": "https://agents.datalayer.run/api/v1/a2a/agents/notebook-validator",
+          "transport": "JSONRPC",
+          "protocolVersion": "1.0"
+        }
+      ],
+      "inputContentTypes": [
+        "application/json",
+        "text/plain"
+      ],
+      "outputContentTypes": [
+        "application/json",
+        "application/x-ipynb+json"
+      ],
+      "supportedOperations": [
+        "delegate",
+        "cancel",
+        "subscribe"
+      ],
+      "authentication": {
+        "schemes": [],
+        "audience": null,
+        "scopes": []
+      },
+      "dataClassifications": [],
+      "trustLevel": "untrusted",
+      "runtime": {
+        "cpu": null,
+        "gpu": null,
+        "memoryMb": null,
+        "region": null,
+        "environment": null
+      },
+      "cost": {
+        "currency": "USD",
+        "perExecution": null,
+        "perInputToken": null,
+        "perOutputToken": null
+      },
+      "latency": {
+        "acceptanceP50Ms": null,
+        "completionP50Ms": null,
+        "completionP95Ms": null
+      },
+      "availability": {
+        "maxConcurrentExecutions": null,
+        "queueDepth": null,
+        "available": true
+      }
+    },
+    "gaps": [
+      {
+        "field": "descriptor.agentId",
+        "reason": "An agent card carries no identifier of its own \u2014 it is found at a URL, and the URL is the identity. The caller's agent_id is used."
+      },
+      {
+        "field": "descriptor.capabilities",
+        "reason": "A card's skills are written for a person to read; the dotted capability names agents.discover matches on are a contract, and reading one out of the other would be inventing it."
+      },
+      {
+        "field": "descriptor.supportedOperations",
+        "reason": "A2A declares only streaming. Delegate and cancel are taken from the protocol's mandatory methods, and steer, pause, resume, checkpoint and terminate do not exist in A2A at all (19.8, decision 5)."
+      },
+      {
+        "field": "descriptor.authentication.audience",
+        "reason": "A2A names security schemes and their scopes, never the audience a token has to be minted for."
+      },
+      {
+        "field": "descriptor.dataClassifications",
+        "reason": "A2A has no data classification. A card's signatures say who wrote it, not what it may be shown."
+      },
+      {
+        "field": "descriptor.trustLevel",
+        "reason": "Trust is the reader's decision, not the card's claim. A signed card could raise it, and verifying a signature belongs where keys are held, not here."
+      },
+      {
+        "field": "descriptor.runtime",
+        "reason": "A card describes an agent already answering somewhere; what it would need to be provisioned is not part of it."
+      },
+      {
+        "field": "descriptor.cost",
+        "reason": "A2A states no price."
+      },
+      {
+        "field": "descriptor.latency",
+        "reason": "A2A states no latency expectation."
+      },
+      {
+        "field": "descriptor.availability",
+        "reason": "A2A states no concurrency limit and no queue depth; a worker that is full answers that it is full, one task at a time."
+      },
+      {
+        "field": "agentCard.capabilities.pushNotifications",
+        "reason": "A2A push notifications are a transport arrangement between a client and a worker. Datalayer executions stream through the control plane's own events (6.2, executions.subscribe)."
+      }
+    ]
+  },
+  "AgentCardMapping": {
+    "card": {
+      "name": "Notebook Validator",
+      "description": "Runs a notebook from a clean sandbox and reports what broke.",
+      "version": "1.4.0",
+      "supportedInterfaces": [
+        {
+          "protocolBinding": "JSONRPC",
+          "url": "https://agents.datalayer.run/api/v1/a2a/agents/notebook-validator",
+          "protocolVersion": "1.0"
+        }
+      ],
+      "capabilities": {
+        "streaming": true
+      },
+      "defaultInputModes": [
+        "application/json",
+        "text/plain"
+      ],
+      "defaultOutputModes": [
+        "application/json",
+        "application/x-ipynb+json"
+      ],
+      "skills": [
+        {
+          "id": "notebook-validate",
+          "name": "Validate a notebook",
+          "description": "Execute every cell in order and compare the outputs.",
+          "tags": [
+            "notebook",
+            "jupyter",
+            "validation"
+          ],
+          "examples": [
+            "Validate the benchmark notebook from a clean sandbox"
+          ]
+        }
+      ]
+    },
+    "gaps": [
+      {
+        "field": "descriptor.agentId",
+        "reason": "The card is found at a URL and identifies itself by that; the Datalayer identity does not travel with it."
+      }
+    ]
+  }
+}

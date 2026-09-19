@@ -77,8 +77,13 @@ export const SubNavSubMenuVariants = ['dropdown', 'anchor'] as const;
 type SubMenuVariants = (typeof SubNavSubMenuVariants)[number];
 
 type SubNavContextType = {
-  portalRef: RefObject<HTMLDivElement>;
+  portalRef: RefObject<HTMLDivElement | null>;
 };
+
+// SubNav.Link renders its children as [link, subMenu?]. React 19 types element
+// props as `unknown` rather than `any`, so the shape this component relies on
+// when it inspects and rebuilds its own children has to be named.
+type SubNavLinkChildren = [React.ReactNode, React.ReactElement<SubMenuProps>?];
 
 const SubNavContext = createContext<SubNavContextType | undefined>(undefined);
 
@@ -194,16 +199,19 @@ const _SubNavRoot = memo(
     }, [isOpenAtNarrow, isLarge]);
 
     const activeLink = childrenArr.find(child => {
-      if (isValidElement(child)) {
+      if (isValidElement<SubNavLinkProps>(child)) {
         return child.props['aria-current'];
       }
-    }) as React.ReactElement | undefined;
+    }) as React.ReactElement<SubNavLinkProps> | undefined;
 
     useEffect(() => {
       // check if there is an anchored nav in the SubNav.SubMenu child
       const hasAnchorVariant = childrenArr.some(child => {
-        if (isValidElement(child) && child.type === SubNavLink) {
-          const [, subMenu] = child.props.children;
+        if (
+          isValidElement<SubNavLinkProps>(child) &&
+          child.type === SubNavLink
+        ) {
+          const [, subMenu] = child.props.children as SubNavLinkChildren;
           if (subMenu?.props?.variant === 'anchor') {
             return true;
           }
@@ -221,11 +229,11 @@ const _SubNavRoot = memo(
         acc: { heading?: ReactNode; links: ReactElement[]; action?: ReactNode },
         child,
       ) => {
-        if (isValidElement(child)) {
+        if (isValidElement<SubNavLinkProps>(child)) {
           if (child.type === SubNavHeading) {
             acc.heading = child;
           } else if (child.type === SubNavLink) {
-            const [link, subMenu] = child.props.children;
+            const [link, subMenu] = child.props.children as SubNavLinkChildren;
 
             if (subMenu?.props?.variant === 'anchor') {
               acc.links.push(
@@ -254,15 +262,20 @@ const _SubNavRoot = memo(
       { heading: undefined, links: [], action: undefined },
     );
 
+    const activeLinkChildren = activeLink?.props.children as
+      SubNavLinkChildren | string | undefined;
     const activeLinklabel =
-      typeof activeLink?.props.children === 'string'
-        ? activeLink.props.children
-        : activeLink?.props.children[0];
+      typeof activeLinkChildren === 'string'
+        ? activeLinkChildren
+        : activeLinkChildren?.[0];
 
     // needed to prevent rendering of anchor subnav inside the narrow <Button variant="invisible"> element
+    const activeLinkSubMenu =
+      typeof activeLinkChildren === 'string'
+        ? undefined
+        : activeLinkChildren?.[1];
     const MaybeSubNav =
-      activeLink?.props.children?.[1]?.props?.variant === 'anchor' &&
-      activeLink.props.children?.[1];
+      activeLinkSubMenu?.props?.variant === 'anchor' && activeLinkSubMenu;
     return (
       <div
         className={clsx(
@@ -585,7 +598,7 @@ const SubNavLink = forwardRef<
 
   if (hasSubMenu) {
     const isAnchorVariantSubMenu = childrenArr.some(child => {
-      if (isValidElement(child)) {
+      if (isValidElement<SubMenuProps>(child)) {
         return child.type === SubMenu && child.props.variant === 'anchor';
       }
     });
@@ -698,14 +711,12 @@ function SubMenu({
       >
         <ul className={styles['SubNav__sub-menu-list']} {...props}>
           {React.Children.map(children, child => {
-            if (isValidElement(child)) {
+            if (isValidElement<SubNavLinkProps>(child)) {
               return React.cloneElement(
                 child as React.ReactElement<SubNavLinkProps>,
                 {
                   onClick: e => {
-                    if ((child.props as any).onClick) {
-                      child.props.onClick(e);
-                    }
+                    child.props.onClick?.(e);
                   },
                 },
               );

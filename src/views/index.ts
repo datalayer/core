@@ -4,5 +4,6 @@
  */
 
 export * from './iam';
+export * from './mcp';
 export * from './profile';
 export * from './otel';

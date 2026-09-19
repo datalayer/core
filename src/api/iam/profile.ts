@@ -15,6 +15,8 @@ import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
   MembershipsResponse,
+  PrincipalSearchResponse,
+  PrincipalSearchUser,
   ShareablePrincipalsResponse,
   UserMeResponse,
   WhoAmIResponse,
@@ -97,3 +99,41 @@ export const principalsShareable = async (
     token,
   });
 };
+
+/**
+ * Search the people, teams and organizations the caller may name: what the
+ * sharing dialogs search, and whom a comment mentions or assigns (B4-02).
+ *
+ * @param token - Authentication token (required)
+ * @param query - What is typed: part of a handle or of a name
+ * @param principalTypes - What to search; people only by default
+ * @param baseUrl - Base URL for the API (defaults to production IAM URL)
+ */
+export const searchPrincipals = async (
+  token: string,
+  query: string,
+  principalTypes: Array<'user' | 'team' | 'organization'> = ['user'],
+  baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
+): Promise<PrincipalSearchResponse> => {
+  validateToken(token);
+
+  return requestDatalayerAPI<PrincipalSearchResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.IAM}/principals/search`,
+    method: 'POST',
+    body: { query, principalTypes },
+    token,
+  });
+};
+
+/** A person `searchPrincipals` found, as a comment or a report names them. */
+export const personOfPrincipalUser = (
+  user: PrincipalSearchUser,
+): { uid: string; handle: string; name: string | null } => ({
+  uid: user.uid,
+  handle: user.handle_s,
+  name:
+    `${user.first_name_t ?? ''} ${user.last_name_t ?? ''}`.trim() ||
+    user.display_name_t ||
+    user.display_name ||
+    null,
+});

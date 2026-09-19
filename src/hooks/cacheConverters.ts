@@ -35,32 +35,6 @@ export function asCodeSandboxSnapshot(s: any): any {
 }
 
 /**
- * Convert a raw page payload into its client shape.
- *
- * @param s - The raw page payload from the API.
- * @returns The converted page object.
- */
-export const asPage = (s: any): any => {
-  return {
-    id: s.uid,
-    type: 'page',
-    variant: s.variant_s,
-    name: s.name_t,
-    description: s.description_t,
-    theme: s.theme_s,
-    nbformat: s.nbformat_s ? JSON.parse(s.nbformat_s) : undefined,
-    screenCapture: s.screen_capture_cdn_url_s || s.screen_capture_s,
-    tags: s.tags_ss ?? [],
-    creator: s.creator ? asUser(s.creator) : undefined,
-    creatorId: s.creator_uid,
-    kernelSnapshot: s.kernel_snapshot
-      ? asCodeSandboxSnapshot(s.kernel_snapshot)
-      : undefined,
-    kernelSnapshotId: s.kernel_snapshot_uid,
-  };
-};
-
-/**
  * Convert a raw space payload into its client shape.
  *
  * @param raw_space - The raw space payload from the API.

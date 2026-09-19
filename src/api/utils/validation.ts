@@ -90,6 +90,7 @@ export const validateToken = (token: string | undefined | null): void => {
     }
     throw new Error(
       'Invalid token format: JWT header is not valid base64-encoded JSON',
+      { cause: e },
     );
   }
 
@@ -140,6 +141,7 @@ export const validateToken = (token: string | undefined | null): void => {
     }
     throw new Error(
       'Invalid token format: JWT payload is not valid base64-encoded JSON',
+      { cause: e },
     );
   }
 
@@ -155,7 +157,7 @@ export const validateToken = (token: string | undefined | null): void => {
  * @param paramName - The name of the parameter for error messages
  * @throws {Error} If the value is missing, null, or undefined
  */
-export const validateRequired = (value: any, paramName: string): void => {
+export const validateRequired = (value: unknown, paramName: string): void => {
   if (value === null || value === undefined) {
     throw new Error(`${paramName} is required`);
   }
@@ -189,8 +191,8 @@ export const validateRequiredString = (
  * @example
  * ```typescript
  * const runtimeData = {
- *   uid: 'abc123',
- *   podName: 'my-pod',
+ *   uid: '01m1dzmb1anqzp1v1ng97x7214',
+ *   runtimeName: '01m1dzmb1anqzp1v1ng97x7214',
  *   environmentName: undefined  // This will throw
  * };
  * validateJSON(runtimeData, 'Runtime');
@@ -198,17 +200,20 @@ export const validateRequiredString = (
  * ```
  */
 export const validateJSON = (
-  obj: Record<string, any>,
+  obj: object,
   modelName: string,
   path: string = '',
 ): void => {
+  // Any object: a model's JSON is an interface without an index signature,
+  // and an interface is not a `Record` — it is read as one here.
+  const record = obj as Record<string, unknown>;
   // Iterate over all enumerable properties
-  for (const key in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+  for (const key in record) {
+    if (!Object.prototype.hasOwnProperty.call(record, key)) {
       continue;
     }
 
-    const value = obj[key];
+    const value = record[key];
     const currentPath = path ? `${path}.${key}` : key;
 
     // Check if value is undefined - this is the error case

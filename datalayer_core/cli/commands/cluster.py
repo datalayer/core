@@ -15,7 +15,6 @@ from rich.tree import Tree
 
 from datalayer_core.utils.urls import DatalayerURLs
 
-
 app = typer.Typer(
     name="cluster",
     help="Cluster visibility commands",
@@ -112,7 +111,12 @@ def _build_anomalies_panel(nodes_with_pods: list[Any], unassigned: list[Any]) ->
         if bool((pod or {}).get("unschedulable")):
             unschedulable_pods += 1
 
-    yellow_total = pending_pods + len(unassigned) + pending_scale_up_nodes + pending_scale_down_nodes
+    yellow_total = (
+        pending_pods
+        + len(unassigned)
+        + pending_scale_up_nodes
+        + pending_scale_down_nodes
+    )
     red_total = unschedulable_pods + failed_pods + not_ready_nodes
 
     if red_total > 0:
@@ -213,8 +217,12 @@ def show_cluster(
                     node_line = Text()
                     node_line.append(node_name, style="bold")
                     node_line.append(" ")
-                    node_line.append(f"[{node_status}]", style=_status_style(node_status))
-                    node_line.append(f" ready={ready} schedulable={schedulable}", style="dim")
+                    node_line.append(
+                        f"[{node_status}]", style=_status_style(node_status)
+                    )
+                    node_line.append(
+                        f" ready={ready} schedulable={schedulable}", style="dim"
+                    )
                     node_line.append(f" pods={len(node_pods)}", style="cyan")
 
                     node_branch = root.add(node_line)
@@ -224,27 +232,33 @@ def show_cluster(
                         continue
 
                     for pod in node_pods:
-                        pod_name = str(pod.get("name") or "")
+                        runtime_name = str(pod.get("name") or "")
                         namespace = str(pod.get("namespace") or "")
                         pod_phase = str(pod.get("phase") or "Unknown")
                         unsched = bool(pod.get("unschedulable"))
 
                         pod_line = Text()
-                        pod_line.append(f"{namespace}/{pod_name}" if namespace else pod_name)
+                        pod_line.append(
+                            f"{namespace}/{runtime_name}" if namespace else runtime_name
+                        )
                         pod_line.append(" ")
-                        pod_line.append(f"[{pod_phase}]", style=_status_style(pod_phase))
+                        pod_line.append(
+                            f"[{pod_phase}]", style=_status_style(pod_phase)
+                        )
                         if unsched:
                             pod_line.append(" unschedulable", style="red")
 
                         node_branch.add(pod_line)
             if unassigned:
-                branch = root.add(f"[bold yellow]unassigned[/bold yellow] pods={len(unassigned)}")
+                branch = root.add(
+                    f"[bold yellow]unassigned[/bold yellow] pods={len(unassigned)}"
+                )
                 for pod in unassigned:
-                    pod_name = str(pod.get("name") or "")
+                    runtime_name = str(pod.get("name") or "")
                     namespace = str(pod.get("namespace") or "")
                     pod_phase = str(pod.get("phase") or "Unknown")
                     line = Text()
-                    line.append(f"{namespace}/{pod_name}" if namespace else pod_name)
+                    line.append(f"{namespace}/{runtime_name}" if namespace else runtime_name)
                     line.append(" ")
                     line.append(f"[{pod_phase}]", style=_status_style(pod_phase))
                     if bool(pod.get("unschedulable")):
@@ -296,7 +310,9 @@ def show_cluster(
                     )
                 if reason:
                     requests_text.append(f"  reason: {reason}\n", style="dim")
-            console.print(Panel(requests_text, title="Node Requests", border_style="cyan"))
+            console.print(
+                Panel(requests_text, title="Node Requests", border_style="cyan")
+            )
     except Exception as e:
         console.print(f"[red]Error showing cluster details: {e}[/red]")
         raise typer.Exit(1)

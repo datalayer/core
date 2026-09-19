@@ -3,10 +3,6 @@
 
 """Service worker handler for Datalayer Core."""
 
-# Copyright (c) 2023-2025 Datalayer, Inc.
-#
-# Datalayer License
-
 from pathlib import Path
 from typing import Optional
 

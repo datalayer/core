@@ -5,6 +5,7 @@
 
 // import { AlertIcon } from '@primer/octicons-react';
 // import { Box, Flash as PrimerFlash, Link } from '@primer/react';
+import type { JSX } from 'react';
 import { Link } from '@primer/react';
 import { Banner } from '@primer/react/experimental';
 import { QuestionIcon } from '@primer/octicons-react';

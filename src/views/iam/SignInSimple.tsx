@@ -21,6 +21,7 @@ import React, {
   useEffect,
 } from 'react';
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
+import { createGlobalStyle } from 'styled-components';
 import {
   Box,
   Button,
@@ -36,6 +37,8 @@ import {
   EyeIcon,
   EyeClosedIcon,
   KeyIcon,
+  MailIcon,
+  SignInIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
 import {
@@ -117,7 +120,7 @@ export interface SignInSimpleProps {
   onSignIn?: (token: string, handle: string) => void;
   /**
    * Called when the user authenticates with an API key.
-   * If not provided the "Sign In with an API Key" button is hidden.
+   * If not provided the "Sign in with an API Key" button is hidden.
    */
   onApiKeySignIn?: (apiKey: string) => void;
   /**
@@ -180,6 +183,18 @@ export interface SignInSimpleProps {
    */
   asDoc?: boolean;
   /**
+   * Whether the form centres itself in the viewport.
+   *
+   * True by default, which is right for a page that is nothing but this form.
+   * False for a host that has placed it — a column beside something else —
+   * where `min-height: 100vh` pushes it half a screen down from whatever it
+   * was meant to sit level with.
+   *
+   * Distinct from `hideHero`, which also top-aligns but takes the title, icon
+   * and description with it, and from `asDoc`, which disables the form.
+   */
+  fillHeight?: boolean;
+  /**
    * Hide header title and description area.
    */
   hideHero?: boolean;
@@ -233,6 +248,39 @@ export interface SignInSimpleProps {
   actionButtonMaxWidth?: number;
 }
 
+// Repaint the browser autofill highlight (Chrome's blue/yellow) with theme
+// tokens so autofilled/disabled inputs keep the Primer surface colors. A
+// scoped global style is used because Primer's TextInput inner <input> is not
+// reliably reachable via the wrapper `sx` for vendor-prefixed autofill pseudos.
+const SignInInputGlobalStyle = createGlobalStyle`
+  .signin-input-theme-scope input:-webkit-autofill,
+  .signin-input-theme-scope input:-webkit-autofill:hover,
+  .signin-input-theme-scope input:-webkit-autofill:focus,
+  .signin-input-theme-scope input:-webkit-autofill:active,
+  .signin-input-theme-scope input:-webkit-autofill:disabled,
+  .signin-input-theme-scope textarea:-webkit-autofill,
+  .signin-input-theme-scope textarea:-webkit-autofill:hover,
+  .signin-input-theme-scope textarea:-webkit-autofill:focus,
+  .signin-input-theme-scope textarea:-webkit-autofill:active,
+  .signin-input-theme-scope textarea:-webkit-autofill:disabled {
+    -webkit-text-fill-color: var(--fgColor-default) !important;
+    caret-color: var(--fgColor-default) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--bgColor-default) inset !important;
+    box-shadow: 0 0 0 1000px var(--bgColor-default) inset !important;
+    background-color: var(--bgColor-default) !important;
+    transition: background-color 9999s ease-in-out 0s !important;
+  }
+
+  .signin-input-theme-scope input:disabled,
+  .signin-input-theme-scope textarea:disabled {
+    -webkit-text-fill-color: var(--fgColor-muted) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--bgColor-default) inset !important;
+    box-shadow: 0 0 0 1000px var(--bgColor-default) inset !important;
+    background-color: var(--bgColor-default) !important;
+    opacity: 1 !important;
+  }
+`;
+
 // ── Component ────────────────────────────────────────────────────────
 
 export const SignInSimple: React.FC<SignInSimpleProps> = ({
@@ -251,6 +299,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   signUp = true,
   socialSignInNavigationTarget,
   asDoc = false,
+  fillHeight = true,
   hideHero = false,
   calloutTitle,
   calloutDescription,
@@ -265,8 +314,10 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   socialButtonMarginTop = 3,
   actionButtonMaxWidth = 320,
 }) => {
-  const headingText = name ?? title;
-  const headingIcon = icon ?? leadingIcon;
+  const compactDocMode = asDoc && !hideHero;
+  const headingText =
+    name ?? (asDoc && title === 'Datalayer OTEL' ? 'Datalayer Sign In' : title);
+  const headingIcon = icon ?? (asDoc ? <SignInIcon size={24} /> : leadingIcon);
 
   const loginUrl = useMemo(() => {
     if (loginUrlProp) return loginUrlProp;
@@ -509,16 +560,19 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
 
   return (
     <Box
+      className="signin-input-theme-scope"
       sx={{
         display: 'flex',
-        alignItems: hideHero ? 'flex-start' : 'center',
+        alignItems:
+          hideHero || compactDocMode || !fillHeight ? 'flex-start' : 'center',
         justifyContent: 'center',
-        minHeight: hideHero ? 'auto' : '100vh',
+        minHeight: hideHero || compactDocMode || !fillHeight ? 'auto' : '100vh',
         bg: hideHero ? 'transparent' : 'canvas.default',
         color: 'fg.default',
-        py: hideHero ? 0 : 4,
+        py: hideHero ? 0 : compactDocMode ? 2 : 4,
       }}
     >
+      <SignInInputGlobalStyle />
       <Box
         sx={{
           width: '100%',
@@ -534,7 +588,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
-                mb: 3,
+                mb: compactDocMode ? 2 : 3,
                 justifyContent: 'center',
               }}
             >
@@ -547,7 +601,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
               sx={{
                 fontSize: 1,
                 color: 'fg.muted',
-                mb: 3,
+                mb: compactDocMode ? 2 : 3,
                 textAlign: 'center',
               }}
             >
@@ -706,7 +760,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                 disabled={loading || asDoc || !handle || !password}
                 onClick={submit}
               >
-                {loading ? 'Signing in…' : 'Sign in'}
+                {loading ? 'Signing in…' : 'Sign In'}
               </Button>
               {showForgotPassword && (
                 <Link
@@ -789,6 +843,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
               <Button
                 variant="primary"
                 size="large"
+                leadingVisual={MailIcon}
                 disabled={asDoc || loading}
                 onClick={handleSignUp}
               >
@@ -820,7 +875,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
               onClick={() => setShowApiKeyDialog(true)}
               sx={{ maxWidth: actionButtonMaxWidth, mx: 'auto' }}
             >
-              Sign In with an API Key
+              Sign in with an API Key
             </Button>
             {showApiKeyDialog && (
               <Box
@@ -876,9 +931,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                       autoFocus
                       placeholder="Paste your API key here"
                       value={apiKeyValue}
-                      onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        setApiKeyValue(e.target.value)
-                      }
+                      onInput={e => setApiKeyValue(e.currentTarget.value)}
                       ref={apiKeyRef}
                     />
                   </FormControl>

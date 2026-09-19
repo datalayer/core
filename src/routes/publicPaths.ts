@@ -17,6 +17,10 @@ export const PUBLIC_PATH_PREFIXES: readonly string[] = [
   '/about',
   '/agents',
   '/agentspecs',
+  // Where AWS Marketplace sends a customer who just subscribed, and the
+  // mailed link that confirms the account: reached signed out, and a 401 on
+  // them must not bounce the visitor to the sign-in page.
+  '/aws/marketplace',
   '/blog',
   '/careers',
   '/community',

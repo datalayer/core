@@ -31,7 +31,7 @@ def display_me(me: dict[str, str], infos: dict[str, str]) -> None:
         me["handle_s"],
         me["first_name_t"],
         me["last_name_t"],
-        infos.get("datalayer_url"),
+        infos.get("iam_url"),
     )
     console = Console()
     console.print(table)

@@ -32,10 +32,9 @@ export const NavigationLink = forwardRef<
         onClick(e);
       }
 
-      // If not prevented, navigate
+      // If not prevented, navigate — or let a modifier click open a new tab.
       if (!e.defaultPrevented) {
-        e.preventDefault();
-        navigate(to, e, true, { replace, state });
+        navigate(to, e, { replace, state });
       }
     },
     [to, replace, state, navigate, onClick],

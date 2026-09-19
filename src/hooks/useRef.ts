@@ -14,9 +14,12 @@ import React, { useRef } from 'react';
  * @type TRef The type of the RefObject which should be created.
  */
 
+// React 19 types `useRef<T>(null)` as `RefObject<T | null>`, so both the
+// accepted and returned ref are nullable here. Primer 37 still declares the
+// React 18 shape, so its call sites cast at the boundary.
 export function useProvidedRefOrCreate<TRef>(
-  providedRef?: React.RefObject<TRef>,
-): React.RefObject<TRef> {
+  providedRef?: React.RefObject<TRef | null>,
+): React.RefObject<TRef | null> {
   const createdRef = useRef<TRef>(null);
   return providedRef ?? createdRef;
 }

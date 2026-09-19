@@ -15,14 +15,18 @@ export * from './hooks';
 // Export APIs.
 export {
   requestDatalayerAPI,
+  requestDatalayerAPIWithResponse,
   RunResponseError,
   NetworkError,
 } from './api/DatalayerApi';
 export type { IRequestDatalayerAPIOptions } from './api/DatalayerApi';
+export type { IDatalayerAPIResponse } from './api/DatalayerApi';
 export { API_BASE_PATHS } from './api/constants';
 export * as iamApi from './api/iam';
+export * as contentsApi from './api/contents';
 
 export * from './client';
+export * from './models/contents';
 
 // OTEL observability components, hooks, and types
 export * from './otel';

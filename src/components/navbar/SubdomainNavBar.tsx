@@ -165,16 +165,22 @@ function Root({
     () =>
       React.Children.toArray(children)
         .map((child, index) => {
-          if (React.isValidElement(child) && typeof child.type !== 'string') {
+          if (
+            React.isValidElement<LinkProps>(child) &&
+            typeof child.type !== 'string'
+          ) {
             if (child.type === Link) {
-              return React.cloneElement(child as React.ReactElement, {
-                'data-navitemid': child.props.children,
-                href: child.props.href,
-                children: child.props.children,
-                style: {
-                  [`--animation-order`]: index,
+              return React.cloneElement(
+                child as React.ReactElement<LinkProps>,
+                {
+                  'data-navitemid': child.props.children,
+                  href: child.props.href,
+                  children: child.props.children,
+                  style: {
+                    [`--animation-order`]: index,
+                  } as React.CSSProperties,
                 },
-              });
+              );
             }
             return null;
           }
@@ -288,15 +294,18 @@ function Root({
               {React.Children.toArray(children)
                 .map(child => {
                   if (
-                    React.isValidElement(child) &&
+                    React.isValidElement<SearchProps>(child) &&
                     typeof child.type !== 'string'
                   ) {
                     if (child.type === Search) {
-                      return React.cloneElement(child as React.ReactElement, {
-                        active: searchVisible,
-                        handlerFn: handleSearchVisibility,
-                        title,
-                      });
+                      return React.cloneElement(
+                        child as React.ReactElement<SearchProps>,
+                        {
+                          active: searchVisible,
+                          handlerFn: handleSearchVisibility,
+                          title,
+                        },
+                      );
                     }
                     return null;
                   }
@@ -450,6 +459,11 @@ type LinkProps = {
   href: string;
   isExternal?: boolean;
   target?: string;
+  /**
+   * Set from the link's own text when the overflow menu clones it, so
+   * `useVisibilityObserver` can track which items are visible.
+   */
+  'data-navitemid'?: React.ReactNode;
 } & React.DetailedHTMLProps<
   React.LiHTMLAttributes<HTMLLIElement>,
   HTMLLIElement
@@ -498,7 +512,7 @@ export type SubdomainNavBarSearchResultProps = {
 type SearchProps = {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  ref: React.RefObject<HTMLInputElement>;
+  ref: React.RefObject<HTMLInputElement | null>;
   active?: boolean;
   title?: string;
   handlerFn?: (event: MouseEvent | TouchEvent | FocusEvent) => void;

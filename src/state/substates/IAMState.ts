@@ -15,6 +15,7 @@ import {
   IAMProvidersSpecs,
   IIAMResponseType,
 } from '../../models';
+import { availableCredits } from '../../models/Credits';
 import type {
   ICredits,
   ICreditsReservation,
@@ -33,6 +34,8 @@ import {
 } from '../../api/DatalayerApi';
 import { getCookie, setCookie, deleteCookie } from '../../utils';
 import { coreStore } from './CoreState';
+import { profileStore } from './ProfileState';
+import { claimSessionState, forgetSessionState } from '../sessionEnd';
 
 /**
  * Limit to warn about low credits in milliseconds.
@@ -109,7 +112,7 @@ export type IAMState = IIAMState & {
   setExternalToken: (externalToken: string) => void;
   setVersion: (version: string) => void;
   /**
-   * Set the {@link token} and the {@link user}.
+   * Set the `token` and the `user`.
    *
    * The user detail will be automatically retrieve
    * to avoid inconsistency.
@@ -174,6 +177,10 @@ export const iamStore = createStore<IAMState>((set, get) => {
     logout: () => {
       storeUser();
       storeToken();
+      profileStore.getState().clearProfile();
+      // Everything else the session left in the browser goes with it: the
+      // current space, the principal, the billing entity, what apps registered.
+      forgetSessionState();
       set({
         credits: undefined,
         creditsReservations: [],
@@ -219,6 +226,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
             ...(user as IUser),
           },
         };
+        profileStore.getState().setProfileFromUser(updatedState.user as IUser);
         /*
         if (state.user?.email && !updatedState.user.email) {
           updatedState.user.email = state.user.email;
@@ -245,16 +253,11 @@ export const iamStore = createStore<IAMState>((set, get) => {
           });
           const { credits, reservations: creditsReservations = [] } =
             creditsRaw;
-          let available =
-            credits.quota !== null
-              ? credits.quota - credits.credits
-              : credits.credits;
-          available -= creditsReservations.reduce(
-            (consumed, reservation) => consumed + reservation.credits,
-            0,
-          );
           set({
-            credits: { ...credits, available: Math.max(0, available) },
+            credits: {
+              ...credits,
+              available: availableCredits(credits, creditsReservations),
+            },
             creditsReservations: creditsReservations,
           });
         } catch (error) {
@@ -296,6 +299,8 @@ export const iamStore = createStore<IAMState>((set, get) => {
           token,
         });
         const user = asUser(data.profile);
+        // State another person left in this browser is not this person's.
+        claimSessionState((user as any)?.id ?? (user as any)?.uid);
         storeUser(user);
         storeToken(token);
         set(() => ({ user, token }));
@@ -320,8 +325,12 @@ export const iamStore = createStore<IAMState>((set, get) => {
       }),
     setLogin: (user: IUser, token: string) =>
       set((state: IAMState) => {
+        claimSessionState((user as any)?.id ?? (user as any)?.uid);
         storeUser(user);
         storeToken(token);
+        // The profile store is what the surfaces (user menu, sidebars,
+        // profile views) read: every flow that learns the user feeds it.
+        profileStore.getState().setProfileFromUser(user);
         return {
           user,
           token,

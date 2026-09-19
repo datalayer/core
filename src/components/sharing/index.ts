@@ -13,5 +13,6 @@ export {
 } from '../principal/PrincipalDetailsOverlay';
 export type { PrincipalDetailsOverlayProps } from '../principal/PrincipalDetailsOverlay';
 export * from '../principal/PrincipalSwitcherMenu';
+export * from './sandboxSharing';
 export * from './ShareAccessComponent';
 export * from './SharingEditor';

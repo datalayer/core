@@ -1,0 +1,209 @@
+# Copyright (c) 2023-2025 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
+# Copyright (c) 2023-2026 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
+"""What the documentation shows must be what the client offers.
+
+Every page of the manual, not a list of them. The checks are about
+`datalayer contents ...` and `datalayer.contents....`, and a page mentioning
+either has to be honest about it wherever it sits — so the pages are found by
+reading the directory rather than named here. Until 2026-09-02 they were
+named, seven of them, and the six Contents pages nobody had thought to add —
+Cloud Storage, Home Folder, Local Mount, Synchronize, Transfer, Volume — had
+never had a command or a call in them read by anything. A page that mentions
+neither contributes nothing and costs one read.
+
+Every command and call in a page is a promise. A promise that stopped being true — a
+renamed command, a method that never landed — is worse than no example: it is
+read as fact and typed into a terminal.
+
+So the examples are a contract, checked here rather than proof-read. A block a
+page marks `title="planned"` is exempt, because a page may honestly show the
+shape of something that is coming; everything else must exist today, and a
+planned block that *has* landed fails too, so the marker cannot rot.
+
+The pages live in the web repository. Where that tree is not checked out, this
+skips: a test that cannot see its subject must not condemn it.
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import pytest
+
+from datalayer_core.cli.commands.contents import app as contents_app
+from datalayer_core.contents import Contents, HomeFolder
+
+#: `src/tech/datalayer/core/datalayer_core/tests` → `src` → the web repository.
+DOCS = (
+    Path(__file__).resolve().parents[5] / "landings/datalayer/ui/src/views/docs/pages"
+)
+#: Pages that must be there. Not the list that gets read — that is derived
+#: below — but a tripwire: a rename or a deletion of one of these is a page
+#: dropping out of the checked set, which is exactly how a hardcoded list
+#: comes to cover a third of the manual without anybody noticing. This one
+#: covered seven of thirteen.
+PAGES = (
+    "ContentsDoc.tsx",
+    "SharingDoc.tsx",
+    "ContentEnvironmentDoc.tsx",
+    "CodeSandboxesDoc.tsx",
+    "ContentMcpDoc.tsx",
+    "ContentDatasourcesDoc.tsx",
+    "ContentDataserversDoc.tsx",
+)
+
+_FENCE = re.compile(r"^(```|~~~)(.*)$")
+_CLI = re.compile(r"\bdatalayer contents ([a-z][a-z0-9-]*)(?: ([a-z][a-z0-9-]*))?")
+_FACADE = re.compile(r"\bdatalayer\.contents\.([a-z_]+)")
+_FOLDER = re.compile(r"\bfolder\.([a-z_]+)\(")
+
+
+def markdown_of(page: Path) -> str:
+    """The documentation itself, out of the module that carries it."""
+    text = page.read_text()
+    body = text.split("const markdown = `", 1)[1].rsplit("`;", 1)[0]
+    # The page escapes backticks so the template literal survives; the reader
+    # sees them unescaped, and so does this.
+    return body.replace("\\`", "`").replace("\\$", "$")
+
+
+def blocks(markdown: str) -> list[tuple[str, str]]:
+    """Every fenced block as `(info string, body)`."""
+    found: list[tuple[str, str]] = []
+    info: str | None = None
+    marker: str | None = None
+    body: list[str] = []
+    for line in markdown.splitlines():
+        fence = _FENCE.match(line)
+        if fence and marker is None:
+            marker, info = fence.group(1), fence.group(2).strip()
+            body = []
+            continue
+        if fence and fence.group(1) == marker:
+            found.append((info or "", "\n".join(body)))
+            marker, info = None, None
+            continue
+        if marker is not None:
+            body.append(line)
+    return found
+
+
+def shipped_and_planned(page: Path) -> tuple[str, str]:
+    """The examples a page presents as working, and the ones it does not."""
+    shipped: list[str] = []
+    planned: list[str] = []
+    for info, body in blocks(markdown_of(page)):
+        (planned if "planned" in info else shipped).append(body)
+    return "\n".join(shipped), "\n".join(planned)
+
+
+def cli_names() -> set[str]:
+    """Every `datalayer contents` command and group, as typed."""
+    names = {
+        command.name or command.callback.__name__.replace("_", "-")
+        for command in contents_app.registered_commands
+    }
+    for group in contents_app.registered_groups:
+        typer_instance = group.typer_instance
+        name = group.name or typer_instance.info.name
+        names.add(str(name))
+        for command in typer_instance.registered_commands:
+            names.add(f"{name} {command.name or command.callback.__name__}")
+    return names
+
+
+#: What makes a file one of these pages: it carries the manual in a template
+#: literal. `ContentsCards.tsx` and friends are components, not prose.
+MARKER = "const markdown = `"
+
+
+def pages() -> list[Path]:
+    """Every documentation page, found rather than listed.
+
+    Derived so that a page added to the manual is checked the day it is
+    added. A list written by hand is a list that stops being the manual: the
+    six pages this one did not name — Cloud Storage, Home Folder, Local
+    Mount, Synchronize, Transfer, Volume — had never had a single command or
+    client call in them read by anything.
+    """
+    if not DOCS.exists():
+        return []
+    return sorted(
+        path
+        for path in DOCS.glob("*Doc.tsx")
+        if MARKER in path.read_text(errors="ignore")
+    )
+
+
+@pytest.mark.skipif(not DOCS.exists(), reason="the web repository is not checked out")
+def test_the_pages_are_where_they_are_expected() -> None:
+    found = {path.name for path in pages()}
+    assert found, f"no Contents documentation page found under {DOCS}"
+    # A named page that is gone is a page that stopped being checked. Being
+    # non-empty is not enough: one page out of thirteen would pass that.
+    missing = sorted(name for name in PAGES if name not in found)
+    assert not missing, (
+        f"pages named here are not in the manual: {missing}. If one was "
+        "renamed, rename it here; if it was removed, remove it here."
+    )
+
+
+@pytest.mark.skipif(not DOCS.exists(), reason="the web repository is not checked out")
+def test_every_documented_command_exists() -> None:
+    available = cli_names()
+    missing: dict[str, set[str]] = {}
+    for page in pages():
+        shipped, _planned = shipped_and_planned(page)
+        used = set()
+        for command, subcommand in _CLI.findall(shipped):
+            if command.startswith("--"):
+                continue
+            used.add(f"{command} {subcommand}".strip() if subcommand else command)
+        # A group named on its own (`datalayer contents sharing`) is a command
+        # too: it prints its own help.
+        unknown = {
+            name
+            for name in used
+            if name not in available and name.split(" ")[0] not in available
+        }
+        unknown.discard("--help")
+        if unknown:
+            missing[page.name] = unknown
+    assert not missing, f"documented commands that do not exist: {missing}"
+
+
+@pytest.mark.skipif(not DOCS.exists(), reason="the web repository is not checked out")
+def test_every_documented_client_call_exists() -> None:
+    missing: dict[str, set[str]] = {}
+    for page in pages():
+        shipped, _planned = shipped_and_planned(page)
+        unknown = {
+            name for name in _FACADE.findall(shipped) if not hasattr(Contents, name)
+        }
+        unknown |= {
+            name for name in _FOLDER.findall(shipped) if not hasattr(HomeFolder, name)
+        }
+        if unknown:
+            missing[page.name] = unknown
+    assert not missing, f"documented calls that do not exist: {missing}"
+
+
+@pytest.mark.skipif(not DOCS.exists(), reason="the web repository is not checked out")
+def test_a_planned_example_that_has_landed_is_no_longer_planned() -> None:
+    """The marker is a promise too, and it expires.
+
+    A block kept as `planned` after the thing shipped tells a reader it is not
+    available when it is, which is the same failure the other way round.
+    """
+    arrived: dict[str, set[str]] = {}
+    for page in pages():
+        _shipped, planned = shipped_and_planned(page)
+        landed = {name for name in _FACADE.findall(planned) if hasattr(Contents, name)}
+        if landed:
+            arrived[page.name] = landed
+    assert not arrived, f"planned examples that now work: {arrived}"

@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 import { Button, IconButton } from '@primer/react';
 import { UploadIcon } from '@primer/octicons-react';

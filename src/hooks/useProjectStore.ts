@@ -17,8 +17,8 @@ import type { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 export type ProjectRuntimeEntry = {
   /** The Jupyter session connection (notebook ↔ kernel bridge). */
   sessionConnection?: Session.ISessionConnection;
-  /** The assigned agent pod name (mirrors project.attachedAgentPodName). */
-  agentPodName?: string;
+  /** The assigned agent pod name (mirrors project.attachedAgentRuntimeName). */
+  agentRuntimeName?: string;
   /** Display name of the assigned agent. */
   agentName?: string;
   /** Agent runtime status (running, starting, terminated, etc.). */
@@ -48,7 +48,7 @@ export type ProjectStoreState = {
   /** Set the assigned agent info for a project. */
   setAgent: (
     projectId: string,
-    agentPodName: string | undefined,
+    agentRuntimeName: string | undefined,
     agentName?: string,
     agentStatus?: string,
     agentSpecId?: string,
@@ -101,22 +101,22 @@ export const useProjectStore = create<ProjectStoreState>()((set, get) => ({
       },
     })),
 
-  setAgent: (projectId, agentPodName, agentName, agentStatus, agentSpecId) =>
+  setAgent: (projectId, agentRuntimeName, agentName, agentStatus, agentSpecId) =>
     set(state => ({
       projects: {
         ...state.projects,
         [projectId]: {
           ...state.projects[projectId],
-          agentPodName,
+          agentRuntimeName,
           agentName,
           // When removing the agent, also clear the status.
           // When setting, use provided status or preserve existing.
           agentStatus:
-            agentPodName !== undefined
+            agentRuntimeName !== undefined
               ? (agentStatus ?? state.projects[projectId]?.agentStatus)
               : undefined,
           agentSpecId:
-            agentPodName !== undefined
+            agentRuntimeName !== undefined
               ? (agentSpecId ?? state.projects[projectId]?.agentSpecId)
               : undefined,
         },
