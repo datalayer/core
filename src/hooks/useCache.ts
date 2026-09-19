@@ -7773,13 +7773,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Search public items (notebooks, documents, etc.)
    */
   /**
-   * Every artifact type the library holds. One list, so a caller that wants
-   * "everything" cannot accidentally ask for the six types someone wrote out
-   * by hand two releases ago.
+   * Every artifact type a library card is drawn for. One list, so a caller
+   * that wants "everything" cannot accidentally ask for the six types someone
+   * wrote out by hand two releases ago.
+   *
+   * `deck` is here because the administration page's "not in the ribbon" list
+   * asks for this default: without it a published deck was in the library and
+   * could be found by searching, but was never offered to be featured.
    */
   const LIBRARY_ARTIFACT_TYPES = [
     'notebook',
     'document',
+    'deck',
     'cell',
     'lesson',
     'exercise',
