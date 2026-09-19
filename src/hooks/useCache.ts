@@ -1158,6 +1158,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
+  /**
+   * A card of the site's own in the featured ribbon — the run the home page is
+   * written about, say. The library knows its name and whether it is
+   * featured; what it draws and where it leads are in the application's build,
+   * keyed by `cardId`.
+   */
+  const toSiteCard = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'sitecard',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      cardId: String(raw.uid || '').replace(/^sitecard:/, ''),
+      publisher: raw.publisher_s || 'datalayer',
+    };
+  };
+
   const toItemOwner = (raw: any): IUser => {
     const uid = String(
       raw?.creator_uid_s ??
@@ -1663,6 +1682,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toInvestigation(item);
       case 'evaluator':
         return toEvaluator(item);
+      case 'sitecard':
+        return toSiteCard(item);
       default:
         return {};
     }
