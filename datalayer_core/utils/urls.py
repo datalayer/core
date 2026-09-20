@@ -34,7 +34,7 @@ DEFAULT_DATALAYER_AI_AGENTS_URL = "https://r1.datalayer.run"
 
 DEFAULT_DATALAYER_AI_INFERENCE_URL = "https://r1.datalayer.run"
 
-DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL = "https://mcp.datalayer.run/mcp"
+DEFAULT_DATALAYER_MCP_SERVER_URL = "https://mcp.datalayer.run/mcp"
 
 DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_SERVICE_URL
 
@@ -180,8 +180,8 @@ class DatalayerURLs:
             then fallback to DEFAULT_DATALAYER_SUPPORT_URL.
         jupyter_mcp_server_url : Optional[str]
             Override for the Jupyter MCP Server URL. If None, will check
-            DATALAYER_JUPYTER_MCP_SERVER_URL, then fallback to
-            DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL.
+            DATALAYER_MCP_SERVER_URL, then fallback to
+            DEFAULT_DATALAYER_MCP_SERVER_URL.
         scheduler_url : Optional[str]
             Override for the scheduler URL. If None, will check DATALAYER_SCHEDULER_URL env var
             then fallback to DEFAULT_DATALAYER_SCHEDULER_URL.
@@ -290,8 +290,8 @@ class DatalayerURLs:
         )
         resolved_jupyter_mcp_server_url = (
             jupyter_mcp_server_url
-            or os.environ.get("DATALAYER_JUPYTER_MCP_SERVER_URL")
-            or DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL
+            or os.environ.get("DATALAYER_MCP_SERVER_URL")
+            or DEFAULT_DATALAYER_MCP_SERVER_URL
         )
         resolved_scheduler_url = (
             scheduler_url

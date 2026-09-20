@@ -63,7 +63,7 @@ def test_ai_and_mcp_services_default_to_the_runtimes_plane(
     monkeypatch.setenv("DATALAYER_IAM_URL", "https://iam.example")
     monkeypatch.delenv("DATALAYER_AI_AGENTS_URL", raising=False)
     monkeypatch.delenv("DATALAYER_AI_INFERENCE_URL", raising=False)
-    monkeypatch.delenv("DATALAYER_JUPYTER_MCP_SERVER_URL", raising=False)
+    monkeypatch.delenv("DATALAYER_MCP_SERVER_URL", raising=False)
 
     urls = DatalayerURLs.from_environment()
 

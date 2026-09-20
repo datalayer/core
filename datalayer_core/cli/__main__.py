@@ -143,7 +143,7 @@ def main_callback(
     jupyter_mcp_server_url: str | None = typer.Option(
         None,
         "--jupyter-mcp-server-url",
-        help="Override DATALAYER_JUPYTER_MCP_SERVER_URL for this CLI invocation.",
+        help="Override DATALAYER_MCP_SERVER_URL for this CLI invocation.",
     ),
     scheduler_url: str | None = typer.Option(
         None,
@@ -170,7 +170,7 @@ def main_callback(
         "DATALAYER_SUCCESS_URL": success_url,
         "DATALAYER_STATUS_URL": status_url,
         "DATALAYER_SUPPORT_URL": support_url,
-        "DATALAYER_JUPYTER_MCP_SERVER_URL": jupyter_mcp_server_url,
+        "DATALAYER_MCP_SERVER_URL": jupyter_mcp_server_url,
         "DATALAYER_SCHEDULER_URL": scheduler_url,
         "DATALAYER_CONTENTS_URL": contents_url,
     }

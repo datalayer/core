@@ -457,7 +457,7 @@ def test_jobs_names_the_replica_and_keeps_skipped_separate_from_failed() -> None
 
 
 def test_setup_writes_each_client_s_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DATALAYER_JUPYTER_MCP_SERVER_URL", "https://mcp.test/mcp")
+    monkeypatch.setenv("DATALAYER_MCP_SERVER_URL", "https://mcp.test/mcp")
     runner = CliRunner()
     written = runner.invoke(app, ["mcp", "setup", "cursor", "--path", str(tmp_path / "mcp.json"), "--scopes", "notebooks:read"])
     assert written.exit_code == 0, written.output
