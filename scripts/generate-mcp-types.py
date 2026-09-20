@@ -12,7 +12,7 @@ OpenAPI document, on the `generate-contents-types.py` pattern.
 The gateway keeps no contract file: its FastAPI application *is* the
 contract, and the document is read from it — imported from the sibling
 checkout of the service when there is one, otherwise fetched from a running
-gateway. `DATALAYER_JUPYTER_MCP_OPENAPI` names either a file or an URL and
+gateway. `DATALAYER_MCP_OPENAPI` names either a file or an URL and
 wins over both; the deployed gateway publishes its document without
 authentication at ``/api/mcp/v1/openapi.json``.
 
@@ -42,7 +42,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).parents[1]
 DEFAULT_GATEWAY_CHECKOUT = ROOT.parents[2] / "k8s/services/jupyter-mcp-server"
 DEFAULT_GATEWAY_OPENAPI_URL = "https://r1.datalayer.run/api/mcp/v1/openapi.json"
-GATEWAY_APP = "datalayer_jupyter_mcp_server.main:app"
+GATEWAY_APP = "datalayer_mcp_server.main:app"
 OUTPUT = ROOT / "src/api/mcp/generated.ts"
 #: The licence header every source file in this repository carries. It is
 #: emitted here because `fix-license-header` adds it to whatever this writes,
@@ -112,7 +112,7 @@ def _read_from_checkout(checkout: Path) -> dict[str, Any] | None:
     configuration — never leak into this one, and so an environment that
     cannot import it says so cleanly and the fetch takes over.
     """
-    if not (checkout / "datalayer_jupyter_mcp_server").is_dir():
+    if not (checkout / "datalayer_mcp_server").is_dir():
         return None
     module, _, attribute = GATEWAY_APP.partition(":")
     code = (
@@ -143,7 +143,7 @@ def _read_from_url(url: str) -> dict[str, Any]:
 
 def read_openapi() -> dict[str, Any]:
     """The document, from the override, the sibling checkout or the deployed gateway."""
-    override = os.environ.get("DATALAYER_JUPYTER_MCP_OPENAPI", "").strip()
+    override = os.environ.get("DATALAYER_MCP_OPENAPI", "").strip()
     if override.startswith(("http://", "https://")):
         return _read_from_url(override)
     if override:
