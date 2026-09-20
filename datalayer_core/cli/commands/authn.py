@@ -456,7 +456,7 @@ def whoami(
                 ("DATALAYER_SUPPORT_URL", urls.support_url),
                 (
                     "DATALAYER_MCP_SERVER_URL",
-                    urls.jupyter_mcp_server_url,
+                    urls.datalayer_mcp_server_url,
                 ),
                 ("DATALAYER_SCHEDULER_URL", urls.scheduler_url),
             ]
@@ -502,7 +502,7 @@ def whoami(
                     ("DATALAYER_SUPPORT_URL", urls.support_url),
                     (
                         "DATALAYER_MCP_SERVER_URL",
-                        urls.jupyter_mcp_server_url,
+                        urls.datalayer_mcp_server_url,
                     ),
                     ("DATALAYER_SCHEDULER_URL", urls.scheduler_url),
                 ]

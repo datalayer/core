@@ -640,7 +640,7 @@ class Mcp:
         path: Path | None = None,
         server_name: str = "datalayer",
     ) -> Path:
-        endpoint = mcp_endpoint_url(url or self.client.urls.jupyter_mcp_server_url, scopes)
+        endpoint = mcp_endpoint_url(url or self.client.urls.datalayer_mcp_server_url, scopes)
         return write_client_configuration(client, endpoint, path=path, server_name=server_name)
 
 

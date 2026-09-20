@@ -55,7 +55,7 @@ class Client(McpMixin):
         self.urls = DatalayerURLs.from_environment(
             iam_url="https://iam.test",
             otel_url="https://otel.test",
-            jupyter_mcp_server_url="https://mcp.test/mcp",
+            datalayer_mcp_server_url="https://mcp.test/mcp",
         )
         self.calls: list[tuple[str, dict[str, Any]]] = []
         self.responses: list[Response] = []

@@ -88,7 +88,7 @@ export type IDatalayerCoreConfig = {
   /**
    * Jupyter MCP Server URL.
    */
-  jupyterMcpServerUrl: string;
+  datalayerMcpServerUrl: string;
   /**
    * OTEL (OpenTelemetry) API URL.
    *

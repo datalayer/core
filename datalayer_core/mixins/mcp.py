@@ -61,11 +61,11 @@ class McpMixin:
     """Authenticated transport for the gateway, IAM's grants and the OTEL service."""
 
     def _mcp_url(self, path: str = "", **parameters: Any) -> str:
-        origin = mcp_gateway_origin(self.urls.jupyter_mcp_server_url)  # type: ignore[attr-defined]
+        origin = mcp_gateway_origin(self.urls.datalayer_mcp_server_url)  # type: ignore[attr-defined]
         return f"{origin}/api/mcp/v1{path}{_query(parameters)}"
 
     def _mcp_service_url(self, path: str) -> str:
-        origin = mcp_gateway_origin(self.urls.jupyter_mcp_server_url)  # type: ignore[attr-defined]
+        origin = mcp_gateway_origin(self.urls.datalayer_mcp_server_url)  # type: ignore[attr-defined]
         return f"{origin}/api/mcp{path}"
 
     def _iam_url(self, path: str = "") -> str:

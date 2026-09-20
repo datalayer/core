@@ -69,4 +69,4 @@ def test_ai_and_mcp_services_default_to_the_runtimes_plane(
 
     assert urls.ai_agents_url == "https://r1.datalayer.run"
     assert urls.ai_inference_url == "https://r1.datalayer.run"
-    assert urls.jupyter_mcp_server_url == "https://mcp.datalayer.run/mcp"
+    assert urls.datalayer_mcp_server_url == "https://mcp.datalayer.run/mcp"

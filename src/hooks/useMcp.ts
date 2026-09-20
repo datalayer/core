@@ -145,7 +145,7 @@ import { useCoreStore, useIAMStore } from '../state';
 import { queryKeys } from './useCache';
 
 const useMcpServerUrl = () =>
-  useCoreStore(state => state.configuration.jupyterMcpServerUrl);
+  useCoreStore(state => state.configuration.datalayerMcpServerUrl);
 
 const useIamUrl = () => useCoreStore(state => state.configuration.iamUrl);
 

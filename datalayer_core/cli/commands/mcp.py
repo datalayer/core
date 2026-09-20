@@ -1154,7 +1154,7 @@ def setup(
     if client not in MCP_CLIENTS:
         raise McpCommandError(f"Unknown client '{client}'. Choose one of: {', '.join(MCP_CLIENT_IDS)}")
     setup_of = MCP_CLIENTS[client]
-    endpoint_base = url or _urls().jupyter_mcp_server_url
+    endpoint_base = url or _urls().datalayer_mcp_server_url
     endpoint = mcp_endpoint_url(endpoint_base, scopes.split(",") if scopes else None)
     target = path or default_config_path(client)
     if print_only:

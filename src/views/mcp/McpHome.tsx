@@ -225,7 +225,7 @@ export const McpHome = ({
 }: McpHomeProps): JSX.Element => {
   const navigate = useNavigate();
   const endpoint = useCoreStore(
-    state => state.configuration.jupyterMcpServerUrl,
+    state => state.configuration.datalayerMcpServerUrl,
   );
   // Whether there is a token, never what it is: this page shows an address
   // and a status, and a credential belongs on neither.
