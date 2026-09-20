@@ -44,8 +44,15 @@ import type { McpTask } from '../../models/McpTask';
  */
 export const MCP_GATEWAY_SERVICE_NAME = 'jupyter-mcp-server';
 
-/** The `service.name` a worker's relayed output is filed under. */
-export const MCP_WORKER_SERVICE_NAME = 'jupyter-mcp-worker';
+/**
+ * The `service.name` a worker's relayed output is filed under.
+ *
+ * `mcp-worker` since the service was renamed to `datalayer-mcp-server`: the
+ * gateway names its workers, and a name carrying `jupyter` said the wrong
+ * thing about a process that serves Datalayer sandboxes as readily as a
+ * Jupyter server.
+ */
+export const MCP_WORKER_SERVICE_NAME = 'mcp-worker';
 
 /**
  * The `service.name` the durable execution service exports under.
@@ -164,25 +171,37 @@ export interface McpMetricsSnapshot {
 }
 
 /** The nearest-rank percentile of a sample; `null` for an empty one. */
-export const percentile = (values: number[], fraction: number): number | null => {
+export const percentile = (
+  values: number[],
+  fraction: number,
+): number | null => {
   if (values.length === 0) {
     return null;
   }
   const sorted = [...values].sort((a, b) => a - b);
-  const rank = Math.min(sorted.length - 1, Math.max(0, Math.ceil(fraction * sorted.length) - 1));
+  const rank = Math.min(
+    sorted.length - 1,
+    Math.max(0, Math.ceil(fraction * sorted.length) - 1),
+  );
   return sorted[rank];
 };
 
-const attribute = (holder: { attributes?: Record<string, unknown> }, name: string): string =>
-  String(holder.attributes?.[name] ?? '');
+const attribute = (
+  holder: { attributes?: Record<string, unknown> },
+  name: string,
+): string => String(holder.attributes?.[name] ?? '');
 
 const notBefore = (timestamp: string | undefined, since?: string): boolean =>
   !since || !timestamp || timestamp >= since;
 
 /** Whether an `mcp.request` span is a failed call in the availability sense. */
 const isUnavailable = (span: OtelSpan): boolean => {
-  const status = attribute(span, 'http.response.status_code') || attribute(span, 'http.status_code');
-  const rpc = attribute(span, 'rpc.jsonrpc.error_code') || attribute(span, 'mcp.error.code');
+  const status =
+    attribute(span, 'http.response.status_code') ||
+    attribute(span, 'http.status_code');
+  const rpc =
+    attribute(span, 'rpc.jsonrpc.error_code') ||
+    attribute(span, 'mcp.error.code');
   return status.startsWith('5') || rpc === '-32001';
 };
 
@@ -209,16 +228,19 @@ export const summarizeServiceLevels = (data: DashboardData): McpSliSummary => {
   const totalCalls = total(calls);
   const failedCalls = (calls.error ?? 0) + (calls.unavailable ?? 0);
   const tasks = byLabel(MCP_SERVICE_LEVEL_PANELS.tasksByStatus);
-  const terminal = TERMINAL_STATUSES.reduce((sum, status) => sum + (tasks[status] ?? 0), 0);
+  const terminal = TERMINAL_STATUSES.reduce(
+    (sum, status) => sum + (tasks[status] ?? 0),
+    0,
+  );
   const p95Seconds = byLabel(MCP_SERVICE_LEVEL_PANELS.callDurationP95)[''];
   const p95SandboxLaunchSeconds = Object.fromEntries(
-    Object.entries(byLabel(MCP_SERVICE_LEVEL_PANELS.sandboxLaunchP95)).map(([provider, seconds]) => [
-      provider || 'unknown',
-      seconds,
-    ]),
+    Object.entries(byLabel(MCP_SERVICE_LEVEL_PANELS.sandboxLaunchP95)).map(
+      ([provider, seconds]) => [provider || 'unknown', seconds],
+    ),
   );
   return {
-    availability: totalCalls > 0 ? (totalCalls - failedCalls) / totalCalls : null,
+    availability:
+      totalCalls > 0 ? (totalCalls - failedCalls) / totalCalls : null,
     p95CallDurationMs: p95Seconds === undefined ? null : p95Seconds * 1000,
     taskSuccessRate: terminal > 0 ? (tasks.completed ?? 0) / terminal : null,
     p95SandboxLaunchSeconds,
@@ -250,7 +272,10 @@ export const summarizeRequestSpans = (
   for (const span of selected) {
     const taskId = attribute(span, 'mcp.task.id');
     if (taskId) {
-      tasks.set(taskId, attribute(span, 'mcp.task.status') || span.status_code || '');
+      tasks.set(
+        taskId,
+        attribute(span, 'mcp.task.status') || span.status_code || '',
+      );
     }
   }
   const terminal = [...tasks.values()].filter(status =>
@@ -258,9 +283,14 @@ export const summarizeRequestSpans = (
   );
   const completed = terminal.filter(status => status === 'completed').length;
   return {
-    availability: selected.length > 0 ? (selected.length - unavailable) / selected.length : null,
+    availability:
+      selected.length > 0
+        ? (selected.length - unavailable) / selected.length
+        : null,
     p95CallDurationMs: percentile(
-      selected.filter(span => !attribute(span, 'mcp.task.id')).map(span => span.duration_ms),
+      selected
+        .filter(span => !attribute(span, 'mcp.task.id'))
+        .map(span => span.duration_ms),
       0.95,
     ),
     taskSuccessRate: terminal.length > 0 ? completed / terminal.length : null,
@@ -287,7 +317,13 @@ export const fetchMcpMetrics = async (
           otelUrl,
         ),
     listMetricNames(token, otelUrl),
-    scoped ? listTraces(token, { serviceName: MCP_GATEWAY_SERVICE_NAME, limit }, otelUrl) : undefined,
+    scoped
+      ? listTraces(
+          token,
+          { serviceName: MCP_GATEWAY_SERVICE_NAME, limit },
+          otelUrl,
+        )
+      : undefined,
   ]);
   const reported = new Set((names.data ?? []).map(row => row.metric_name));
   const spans = traces?.data ?? [];
@@ -295,7 +331,9 @@ export const fetchMcpMetrics = async (
     filters,
     reporting: MCP_METRIC_CATALOG.filter(name => reported.has(name)),
     spans,
-    slis: levels ? summarizeServiceLevels(levels) : summarizeRequestSpans(spans, filters),
+    slis: levels
+      ? summarizeServiceLevels(levels)
+      : summarizeRequestSpans(spans, filters),
     readAt: new Date().toISOString(),
   };
 };
@@ -314,10 +352,13 @@ export const spanTree = (spans: OtelSpan[]): McpSpanNode[] => {
   }
   const roots: McpSpanNode[] = [];
   for (const node of nodes.values()) {
-    const parent = node.span.parent_span_id ? nodes.get(node.span.parent_span_id) : undefined;
+    const parent = node.span.parent_span_id
+      ? nodes.get(node.span.parent_span_id)
+      : undefined;
     (parent ? parent.children : roots).push(node);
   }
-  const byStart = (a: McpSpanNode, b: McpSpanNode) => a.span.start_time.localeCompare(b.span.start_time);
+  const byStart = (a: McpSpanNode, b: McpSpanNode) =>
+    a.span.start_time.localeCompare(b.span.start_time);
   const sort = (list: McpSpanNode[]) => {
     list.sort(byStart);
     list.forEach(node => sort(node.children));
@@ -344,7 +385,12 @@ export const fetchRunTrace = async (
   }
   const trace = await getTrace(token, task.traceId, otelUrl);
   const spans = trace.data ?? [];
-  return { taskUid: task.uid, traceId: task.traceId, spans, tree: spanTree(spans) };
+  return {
+    taskUid: task.uid,
+    traceId: task.traceId,
+    spans,
+    tree: spanTree(spans),
+  };
 };
 
 /**
@@ -385,7 +431,11 @@ export const fetchMcpLogs = async (
   }
   const page = await queryLogs(
     token,
-    { traceId: task.traceId, limit: options.limit ?? 200, severity: options.severity },
+    {
+      traceId: task.traceId,
+      limit: options.limit ?? 200,
+      severity: options.severity,
+    },
     otelUrl,
   );
   return { taskUid: task.uid, traceId: task.traceId, records: page.data ?? [] };
