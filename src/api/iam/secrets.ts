@@ -49,7 +49,6 @@ export const createSecret = async (
   validateRequiredString(data.name, 'Secret name');
   validateRequiredString(data.value, 'Secret value');
 
-  // Base64 encode the value before sending to API
   const requestBody = {
     variant: data.variant || 'generic',
     name: data.name,
@@ -169,7 +168,7 @@ export const updateSecret = async (
   validateToken(token);
   validateRequiredString(secretId, 'Secret ID');
 
-  // Base64 encode value if provided
+  // Secret values are opaque. Send exactly what the owner supplied.
   const requestBody: any = { ...data };
   if (data.value) {
     requestBody.value = data.value;

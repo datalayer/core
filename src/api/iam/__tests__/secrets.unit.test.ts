@@ -31,7 +31,7 @@ describe('Secrets API', () => {
           variant_s: 'password',
           name_s: 'test_secret',
           description_t: 'Test secret',
-          value_s: 'YmFzZTY0X2VuY29kZWQ=', // base64 for "base64_encoded"
+          value_s: 'plain_text_value',
         },
       };
       vi.mocked(requestDatalayerAPI).mockResolvedValue(mockResponse);
@@ -241,7 +241,7 @@ describe('Secrets API', () => {
       expect(result.secret.description_t).toBe('Updated description');
     });
 
-    it('should encode value if provided in update', async () => {
+    it('sends an updated value exactly as supplied', async () => {
       const mockResponse = {
         success: true,
         message: 'Secret updated',
@@ -250,19 +250,20 @@ describe('Secrets API', () => {
           variant_s: 'password',
           name_s: 'test',
           description_t: 'desc',
-          value_s: 'encoded',
+          value_s: 'dGhpcyBpcyBiYXNlNjQ=',
         },
       };
       vi.mocked(requestDatalayerAPI).mockResolvedValue(mockResponse);
 
       await secretsAPI.updateSecret(MOCK_JWT_TOKEN, 'secret-123', {
-        value: 'new_plain_value',
+        // A valid base64 string is still an opaque literal secret value.
+        value: 'dGhpcyBpcyBiYXNlNjQ=',
       });
 
       expect(requestDatalayerAPI).toHaveBeenCalledWith(
         expect.objectContaining({
           body: expect.objectContaining({
-            value: expect.any(String),
+            value: 'dGhpcyBpcyBiYXNlNjQ=',
           }),
         }),
       );
