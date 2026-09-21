@@ -222,6 +222,19 @@ class DatalayerClient(
             )
         return res
 
+    def get_secret_value(self, name: str) -> str:
+        """Return one secret value by name exactly as its owner stored it.
+
+        This deliberately requires a name: the values endpoint is keyed by
+        environment-variable name, while secret UIDs are metadata identifiers.
+        CLI callers may resolve a UID through :meth:`list_secrets` first.
+        """
+        raw = self._get_secret_values()
+        values = raw.get("secrets", {})
+        if not isinstance(values, dict) or name not in values:
+            raise ValueError(f"No secret is named '{name}'.")
+        return str(values[name])
+
     def create_secret(
         self,
         name: str,
@@ -370,7 +383,9 @@ class DatalayerClient(
             notebook for space in self.list_spaces() for notebook in space.notebooks()
         ]
 
-    def list_notebook_versions(self, notebook: Union[str, ItemModel]) -> list[dict[str, Any]]:
+    def list_notebook_versions(
+        self, notebook: Union[str, ItemModel]
+    ) -> list[dict[str, Any]]:
         """
         List a notebook's kept versions, newest first.
 
@@ -393,7 +408,9 @@ class DatalayerClient(
             return list(response.get("versions") or [])
         return []
 
-    def snapshot_notebook(self, notebook: Union[str, ItemModel], message: str = "") -> dict[str, Any]:
+    def snapshot_notebook(
+        self, notebook: Union[str, ItemModel], message: str = ""
+    ) -> dict[str, Any]:
         """
         Keep a notebook as it is now, as a version to restore later.
 
@@ -417,10 +434,18 @@ class DatalayerClient(
         uid = notebook.uid if isinstance(notebook, ItemModel) else notebook
         response = self._snapshot_notebook(uid, message)
         if not response.get("success"):
-            raise RuntimeError(str(response.get("message") or response.get("detail") or "the version was not kept"))
+            raise RuntimeError(
+                str(
+                    response.get("message")
+                    or response.get("detail")
+                    or "the version was not kept"
+                )
+            )
         return dict(response.get("version") or {})
 
-    def restore_notebook_version(self, notebook: Union[str, ItemModel], version_uid: str) -> dict[str, Any]:
+    def restore_notebook_version(
+        self, notebook: Union[str, ItemModel], version_uid: str
+    ) -> dict[str, Any]:
         """
         Make a kept version the notebook's current content.
 
@@ -448,8 +473,17 @@ class DatalayerClient(
         uid = notebook.uid if isinstance(notebook, ItemModel) else notebook
         response = self._restore_notebook_version(uid, version_uid)
         if not response.get("success"):
-            raise RuntimeError(str(response.get("message") or response.get("detail") or "the version was not restored"))
-        return {"restored": response.get("restored") or {}, "kept": response.get("kept") or {}}
+            raise RuntimeError(
+                str(
+                    response.get("message")
+                    or response.get("detail")
+                    or "the version was not restored"
+                )
+            )
+        return {
+            "restored": response.get("restored") or {},
+            "kept": response.get("kept") or {},
+        }
 
     #: The three sharing levels, nested: each includes the ones before it.
     SHARING_LEVELS = ("view", "update", "execute")
@@ -478,7 +512,13 @@ class DatalayerClient(
         """
         response = self._runtime_sharing(runtime_name)
         if not response.get("success"):
-            raise RuntimeError(str(response.get("message") or response.get("detail") or "the sharing could not be read"))
+            raise RuntimeError(
+                str(
+                    response.get("message")
+                    or response.get("detail")
+                    or "the sharing could not be read"
+                )
+            )
         return dict(response.get("sharing") or {})
 
     def share_runtime(
@@ -506,14 +546,33 @@ class DatalayerClient(
             The sharing as Runtimes holds it afterwards.
         """
         if level not in self.SHARING_LEVELS:
-            raise ValueError(f"'{level}' is not a level; the levels are {', '.join(self.SHARING_LEVELS)}")
-        wanted = {"userUids": users or [], "teamUids": teams or [], "organizationUids": organizations or [], "agentUids": agents or []}
+            raise ValueError(
+                f"'{level}' is not a level; the levels are {', '.join(self.SHARING_LEVELS)}"
+            )
+        wanted = {
+            "userUids": users or [],
+            "teamUids": teams or [],
+            "organizationUids": organizations or [],
+            "agentUids": agents or [],
+        }
         if not replace:
-            held = (self.runtime_sharing(runtime_name).get("access") or {}).get(level) or {}
-            wanted = {kind: list(held.get(kind) or []) + [v for v in values if v not in (held.get(kind) or [])] for kind, values in wanted.items()}
+            held = (self.runtime_sharing(runtime_name).get("access") or {}).get(
+                level
+            ) or {}
+            wanted = {
+                kind: list(held.get(kind) or [])
+                + [v for v in values if v not in (held.get(kind) or [])]
+                for kind, values in wanted.items()
+            }
         response = self._share_runtime(runtime_name, {level: wanted})
         if not response.get("success"):
-            raise RuntimeError(str(response.get("message") or response.get("detail") or "the runtime was not shared"))
+            raise RuntimeError(
+                str(
+                    response.get("message")
+                    or response.get("detail")
+                    or "the runtime was not shared"
+                )
+            )
         return dict(response.get("sharing") or {})
 
     def unshare_runtime(
@@ -535,20 +594,37 @@ class DatalayerClient(
         levels = self.SHARING_LEVELS if level == "all" else (level,)
         for one in levels:
             if one not in self.SHARING_LEVELS:
-                raise ValueError(f"'{level}' is not a level; the levels are {', '.join(self.SHARING_LEVELS)}")
-        asked = {"userUids": users or [], "teamUids": teams or [], "organizationUids": organizations or [], "agentUids": agents or []}
+                raise ValueError(
+                    f"'{level}' is not a level; the levels are {', '.join(self.SHARING_LEVELS)}"
+                )
+        asked = {
+            "userUids": users or [],
+            "teamUids": teams or [],
+            "organizationUids": organizations or [],
+            "agentUids": agents or [],
+        }
         nobody_named = not any(asked.values())
         held = self.runtime_sharing(runtime_name).get("access") or {}
         access: dict[str, Any] = {}
         for one in levels:
             at_level = dict(held.get(one) or {})
             access[one] = {
-                kind: ([] if nobody_named else [v for v in (at_level.get(kind) or []) if v not in asked[kind]])
+                kind: (
+                    []
+                    if nobody_named
+                    else [v for v in (at_level.get(kind) or []) if v not in asked[kind]]
+                )
                 for kind in asked
             }
         response = self._share_runtime(runtime_name, access)
         if not response.get("success"):
-            raise RuntimeError(str(response.get("message") or response.get("detail") or "the runtime was not unshared"))
+            raise RuntimeError(
+                str(
+                    response.get("message")
+                    or response.get("detail")
+                    or "the runtime was not unshared"
+                )
+            )
         return dict(response.get("sharing") or {})
 
     def runtime_permissions(self, runtime_name: str) -> dict[str, Any]:
@@ -560,7 +636,13 @@ class DatalayerClient(
         """
         response = self._runtime_permissions(runtime_name)
         if not response.get("success"):
-            raise RuntimeError(str(response.get("message") or response.get("detail") or "the permissions could not be read"))
+            raise RuntimeError(
+                str(
+                    response.get("message")
+                    or response.get("detail")
+                    or "the permissions could not be read"
+                )
+            )
         return dict(response.get("permissions") or {})
 
     def delete_api_key(self, api_key: Union[str, ApiKeyModel]) -> bool:

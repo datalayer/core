@@ -16,7 +16,7 @@ found 2026-09-17).
 from typing import Any
 from unittest.mock import MagicMock
 
-from datalayer_core.mixins.secrets import SecretsCreateMixin
+from datalayer_core.mixins.secrets import SecretsCreateMixin, SecretsValuesMixin
 
 
 class _Client(SecretsCreateMixin):
@@ -30,6 +30,21 @@ class _Client(SecretsCreateMixin):
         self.sent = {"url": url, "method": method, **kwargs}
         response = MagicMock()
         response.json.return_value = {"success": True}
+        return response
+
+
+class _ValuesClient(SecretsValuesMixin):
+    def __init__(self) -> None:
+        self.sent: dict[str, Any] = {}
+        self.urls = MagicMock(iam_url="https://iam.example")
+
+    def _fetch(self, url: str, method: str = "GET", **kwargs: Any) -> Any:
+        self.sent = {"url": url, "method": method, **kwargs}
+        response = MagicMock()
+        response.json.return_value = {
+            "success": True,
+            "secrets": {"DATALAYER_ODOO_URL": "https://example.odoo.com"},
+        }
         return response
 
 
@@ -67,3 +82,13 @@ def test_it_posts_to_the_secrets_route() -> None:
     client._create_secret(name="K", description="d", value="v", secret_type="generic")
     assert client.sent["url"] == "https://iam.example/api/iam/v1/secrets"
     assert client.sent["method"] == "POST"
+
+
+def test_values_are_read_from_the_values_route_without_transformation() -> None:
+    client = _ValuesClient()
+    answer = client._get_secret_values()
+    assert answer["secrets"] == {"DATALAYER_ODOO_URL": "https://example.odoo.com"}
+    assert client.sent == {
+        "url": "https://iam.example/api/iam/v1/secrets/values",
+        "method": "GET",
+    }

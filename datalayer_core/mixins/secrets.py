@@ -106,5 +106,22 @@ class SecretsListMixin:
             return {"sucess": False, "error": str(e)}
 
 
-class SecretsMixin(SecretsCreateMixin, SecretsDeleteMixin, SecretsListMixin):
+class SecretsValuesMixin:
+    """Mixin for reading the current user's secret values."""
+
+    def _get_secret_values(self) -> dict[str, Any]:
+        """Return secret values by name exactly as IAM stores them."""
+        try:
+            response = self._fetch(  # type: ignore
+                "{}/api/iam/v1/secrets/values".format(self.urls.iam_url),  # type: ignore
+                method="GET",
+            )
+            return response.json()
+        except RuntimeError as e:
+            return {"success": False, "error": str(e)}
+
+
+class SecretsMixin(
+    SecretsCreateMixin, SecretsDeleteMixin, SecretsListMixin, SecretsValuesMixin
+):
     """A mixin that combines create, delete, and list functionalities for secrets."""
