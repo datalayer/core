@@ -12,6 +12,7 @@ import {
   IUser,
   asUser,
   IIAMProviderName,
+  IBrowserTokenProviderName,
   IAMProvidersSpecs,
   IIAMResponseType,
 } from '../../models';
@@ -65,8 +66,7 @@ export type IIAMState = {
    * Mapping of IAM providers and the corresponding Authorization URL.
    */
   iamProvidersAuthorizationURL:
-    | Record<IIAMProviderName, IAMProviderAuthorizationURL>
-    | object;
+    Record<IIAMProviderName, IAMProviderAuthorizationURL> | object;
   /**
    * User authenticated to Datalayer.
    */
@@ -99,12 +99,12 @@ export type IAMState = IIAMState & {
   refreshCredits: () => Promise<void>;
   checkIAMToken: (token: string) => Promise<void>;
   setIAMProviderAccessToken: (
-    provider: IIAMProviderName,
+    provider: IBrowserTokenProviderName,
     accessToken?: string | null,
   ) => void;
   getIAMProviderAccessToken: (
     user: IUser,
-    provider: IIAMProviderName,
+    provider: IBrowserTokenProviderName,
   ) => string | undefined;
   refreshUser: () => Promise<void>;
   refreshUserByTokenStored: () => Promise<void>;
@@ -195,7 +195,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
       }
     },
     setIAMProviderAccessToken: (
-      provider: IIAMProviderName,
+      provider: IBrowserTokenProviderName,
       accessToken?: string | null,
     ) => {
       const { user } = get();
@@ -212,7 +212,10 @@ export const iamStore = createStore<IAMState>((set, get) => {
       }
     },
     // TODO passing the user as param for now, could/should be changed? If so, check the profile pages are still working on refresh...
-    getIAMProviderAccessToken: (user: IUser, provider: IIAMProviderName) => {
+    getIAMProviderAccessToken: (
+      user: IUser,
+      provider: IBrowserTokenProviderName,
+    ) => {
       const iamProvider = IAMProvidersSpecs.getProvider(provider);
       const cookieName = iamProvider.accessTokenCookieName(user);
       const accessToken = getCookie(cookieName);
@@ -371,8 +374,7 @@ iamStore
     console.error('Failed to refresh to validate the stored token.', reason);
   })
   .finally(() => {
-    const { externalToken, iamUrl, checkIAMToken, token } =
-      iamStore.getState();
+    const { externalToken, iamUrl, checkIAMToken, token } = iamStore.getState();
     // If the stored token is invalid and an external token exists, try authenticating with it.
     if (!token && externalToken) {
       console.debug(

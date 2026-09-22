@@ -1002,6 +1002,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
      * is no use to whoever the link is being copied for.
      */
     if (raw.publicUrl) meta.publicUrl = raw.publicUrl;
+    if (raw.shareCardUrl) meta.shareCardUrl = raw.shareCardUrl;
+    if (raw.shareCardVersion) meta.shareCardVersion = raw.shareCardVersion;
     return meta;
   };
 
@@ -8457,6 +8459,142 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
+  /** Publish a public artifact natively to LinkedIn through Library's saga. */
+  const usePublishLinkedInShare = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        commentary,
+        idempotencyKey,
+        imageDataUrl,
+        imageAltText,
+      }: {
+        itemId: string;
+        commentary: string;
+        idempotencyKey: string;
+        imageDataUrl?: string;
+        imageAltText?: string;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/shares/linkedin`,
+          method: 'POST',
+          headers: { 'Idempotency-Key': idempotencyKey },
+          body: { commentary, imageDataUrl, imageAltText },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to publish to LinkedIn');
+        }
+        return resp.share;
+      },
+    });
+  };
+
+  const useUnpublishLinkedInShare = () => {
+    return useMutation({
+      mutationFn: async (idempotencyKey: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/shares/linkedin/${encodeURIComponent(idempotencyKey)}`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to unpublish from LinkedIn');
+        }
+        return resp.share;
+      },
+    });
+  };
+
+  const useLinkedInShares = (itemId: string, enabled = true) => {
+    return useQuery({
+      queryKey: ['library', 'social-shares', 'linkedin', itemId],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/shares/linkedin`,
+          method: 'GET',
+          notifyOnError: false,
+        });
+        if (!resp.success) {
+          throw new Error(
+            resp.message || 'Failed to load LinkedIn publications',
+          );
+        }
+        return Array.isArray(resp.shares) ? resp.shares : [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: Boolean(configuration.libraryUrl) && Boolean(itemId) && enabled,
+    });
+  };
+
+  /** Publish one selected public result through the durable Bluesky saga. */
+  const usePublishBlueskyShare = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        finding,
+        cellId,
+        outputIndex,
+        idempotencyKey,
+        imageDataUrl,
+        imageAltText,
+      }: {
+        itemId: string;
+        finding: string;
+        cellId: string;
+        outputIndex: number;
+        idempotencyKey: string;
+        imageDataUrl: string;
+        imageAltText: string;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/shares/bluesky`,
+          method: 'POST',
+          headers: { 'Idempotency-Key': idempotencyKey },
+          body: { finding, cellId, outputIndex, imageDataUrl, imageAltText },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to publish to Bluesky');
+        }
+        return resp.share;
+      },
+    });
+  };
+
+  const useUnpublishBlueskyShare = () => {
+    return useMutation({
+      mutationFn: async (idempotencyKey: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/shares/bluesky/${encodeURIComponent(idempotencyKey)}`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to unpublish from Bluesky');
+        }
+        return resp.share;
+      },
+    });
+  };
+
+  const useBlueskyShares = (itemId: string, enabled = true) => {
+    return useQuery({
+      queryKey: ['library', 'social-shares', 'bluesky', itemId],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/shares/bluesky`,
+          method: 'GET',
+          notifyOnError: false,
+        });
+        if (!resp.success) {
+          throw new Error(
+            resp.message || 'Failed to load Bluesky publications',
+          );
+        }
+        return Array.isArray(resp.shares) ? resp.shares : [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: Boolean(configuration.libraryUrl) && Boolean(itemId) && enabled,
+    });
+  };
+
   /**
    * Tell the library that an artifact was reused: cloned into a space, or
    * instantiated as a runtime. The reuse itself belongs to the service that
@@ -8467,14 +8605,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async ({
         itemId,
         kind,
+        signupSource,
+        shareRef,
       }: {
         itemId: string;
         kind: 'clone' | 'instantiate';
+        signupSource?: 'copy' | 'linkedin' | 'x' | 'bluesky';
+        shareRef?: string;
       }) => {
         const resp = await requestDatalayer({
           url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/reused`,
           method: 'POST',
-          body: { kind },
+          body: {
+            kind,
+            ...(signupSource && shareRef ? { signupSource, shareRef } : {}),
+          },
         });
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to count the reuse');
@@ -8735,265 +8880,82 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
-  /**
-   * Get LinkedIn profile via proxy
-   */
+  /** Get the server-connected LinkedIn profile. */
   const useGetLinkedinProfile = () => {
     return useMutation({
-      mutationFn: async (accessToken: string) => {
+      mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
-          method: 'POST',
-          body: {
-            request_method: 'GET',
-            request_url: 'https://api.linkedin.com/v2/userinfo',
-            request_token: accessToken,
-          },
+          url: `${configuration.iamUrl}/api/iam/v1/social/linkedin/profile`,
+          method: 'GET',
         });
       },
     });
   };
 
-  /**
-   * Post LinkedIn share
-   */
+  /** Publish a LinkedIn text post through the server-held connection. */
   const usePostLinkedinShare = () => {
     return useMutation({
-      mutationFn: async ({
-        linkedinUserUrn,
-        postText,
-        accessToken,
-      }: {
-        linkedinUserUrn: string;
-        postText: string;
-        accessToken: string;
-      }) => {
-        const postShareRequest = {
-          author: linkedinUserUrn,
-          lifecycleState: 'PUBLISHED',
-          specificContent: {
-            'com.linkedin.ugc.ShareContent': {
-              shareCommentary: { text: postText },
-              shareMediaCategory: 'NONE',
-            },
-          },
-          visibility: {
-            'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-          },
-        };
-
+      mutationFn: async ({ postText }: { postText: string }) => {
         return requestDatalayer({
-          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/social/linkedin/posts`,
           method: 'POST',
-          body: {
-            request_method: 'POST',
-            request_url: 'https://api.linkedin.com/v2/ugcPosts',
-            request_token: accessToken,
-            request_body: postShareRequest,
-          },
+          body: { commentary: postText },
         });
       },
     });
   };
 
-  /**
-   * Post LinkedIn share with image upload
-   */
+  /** Publish a LinkedIn post, optionally with one uploaded image. */
   const usePostLinkedinShareWithUpload = () => {
     return useMutation({
       mutationFn: async ({
-        linkedinUserUrn,
         postText,
         uploadObject,
-        accessToken,
       }: {
-        linkedinUserUrn: string;
         postText: string;
         uploadObject?: string;
-        accessToken: string;
-      }) => {
-        let shareRequest: any;
-
-        if (uploadObject) {
-          // Step 1: Register upload
-          const registerUploadRequest = {
-            registerUploadRequest: {
-              recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-              owner: linkedinUserUrn,
-              serviceRelationships: [
-                {
-                  relationshipType: 'OWNER',
-                  identifier: 'urn:li:userGeneratedContent',
-                },
-              ],
-            },
-          };
-
-          const registerResp = await requestDatalayer({
-            url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
-            method: 'POST',
-            body: {
-              request_method: 'POST',
-              request_url:
-                'https://api.linkedin.com/v2/assets?action=registerUpload',
-              request_token: accessToken,
-              request_body: registerUploadRequest,
-            },
-          });
-
-          const asset = registerResp.response.value.asset;
-          const uploadUrl =
-            registerResp.response.value.uploadMechanism[
-              'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-            ].uploadUrl;
-
-          // Step 2: Upload image
-          await requestDatalayer({
-            url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
-            method: 'POST',
-            body: {
-              request_method: 'PUT',
-              request_url: uploadUrl,
-              request_token: accessToken,
-              request_body: {
-                uploadURL: uploadUrl,
-                content: uploadObject,
-                userURN: linkedinUserUrn,
-              },
-            },
-          });
-
-          // Step 3: Create share with media
-          shareRequest = {
-            author: linkedinUserUrn,
-            lifecycleState: 'PUBLISHED',
-            specificContent: {
-              'com.linkedin.ugc.ShareContent': {
-                shareCommentary: { text: postText },
-                shareMediaCategory: 'IMAGE',
-                media: [
-                  {
-                    status: 'READY',
-                    description: { text: 'Datalayer Notebook' },
-                    media: asset,
-                    title: { text: 'Datalayer Notebook' },
-                  },
-                ],
-              },
-            },
-            visibility: {
-              'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-            },
-          };
-        } else {
-          // Text-only share (no image upload)
-          shareRequest = {
-            author: linkedinUserUrn,
-            lifecycleState: 'PUBLISHED',
-            specificContent: {
-              'com.linkedin.ugc.ShareContent': {
-                shareCommentary: { text: postText },
-                shareMediaCategory: 'NONE',
-              },
-            },
-            visibility: {
-              'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-            },
-          };
-        }
-
-        return requestDatalayer({
-          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
-          method: 'POST',
-          body: {
-            request_method: 'POST',
-            request_url: 'https://api.linkedin.com/v2/ugcPosts',
-            request_token: accessToken,
-            request_body: shareRequest,
-          },
-        });
-      },
-    });
-  };
-
-  // ============================================================================
-  // Proxy Operations
-  // ============================================================================
-
-  /**
-   * Proxy GET request
-   */
-  const useProxyGET = () => {
-    return useMutation({
-      mutationFn: async ({ url, token }: { url: string; token: string }) => {
-        return requestDatalayer({
-          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
-          method: 'POST',
-          body: {
-            request_method: 'GET',
-            request_url: url,
-            request_token: token,
-          },
-        });
-      },
-    });
-  };
-
-  /**
-   * Proxy POST request
-   */
-  const useProxyPOST = () => {
-    return useMutation({
-      mutationFn: async ({
-        url,
-        body,
-        token,
-      }: {
-        url: string;
-        body: object;
-        token: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/social/linkedin/posts`,
           method: 'POST',
           body: {
-            request_method: 'POST',
-            request_url: url,
-            request_token: token,
-            request_body: body,
+            commentary: postText,
+            image_data_url: uploadObject,
           },
         });
       },
     });
   };
 
-  /**
-   * Proxy PUT request
-   */
-  const useProxyPUT = () => {
-    return useMutation({
-      mutationFn: async ({
-        url,
-        body,
-        token,
-      }: {
-        url: string;
-        body: object;
-        token: string;
-      }) => {
-        return requestDatalayer({
-          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
-          method: 'POST',
-          body: {
-            request_method: 'PUT',
-            request_url: url,
-            request_token: token,
-            request_body: body,
-          },
-        });
-      },
+  /** Connect-only AT Protocol account operations. */
+  const useGetBlueskyConnection = () =>
+    useMutation({
+      mutationFn: async () =>
+        requestDatalayer({
+          url: `${configuration.iamUrl}/api/iam/v1/social/bluesky/profile`,
+          method: 'GET',
+          notifyOnError: false,
+        }),
     });
-  };
+
+  const useConnectBluesky = () =>
+    useMutation({
+      mutationFn: async (identifier: string) =>
+        requestDatalayer({
+          url: `${configuration.iamUrl}/api/iam/v1/social/bluesky/connect`,
+          method: 'POST',
+          body: { identifier },
+        }),
+    });
+
+  const useDisconnectBluesky = () =>
+    useMutation({
+      mutationFn: async () =>
+        requestDatalayer({
+          url: `${configuration.iamUrl}/api/iam/v1/social/bluesky/connection`,
+          method: 'DELETE',
+        }),
+    });
 
   // ============================================================================
   // Waiting List & Growth
@@ -10315,12 +10277,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useGetLinkedinProfile,
     usePostLinkedinShare,
     usePostLinkedinShareWithUpload,
+    useGetBlueskyConnection,
+    useConnectBluesky,
+    useDisconnectBluesky,
+    usePublishLinkedInShare,
+    useUnpublishLinkedInShare,
+    useLinkedInShares,
+    usePublishBlueskyShare,
+    useUnpublishBlueskyShare,
+    useBlueskyShares,
     useRegisterToWaitingList,
-
-    // Proxy
-    useProxyGET,
-    useProxyPOST,
-    useProxyPUT,
 
     // Users
     useUser,
