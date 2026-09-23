@@ -155,7 +155,7 @@
         "diff": "^8.0.2",
         "echarts": "^5.5.0",
         "echarts-for-react": "^3.0.2",
-        "html2canvas": "^1.4.1",
+        "html-to-image": "^1.11.13",
         "jwt-decode": "^2.2.0",
         "localforage": "^1.10.0",
         "lucide-react": "^0.542.0",
