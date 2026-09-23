@@ -212,6 +212,26 @@ export function isRememberableRoute(route: string): boolean {
   ].some(prefix => path === prefix || path.startsWith(`${prefix}/`));
 }
 
+/**
+ * The shell a route belongs to, read off its first segment.
+ *
+ * The store used to trust whatever `view` said when a route was recorded,
+ * and `view` was only ever written by the header toggle. A reader who
+ * reached Home through a sidebar link while the toggle still said Agentify
+ * had their Home pages filed under Agentify — and the toggle, seeing
+ * "Agentify" already chosen, did nothing when they clicked it.
+ */
+export function viewForRoute(route: string): NavigationView {
+  const path = route.split('?')[0];
+  if (path === '/agentify' || path.startsWith('/agentify/')) {
+    return 'agentify';
+  }
+  if (path === '/admin' || path.startsWith('/admin/')) {
+    return 'admin';
+  }
+  return 'home';
+}
+
 const initial = restore();
 
 export const navigationStore = createStore<NavigationState>((set, get) => ({
@@ -232,17 +252,35 @@ export const navigationStore = createStore<NavigationState>((set, get) => ({
     if (!isRememberableRoute(route)) {
       return;
     }
-    const shell = view ?? get().view;
-    if (get().lastRouteByView[shell] === route) {
+    // The route says which shell it belongs to; the caller may only insist
+    // when it knows better. And being on a shell's page *is* being in that
+    // shell, so the view follows.
+    const shell = view ?? viewForRoute(route);
+    // Told which shell, the caller is filing a page away, not going there.
+    const follow = view === undefined;
+    const current = get();
+    if (
+      current.lastRouteByView[shell] === route &&
+      (!follow || current.view === shell)
+    ) {
       return;
     }
     set(state => ({
+      view: follow ? shell : state.view,
       lastRouteByView: { ...state.lastRouteByView, [shell]: route },
     }));
     persist(get());
   },
-  routeForView: view =>
-    get().lastRouteByView[view] ?? NAVIGATION_VIEW_HOMES[view],
+  routeForView: view => {
+    // Only a page of that shell: an earlier version filed pages under the
+    // shell the toggle named rather than the one the route belonged to, so a
+    // reader can still have `/items` written down as Agentify's page. Going
+    // "to Agentify" must never land on a Home page.
+    const remembered = get().lastRouteByView[view];
+    return remembered && viewForRoute(remembered) === view
+      ? remembered
+      : NAVIGATION_VIEW_HOMES[view];
+  },
   setViewTab: (view, tab) => {
     if (get().tabsByView[view] === tab) {
       return;

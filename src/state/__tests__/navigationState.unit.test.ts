@@ -21,6 +21,7 @@ import {
   NAVIGATION_VIEW_HOMES,
   isRememberableRoute,
   navigationStore,
+  viewForRoute,
 } from '../substates/NavigationState';
 
 describe('where each shell was left', () => {
@@ -59,6 +60,30 @@ describe('where each shell was left', () => {
       '/admin/users',
     );
     expect(navigationStore.getState().view).toBe('home');
+  });
+
+  it('files a page under the shell its route names, and moves the view there', () => {
+    // The toggle said Agentify; the reader went Home through a sidebar link.
+    navigationStore.getState().setView('agentify');
+    navigationStore.getState().rememberRoute('/items');
+    const state = navigationStore.getState();
+    expect(state.view).toBe('home');
+    expect(state.lastRouteByView.home).toBe('/items');
+    expect(state.lastRouteByView.agentify).toBeUndefined();
+    // So the toggle can take them to Agentify: it is not "already there".
+    expect(viewForRoute('/agentify/tutor?tab=home')).toBe('agentify');
+    expect(viewForRoute('/admin/users')).toBe('admin');
+    expect(viewForRoute('/agentifyx')).toBe('home');
+  });
+
+  it('never sends a shell to a page that is not its own', () => {
+    // What an earlier version could leave behind.
+    navigationStore.setState({
+      lastRouteByView: { agentify: '/items', home: '/agentify/tutor' },
+    });
+    const { routeForView } = navigationStore.getState();
+    expect(routeForView('agentify')).toBe('/agentify');
+    expect(routeForView('home')).toBe('/');
   });
 
   it('does not remember the doors: sign-in, OAuth callbacks, the documentation', () => {
