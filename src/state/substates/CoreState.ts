@@ -6,6 +6,7 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import type { IDatalayerCoreConfig } from '../../config/Configuration';
+import { DEFAULT_PLANE_URLS } from '../../config/planes';
 import { configLogger } from '../../utils/Logger';
 
 let loadConfigurationFromServer = true;
@@ -19,22 +20,8 @@ let initialConfiguration: IDatalayerCoreConfig = {
   whiteLabel: true,
   loadConfigurationFromServer: true,
   jupyterServerless: false,
-  iamUrl: 'https://prod1.datalayer.run',
-  contentsUrl: 'https://r1.datalayer.run',
-  managerUrl: 'https://prod1.datalayer.run',
-  runtimesUrl: 'https://r1.datalayer.run',
-  schedulerUrl: 'https://r1.datalayer.run',
-  libraryUrl: 'https://prod1.datalayer.run',
-  spacerUrl: 'https://prod1.datalayer.run',
-  aiAgentsUrl: 'https://r1.datalayer.run',
-  aiInferenceUrl: 'https://r1.datalayer.run',
-  datalayerMcpServerUrl: 'https://mcp.datalayer.run/mcp',
-  otelUrl: 'https://prod1.datalayer.run',
-  // Defaults to prod so telemetry is consumed from the production OTEL service
-  growthUrl: 'https://prod1.datalayer.run',
-  inboundsUrl: 'https://prod1.datalayer.run',
-  successUrl: 'https://prod1.datalayer.run',
-  supportUrl: 'https://prod1.datalayer.run',
+  // Which plane each service is on is said once, in `config/planes`.
+  ...DEFAULT_PLANE_URLS,
   launcher: {
     category: 'Datalayer',
     name: 'Datalayer',

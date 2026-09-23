@@ -8938,14 +8938,31 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }),
     });
 
+  /**
+   * Begin a Bluesky connection.
+   *
+   * `returnOrigin` is where the reader should come back to — their own origin,
+   * so a connection begun on a developer's machine does not end on
+   * production. IAM takes the origin only and builds the address itself, so
+   * this cannot ask to be sent anywhere.
+   */
   const useConnectBluesky = () =>
     useMutation({
-      mutationFn: async (identifier: string) =>
-        requestDatalayer({
+      mutationFn: async (
+        asked: string | { identifier: string; returnOrigin?: string },
+      ) => {
+        const { identifier, returnOrigin } =
+          typeof asked === 'string'
+            ? { identifier: asked, returnOrigin: undefined }
+            : asked;
+        return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/social/bluesky/connect`,
           method: 'POST',
-          body: { identifier },
-        }),
+          body: returnOrigin
+            ? { identifier, return_origin: returnOrigin }
+            : { identifier },
+        });
+      },
     });
 
   const useDisconnectBluesky = () =>

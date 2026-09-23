@@ -15,11 +15,18 @@
  * `window.open` otherwise, so a button gets it too. `newTab` in the options
  * opens a new tab outright.
  *
+ * Every navigation that stays in this tab is also **recorded** against the
+ * shell the reader is in ({@link state/substates/NavigationState}). That is
+ * what lets a reader switch from Agentify back to Home and find the page they
+ * left rather than a landing page, and it is done here — the one place every
+ * navigation goes through — rather than in an effect per layout.
+ *
  * @module hooks/useNavigate
  */
 
 import { useCallback, useMemo } from 'react';
 import { useLayoutStore } from '../state';
+import { navigationStore } from '../state/substates/NavigationState';
 import { createNativeNavigate } from '../navigation/adapters/native';
 // Import React Router hooks from our wrapper
 import { useNavigateRR } from '../navigation/adapters/react-router';
@@ -198,6 +205,10 @@ export const useNavigate = (): Navigate => {
         window.scrollTo(0, 0);
         document.body.scrollTop = 0;
       }
+
+      // Where the reader is now, for the shell they are in. A new tab and a
+      // step back through history are both already past by here.
+      navigationStore.getState().rememberRoute(to);
 
       if (rrNavigate) {
         rrNavigate(to, { replace: options.replace, state: options.state });

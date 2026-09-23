@@ -6,6 +6,7 @@
 export * from './CoreState';
 export * from './IAMState';
 export * from './LayoutState';
+export * from './NavigationState';
 export * from './ProfileState';
 export * from './OrganizationState';
 export * from './SurveysState';

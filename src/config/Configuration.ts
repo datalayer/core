@@ -5,6 +5,11 @@
 
 import { ISignal, Signal } from '@lumino/signaling';
 import { coreStore } from '../state';
+import {
+  CONTROL_PLANE_URL,
+  DEFAULT_PLANE_URLS,
+  RUNTIMES_PLANE_URL,
+} from './planes';
 
 export const FORCE_ACTIVATE_RUNTIMES_PLUGINS = false;
 
@@ -204,23 +209,22 @@ export class DatalayerConfiguration {
  * Default configuration values for Datalayer
  */
 /**
- * Where a service lives when nothing says otherwise.
+ * Where a service lives when nothing says otherwise: the control plane.
  *
- * Each service has a URL of its own — `iamUrl`, `runtimesUrl`, … — and this is
- * what each of them falls back to.
+ * Kept under its old name for the callers that have it; the table every
+ * service is read from is `DEFAULT_PLANE_URLS` in `config/planes`.
  */
-export const DEFAULT_DATALAYER_SERVICE_URL = 'https://prod1.datalayer.run';
+export const DEFAULT_DATALAYER_SERVICE_URL = CONTROL_PLANE_URL;
 
 /**
  * Where the Contents service lives when nothing says otherwise.
  *
  * Not the generic default: Contents runs on the runtimes plane, where the NFS that backs the Home Folder and Volumes lives.
  */
-export const DEFAULT_DATALAYER_CONTENTS_URL = 'https://r1.datalayer.run';
+export const DEFAULT_DATALAYER_CONTENTS_URL = RUNTIMES_PLANE_URL;
 
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
-  iamUrl: DEFAULT_DATALAYER_SERVICE_URL,
-  contentsUrl: DEFAULT_DATALAYER_CONTENTS_URL,
+  ...DEFAULT_PLANE_URLS,
   credits: 100,
   cpuEnvironment: 'ai-agents-env',
   gpuEnvironment: 'ai-env',
