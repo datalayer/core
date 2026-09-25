@@ -12,13 +12,13 @@ on:
     paths:
       - 'src/api/mcp/**'
       - 'scripts/generate-mcp-types.py'
-      - '.github/workflows/mcp-generated-types.yml'
+      - '.github/workflows/mcp-generated-types.yaml'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'src/api/mcp/**'
       - 'scripts/generate-mcp-types.py'
-      - '.github/workflows/mcp-generated-types.yml'
+      - '.github/workflows/mcp-generated-types.yaml'
   workflow_dispatch:
 
 permissions:

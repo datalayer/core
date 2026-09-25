@@ -9,7 +9,7 @@ on:
       - "datalayer_core/**"
       - "typedoc.json"
       - "pyproject.toml"
-      - ".github/workflows/docs.yml"
+      - ".github/workflows/docs.yaml"
   pull_request:
     branches: [main, develop]
     paths:
@@ -18,7 +18,7 @@ on:
       - "datalayer_core/**"
       - "typedoc.json"
       - "pyproject.toml"
-      - ".github/workflows/docs.yml"
+      - ".github/workflows/docs.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
