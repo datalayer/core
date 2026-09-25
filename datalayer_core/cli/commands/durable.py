@@ -5,8 +5,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The ``datalayer durable`` command group: `datalayer-durable`'s own workflow
-engine, for a platform administrator troubleshooting it directly (2026-09-13)::
+The ``datalayer durable`` command group.
+
+`datalayer-durable`'s own workflow engine, for a platform administrator
+troubleshooting it directly (2026-09-13)::
 
     datalayer durable list
     datalayer durable describe exec_123
@@ -51,6 +53,7 @@ app = typer.Typer(
 
 
 def _run_table(run: WorkflowRun) -> Table:
+    """Render one run as a two-column table."""
     table = Table(show_header=False, box=None)
     table.add_row("uid", run.uid)
     table.add_row("workflow", run.workflow)
@@ -63,6 +66,7 @@ def _run_table(run: WorkflowRun) -> Table:
 
 
 def _runs_table(runs: list[WorkflowRun]) -> Table:
+    """Render runs as a table, one row each."""
     table = Table()
     for column in ("uid", "workflow", "status", "task_uid", "queue"):
         table.add_column(column)
@@ -74,12 +78,20 @@ def _runs_table(runs: list[WorkflowRun]) -> Table:
 @app.command("list")
 @orchestration_command
 def list_workflows(
-    task_uid: Optional[str] = typer.Option(None, "--task-uid", help="Only runs under this task uid."),
-    limit: int = typer.Option(50, "--limit", help="At most this many, oldest open first."),
+    task_uid: Optional[str] = typer.Option(
+        None, "--task-uid", help="Only runs under this task uid."
+    ),
+    limit: int = typer.Option(
+        50, "--limit", help="At most this many, oldest open first."
+    ),
     output: OutputFormat = output_option(),
 ) -> None:
     """The open runs durable holds, or those of one task uid."""
-    runs = call(lambda: client().list_open_durable_workflows(task_uid=task_uid or "", limit=limit))
+    runs = call(
+        lambda: client().list_open_durable_workflows(
+            task_uid=task_uid or "", limit=limit
+        )
+    )
     if emit([run.__dict__ for run in runs], output):
         return
     if not runs:
@@ -91,13 +103,19 @@ def list_workflows(
 @app.command("describe")
 @orchestration_command
 def describe(
-    uid: str = typer.Argument(..., help="The workflow's own uid — a literal `task_uid`, not an execution id past its first attempt."),
+    uid: str = typer.Argument(
+        ...,
+        help="The workflow's own uid — a literal `task_uid`, not an execution id past its first attempt.",
+    ),
     output: OutputFormat = output_option(),
 ) -> None:
-    """One run, by its own uid. For an orchestration execution that may have
-    retried, `describe-execution` asks about its *current* attempt instead —
-    this only ever answers about the uid given, which for an execution means
-    attempt 1."""
+    """
+    One run, by its own uid.
+
+    For an orchestration execution that may have retried, `describe-execution` asks
+    about its *current* attempt instead — this only ever answers about the uid given,
+    which for an execution means attempt 1.
+    """
     run = call(lambda: client().describe_durable_workflow(uid))
     if run is None:
         console.print(f"No run {uid!r}.", style="red", markup=False, highlight=False)
@@ -111,16 +129,28 @@ def describe(
 @orchestration_command
 def describe_execution(
     execution_id: str = typer.Argument(..., help="The execution."),
-    account: str = typer.Option(..., "--account", help="The account the execution belongs to."),
+    account: str = typer.Option(
+        ..., "--account", help="The account the execution belongs to."
+    ),
     output: OutputFormat = output_option(),
 ) -> None:
-    """The run of an orchestration execution's *current* attempt — the one
-    durable route that is execution-aware rather than a literal workflow uid
-    (ORCHESTRATOR.md, O4-05). Not defaulted to your own account: a platform
-    administrator is as likely investigating someone else's."""
-    run = call(lambda: client().describe_durable_execution(execution_id, account_uid=account))
+    """
+    Describe the run of an orchestration execution's *current* attempt.
+
+    The one durable route that is execution-aware rather than a literal
+    workflow uid (ORCHESTRATOR.md, O4-05). Not defaulted to your own account:
+    a platform administrator is as likely investigating someone else's.
+    """
+    run = call(
+        lambda: client().describe_durable_execution(execution_id, account_uid=account)
+    )
     if run is None:
-        console.print(f"No run for execution {execution_id!r}.", style="red", markup=False, highlight=False)
+        console.print(
+            f"No run for execution {execution_id!r}.",
+            style="red",
+            markup=False,
+            highlight=False,
+        )
         raise typer.Exit(1)
     if emit(run.__dict__, output):
         return
@@ -130,17 +160,33 @@ def describe_execution(
 @app.command("start")
 @orchestration_command
 def start(
-    workflow: str = typer.Argument(..., help="The workflow's name, as durable's catalog knows it."),
-    task_uid: str = typer.Option(..., "--task-uid", help="Its identity — the same request twice answers the run that already exists."),
+    workflow: str = typer.Argument(
+        ..., help="The workflow's name, as durable's catalog knows it."
+    ),
+    task_uid: str = typer.Option(
+        ...,
+        "--task-uid",
+        help="Its identity — the same request twice answers the run that already exists.",
+    ),
     queue: str = typer.Option("", "--queue"),
-    arguments: Optional[str] = typer.Option(None, "--arguments", help="A JSON object, the workflow's own arguments."),
+    arguments: Optional[str] = typer.Option(
+        None, "--arguments", help="A JSON object, the workflow's own arguments."
+    ),
     output: OutputFormat = output_option(),
 ) -> None:
-    """Start a workflow directly. What every service caller does through its
-    own key, done here as yourself — troubleshooting, not the ordinary path
-    a person's work takes (that is `datalayer executions run`)."""
+    """
+    Start a workflow directly.
+
+    What every service caller does through its own key, done here as yourself —
+    troubleshooting, not the ordinary path a person's work takes (that is `datalayer
+    executions run`).
+    """
     parsed = call(lambda: json.loads(arguments) if arguments else {})
-    run = call(lambda: client().start_durable_workflow(workflow, task_uid=task_uid, queue=queue, arguments=parsed))
+    run = call(
+        lambda: client().start_durable_workflow(
+            workflow, task_uid=task_uid, queue=queue, arguments=parsed
+        )
+    )
     if emit(run.__dict__, output):
         return
     console.print(_run_table(run))
@@ -150,13 +196,21 @@ def start(
 @orchestration_command
 def signal(
     uid: str = typer.Argument(..., help="The run to signal."),
-    name: str = typer.Argument(..., help="The signal's name, as the workflow waits for it."),
-    payload: Optional[str] = typer.Option(None, "--payload", help="A JSON object, the signal's own payload."),
+    name: str = typer.Argument(
+        ..., help="The signal's name, as the workflow waits for it."
+    ),
+    payload: Optional[str] = typer.Option(
+        None, "--payload", help="A JSON object, the signal's own payload."
+    ),
 ) -> None:
     """Tell a waiting run something. Already over answers so, not an error."""
     parsed = call(lambda: json.loads(payload) if payload else {})
     delivered = call(lambda: client().signal_durable_workflow(uid, name, parsed))
-    console.print("Delivered." if delivered else "Nothing was waiting to receive it.", markup=False, highlight=False)
+    console.print(
+        "Delivered." if delivered else "Nothing was waiting to receive it.",
+        markup=False,
+        highlight=False,
+    )
 
 
 @app.command("cancel")
@@ -167,7 +221,11 @@ def cancel(
 ) -> None:
     """Stop a run. Already over answers so, not an error."""
     cancelled = call(lambda: client().cancel_durable_workflow(uid, reason=reason))
-    console.print("Cancelled." if cancelled else "Nothing was left running to cancel.", markup=False, highlight=False)
+    console.print(
+        "Cancelled." if cancelled else "Nothing was left running to cancel.",
+        markup=False,
+        highlight=False,
+    )
 
 
 @app.command("operations")
@@ -177,4 +235,6 @@ def operations(output: OutputFormat = output_option()) -> None:
     answer = call(lambda: client().durable_operations())
     if emit(answer, output):
         return
-    console.print(yaml.safe_dump(answer, sort_keys=False).rstrip(), markup=False, highlight=False)
+    console.print(
+        yaml.safe_dump(answer, sort_keys=False).rstrip(), markup=False, highlight=False
+    )

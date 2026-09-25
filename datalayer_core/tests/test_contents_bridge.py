@@ -85,7 +85,9 @@ def session(state: str = "pending", **overrides: Any) -> BridgeSession:
     return BridgeSession.model_validate(value)
 
 
-def attachment(mode: str = "ro", mount_path: str = MOUNT_PATH, delivery: str = "local-bridge") -> ContentAttachment:
+def attachment(
+    mode: str = "ro", mount_path: str = MOUNT_PATH, delivery: str = "local-bridge"
+) -> ContentAttachment:
     return ContentAttachment.model_validate(
         {
             "uid": ATTACHMENT,
@@ -110,7 +112,9 @@ class BridgeClient:
 
     last: "BridgeClient | None" = None
 
-    def __init__(self, *, existing: list[ContentAttachment] | None = None, revoke_after: int = 2) -> None:
+    def __init__(
+        self, *, existing: list[ContentAttachment] | None = None, revoke_after: int = 2
+    ) -> None:
         BridgeClient.last = self
         self.existing = list(existing or [])
         self.revoke_after = revoke_after
@@ -157,25 +161,38 @@ class BridgeClient:
             '"v1"',
         )
 
-    def create_content_attachment(self, request: dict[str, Any], *, idempotency_key: str) -> ContentAttachment:
+    def create_content_attachment(
+        self, request: dict[str, Any], *, idempotency_key: str
+    ) -> ContentAttachment:
         self.attachment_request = request
         self.requests.append(request)
         return attachment(mode=request["mode"], mount_path=request["mount_path"])
 
-    def open_content_bridge(self, attachment_uid: str, request: dict[str, Any]) -> BridgeOpened:
+    def open_content_bridge(
+        self, attachment_uid: str, request: dict[str, Any]
+    ) -> BridgeOpened:
         assert attachment_uid == ATTACHMENT
         self.bridge_request = request
         self.requests.append(request)
-        return BridgeOpened(bridge=session("pending"), client_token="token-1", relay_url=RELAY, session_key=KEY)
+        return BridgeOpened(
+            bridge=session("pending"),
+            client_token="token-1",
+            relay_url=RELAY,
+            session_key=KEY,
+        )
 
     def heartbeat_content_bridge(self, bridge_uid: str) -> BridgeHeartbeat:
         assert bridge_uid == BRIDGE
         self.heartbeats += 1
         state = "revoked" if self.heartbeats >= self.revoke_after else "connected"
-        return BridgeHeartbeat(bridge=session(state), client_token=f"token-{self.heartbeats + 1}")
+        return BridgeHeartbeat(
+            bridge=session(state), client_token=f"token-{self.heartbeats + 1}"
+        )
 
     def list_content_bridges(self, *, active: bool = False) -> BridgeList:
-        return BridgeList(items=[session("connected", mount_seen_at="2026-08-26T12:00:30Z")])
+        return BridgeList(
+            items=[session("connected", mount_seen_at="2026-08-26T12:00:30Z")]
+        )
 
     def revoke_content_bridge(self, bridge_uid: str) -> BridgeSession:
         self.revoked.append(bridge_uid)
@@ -185,7 +202,9 @@ class BridgeClient:
 class FakeConnection:
     """One dial of the relay, playing a script against the client."""
 
-    def __init__(self, script: Callable[["FakeConnection"], AsyncIterator[Any]], url: str) -> None:
+    def __init__(
+        self, script: Callable[["FakeConnection"], AsyncIterator[Any]], url: str
+    ) -> None:
         self.script = script
         self.url = url
         self.sent: list[Any] = []
@@ -213,7 +232,9 @@ class FakeConnection:
 class FakeRelay:
     """The relay across reconnects: one script per dial, in order."""
 
-    def __init__(self, *scripts: Callable[[FakeConnection], AsyncIterator[Any]]) -> None:
+    def __init__(
+        self, *scripts: Callable[[FakeConnection], AsyncIterator[Any]]
+    ) -> None:
         self.scripts = list(scripts)
         self.connections: list[FakeConnection] = []
 
@@ -240,7 +261,9 @@ async def sandbox_asks(connection: FakeConnection) -> AsyncIterator[Any]:
         ("stat", b"", {"path": "../outside"}),
     ]
     for number, (operation, payload, arguments) in enumerate(requests, start=1):
-        yield mount.seal(encode_frame({"id": number, "op": operation, "args": arguments}, payload))
+        yield mount.seal(
+            encode_frame({"id": number, "op": operation, "args": arguments}, payload)
+        )
         connection.answers.append(decode_frame(mount.open(connection.sent[-1])))
     yield json.dumps({"event": "peer-left", "role": "mount"})
     # The relay keeps the connection up; the client leaves when told to.
@@ -249,8 +272,9 @@ async def sandbox_asks(connection: FakeConnection) -> AsyncIterator[Any]:
         yield json.dumps({"event": "keepalive"})
 
 
-
-async def a_stale_frame_then_the_hello(connection: FakeConnection) -> AsyncIterator[Any]:
+async def a_stale_frame_then_the_hello(
+    connection: FakeConnection,
+) -> AsyncIterator[Any]:
     """The peer comes back, but a frame from before it left is still on the wire.
 
     The relay forwards whatever the previous pairing had in flight, and it
@@ -264,11 +288,14 @@ async def a_stale_frame_then_the_hello(connection: FakeConnection) -> AsyncItera
     mount = SecureChannel(role="mount", bridge_uid=BRIDGE, session_key=KEY)
     mount.establish(client_hello)
     yield mount.hello()
-    yield mount.seal(encode_frame({"id": 1, "op": "stat", "args": {"path": "docs/notes.txt"}}, b""))
+    yield mount.seal(
+        encode_frame({"id": 1, "op": "stat", "args": {"path": "docs/notes.txt"}}, b"")
+    )
     connection.answers.append(decode_frame(mount.open(connection.sent[-1])))
     while True:
         await asyncio.sleep(0.01)
         yield json.dumps({"event": "keepalive"})
+
 
 async def relay_drops(connection: FakeConnection) -> AsyncIterator[Any]:
     yield json.dumps({"event": "paired", "bridge_uid": BRIDGE})
@@ -282,7 +309,9 @@ async def relay_refuses_for_good(connection: FakeConnection) -> AsyncIterator[An
     yield  # pragma: no cover - makes this an async generator
 
 
-def bridge_for(client: BridgeClient, root: Path, relay: FakeRelay, **overrides: Any) -> LocalBridge:
+def bridge_for(
+    client: BridgeClient, root: Path, relay: FakeRelay, **overrides: Any
+) -> LocalBridge:
     arguments: dict[str, Any] = dict(
         local_root=root,
         sandbox_uid=SANDBOX,
@@ -298,7 +327,9 @@ def bridge_for(client: BridgeClient, root: Path, relay: FakeRelay, **overrides: 
     return LocalBridge(client, **arguments)
 
 
-def test_the_folder_is_attached_and_the_session_opened_without_its_path(tmp_path: Path) -> None:
+def test_the_folder_is_attached_and_the_session_opened_without_its_path(
+    tmp_path: Path,
+) -> None:
     root = folder(tmp_path)
     client = BridgeClient()
     bridge = bridge_for(client, root, FakeRelay(sandbox_asks))
@@ -335,12 +366,19 @@ def test_an_existing_attachment_for_the_path_and_mode_is_reused(tmp_path: Path) 
     assert bridge.attachment.mode == "ro"
 
     # A mount elsewhere, or a plain mount, is not this bridge's attachment.
-    other = BridgeClient(existing=[attachment(mount_path="/home/datalayer/other"), attachment(delivery="mount")])
+    other = BridgeClient(
+        existing=[
+            attachment(mount_path="/home/datalayer/other"),
+            attachment(delivery="mount"),
+        ]
+    )
     bridge_for(other, root, FakeRelay(sandbox_asks)).open()
     assert other.attachment_request is not None
 
 
-def test_the_folder_answers_the_sandbox_through_the_channel_until_revoked(tmp_path: Path) -> None:
+def test_the_folder_answers_the_sandbox_through_the_channel_until_revoked(
+    tmp_path: Path,
+) -> None:
     root = folder(tmp_path)
     client = BridgeClient(revoke_after=2)
     relay = FakeRelay(sandbox_asks)
@@ -372,8 +410,9 @@ def test_the_folder_answers_the_sandbox_through_the_channel_until_revoked(tmp_pa
             assert b"hello" not in frame and b"notes.txt" not in frame
 
 
-
-def test_a_frame_that_is_not_a_hello_is_dropped_not_the_whole_session(tmp_path: Path) -> None:
+def test_a_frame_that_is_not_a_hello_is_dropped_not_the_whole_session(
+    tmp_path: Path,
+) -> None:
     """Found on r1 (audit 70). Anything that is not 32 bytes raises
     `BridgeProtocolError` out of `establish`, and that used to escape the
     receive loop and end the relay connection — which reconnected into the
@@ -404,7 +443,10 @@ def test_a_frame_that_is_not_a_hello_is_dropped_not_the_whole_session(tmp_path: 
     [(answer, _payload)] = connection.answers
     assert answer["result"]["size"] == len("hello, bridge")
 
-def test_a_dropped_relay_is_dialled_again_with_the_renewed_token(tmp_path: Path) -> None:
+
+def test_a_dropped_relay_is_dialled_again_with_the_renewed_token(
+    tmp_path: Path,
+) -> None:
     root = folder(tmp_path)
     client = BridgeClient(revoke_after=3)
     relay = FakeRelay(relay_drops, sandbox_asks)
@@ -442,7 +484,7 @@ def test_a_session_contents_no_longer_knows_stops_the_client(tmp_path: Path) -> 
     class Gone(BridgeClient):
         def heartbeat_content_bridge(self, bridge_uid: str) -> BridgeHeartbeat:
             raise RuntimeError(
-                "Failed to request the URL https://contents.test/bridges (status=410, body={\"code\": \"BRIDGE_ENDED\"})"
+                'Failed to request the URL https://contents.test/bridges (status=410, body={"code": "BRIDGE_ENDED"})'
             )
 
     client = Gone()
@@ -455,7 +497,12 @@ def test_a_session_contents_no_longer_knows_stops_the_client(tmp_path: Path) -> 
 
 
 def test_the_status_of_a_transport_error_is_read_from_either_place() -> None:
-    assert http_status_of(RuntimeError("Failed to request the URL x (status=404, body=nothing)")) == 404
+    assert (
+        http_status_of(
+            RuntimeError("Failed to request the URL x (status=404, body=nothing)")
+        )
+        == 404
+    )
     assert http_status_of(RuntimeError("no status here")) is None
     cause = Exception("410 Gone")
     cause.response = SimpleNamespace(status_code=410)  # type: ignore[attr-defined]
@@ -481,7 +528,9 @@ def test_stopping_the_client_ends_the_run_as_stopped(tmp_path: Path) -> None:
     assert outcome.requests == 5
 
 
-def test_mount_mounts_and_unmount_commands(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_mount_mounts_and_unmount_commands(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     root = folder(tmp_path)
     monkeypatch.setattr(contents_commands, "DatalayerClient", BridgeClient)
     relay = FakeRelay(sandbox_asks)
@@ -515,6 +564,8 @@ def test_mount_mounts_and_unmount_commands(monkeypatch: pytest.MonkeyPatch, tmp_
     assert outcome["bridge_uid"] == BRIDGE
     client = BridgeClient.last
     assert client is not None
+    assert client.attachment_request is not None
+    assert client.bridge_request is not None
     assert client.attachment_request["mode"] == "ro"
     assert client.bridge_request["exclusions"] == ["*.tmp"]
     assert str(root) not in mounted.stdout
@@ -529,7 +580,19 @@ def test_mount_mounts_and_unmount_commands(monkeypatch: pytest.MonkeyPatch, tmp_
     unmounted = runner.invoke(app, ["contents", "--output", "json", "unmount", BRIDGE])
     assert unmounted.exit_code == 0, unmounted.stdout
     assert json.loads(unmounted.stdout)["state"] == "revoked"
+    assert BridgeClient.last is not None
     assert BridgeClient.last.revoked == [BRIDGE]
 
-    missing = runner.invoke(app, ["contents", "mount", str(tmp_path / "nowhere"), "--sandbox", SANDBOX, "--path", MOUNT_PATH])
+    missing = runner.invoke(
+        app,
+        [
+            "contents",
+            "mount",
+            str(tmp_path / "nowhere"),
+            "--sandbox",
+            SANDBOX,
+            "--path",
+            MOUNT_PATH,
+        ],
+    )
     assert missing.exit_code != 0

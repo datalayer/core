@@ -4,7 +4,8 @@
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""What datalayer-core contributes to a host CLI, as a reactor plugin.
+"""
+What datalayer-core contributes to a host CLI, as a reactor plugin.
 
 The `datalayer` command is itself a reactor *host* — it discovers extensions
 under the ``datalayer.cli`` entry-point group and lets them add their command

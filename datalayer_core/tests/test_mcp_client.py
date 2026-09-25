@@ -31,7 +31,12 @@ class Otel:
 
     def get_trace(self, trace_id: str) -> dict[str, Any]:
         self.calls.append(("get_trace", {"trace_id": trace_id}))
-        return {"trace_id": trace_id, "data": [{"span_id": "root", "span_name": "mcp.request", "start_time": "t"}]}
+        return {
+            "trace_id": trace_id,
+            "data": [
+                {"span_id": "root", "span_name": "mcp.request", "start_time": "t"}
+            ],
+        }
 
     def query_logs(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("query_logs", kwargs))
@@ -39,15 +44,35 @@ class Otel:
 
     def dashboard_data(self, dashboard_id: str, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("dashboard_data", {"dashboard_id": dashboard_id, **kwargs}))
-        return {"panels": [{"id": "mcp-calls-by-outcome", "series": [{"label": "ok", "summary": 1}]}]}
+        return {
+            "panels": [
+                {
+                    "id": "mcp-calls-by-outcome",
+                    "series": [{"label": "ok", "summary": 1}],
+                }
+            ]
+        }
 
     def metric_names(self) -> dict[str, Any]:
         self.calls.append(("metric_names", {}))
-        return {"data": [{"metric_name": "mcp.calls"}, {"metric_name": "not.in.the.catalog"}]}
+        return {
+            "data": [
+                {"metric_name": "mcp.calls"},
+                {"metric_name": "not.in.the.catalog"},
+            ]
+        }
 
     def list_traces(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("list_traces", kwargs))
-        return {"data": [{"span_name": "mcp.request", "duration_ms": 5, "attributes": {"client.id": "agent-1"}}]}
+        return {
+            "data": [
+                {
+                    "span_name": "mcp.request",
+                    "duration_ms": 5,
+                    "attributes": {"client.id": "agent-1"},
+                }
+            ]
+        }
 
 
 class Client(McpMixin):
@@ -77,7 +102,11 @@ TASK = {"uid": "01T", "status": "working", "tool": "execute_cell", "trace_id": "
 
 def test_routes_live_under_the_resource_host_with_stable_queries() -> None:
     client = Client()
-    client.responses = [Response({"items": [TASK], "next_cursor": "n"}), Response(TASK), Response({"items": []})]
+    client.responses = [
+        Response({"items": [TASK], "next_cursor": "n"}),
+        Response(TASK),
+        Response({"items": []}),
+    ]
 
     page = client.list_mcp_tasks(status="working", notebook="01NB", limit=10)
     task = client.cancel_mcp_task("01T")
@@ -85,9 +114,18 @@ def test_routes_live_under_the_resource_host_with_stable_queries() -> None:
 
     assert page.next_cursor == "n"
     assert task.uid == "01T"
-    assert client.calls[0][0] == "https://mcp.test/api/mcp/v1/tasks?notebook=01NB&status=working&limit=10"
-    assert client.calls[1] == ("https://mcp.test/api/mcp/v1/tasks/01T", {"method": "DELETE"})
-    assert client.calls[2][0] == "https://mcp.test/api/mcp/v1/bindings?kind=sandbox&limit=50"
+    assert (
+        client.calls[0][0]
+        == "https://mcp.test/api/mcp/v1/tasks?notebook=01NB&status=working&limit=10"
+    )
+    assert client.calls[1] == (
+        "https://mcp.test/api/mcp/v1/tasks/01T",
+        {"method": "DELETE"},
+    )
+    assert (
+        client.calls[2][0]
+        == "https://mcp.test/api/mcp/v1/bindings?kind=sandbox&limit=50"
+    )
 
 
 def test_answering_a_task_carries_an_idempotency_key_and_the_input_as_typed() -> None:
@@ -103,35 +141,73 @@ def test_answering_a_task_carries_an_idempotency_key_and_the_input_as_typed() ->
 def test_the_audit_log_pages_and_exports() -> None:
     client = Client()
     client.responses = [
-        Response({"items": [{"uid": "01A", "at": "t", "decision": "refused", "refusal_reason": "tool_denylist"}]}),
+        Response(
+            {
+                "items": [
+                    {
+                        "uid": "01A",
+                        "at": "t",
+                        "decision": "refused",
+                        "refusal_reason": "tool_denylist",
+                    }
+                ]
+            }
+        ),
         Response(None, text="uid,at\n01A,t\n"),
     ]
     page = client.list_mcp_audit_events(org="01ORG", decision="refused", task_id="01T")
     csv = client.export_mcp_audit_events(format="csv", org="01ORG")
     assert page.items[0].refusal_reason == "tool_denylist"
-    assert client.calls[0][0] == "https://mcp.test/api/mcp/v1/audit?org=01ORG&decision=refused&task_id=01T&limit=50"
+    assert (
+        client.calls[0][0]
+        == "https://mcp.test/api/mcp/v1/audit?org=01ORG&decision=refused&task_id=01T&limit=50"
+    )
     assert csv.startswith("uid,at")
-    assert client.calls[1][0] == "https://mcp.test/api/mcp/v1/audit?org=01ORG&export=csv"
+    assert (
+        client.calls[1][0] == "https://mcp.test/api/mcp/v1/audit?org=01ORG&export=csv"
+    )
     assert client.calls[1][1]["headers"] == {"Accept": "text/csv"}
 
 
 def test_connected_agents_come_from_iam() -> None:
     client = Client()
     client.responses = [
-        Response({"success": True, "agents": [{"uid": "01G", "client_id": "https://claude.ai/c.json", "client_name": "Claude", "scopes": ["notebooks:read"]}]}),
+        Response(
+            {
+                "success": True,
+                "agents": [
+                    {
+                        "uid": "01G",
+                        "client_id": "https://claude.ai/c.json",
+                        "client_name": "Claude",
+                        "scopes": ["notebooks:read"],
+                    }
+                ],
+            }
+        ),
         Response({"success": True, "message": "gone"}),
     ]
     agents = client.list_connected_agents()
     answer = client.disconnect_agent("01G")
     assert agents[0].client_name == "Claude"
     assert answer["message"] == "gone"
-    assert client.calls[0] == ("https://iam.test/api/iam/v1/oauth/connected-agents", {"method": "GET"})
-    assert client.calls[1] == ("https://iam.test/api/iam/v1/oauth/connected-agents/01G", {"method": "DELETE"})
+    assert client.calls[0] == (
+        "https://iam.test/api/iam/v1/oauth/connected-agents",
+        {"method": "GET"},
+    )
+    assert client.calls[1] == (
+        "https://iam.test/api/iam/v1/oauth/connected-agents/01G",
+        {"method": "DELETE"},
+    )
 
 
 def test_a_run_s_trace_and_logs_are_read_by_the_task_s_trace_id() -> None:
     client = Client()
-    client.responses = [Response(TASK), Response(TASK), Response({**TASK, "trace_id": None})]
+    client.responses = [
+        Response(TASK),
+        Response(TASK),
+        Response({**TASK, "trace_id": None}),
+    ]
     trace = client.get_mcp_run_trace("01T")
     logs = client.get_mcp_run_logs("01T", limit=5)
     none = client.get_mcp_run_trace("01T")
@@ -140,7 +216,10 @@ def test_a_run_s_trace_and_logs_are_read_by_the_task_s_trace_id() -> None:
     assert logs["records"][0]["body"] == "ran"
     assert none == {"task_uid": "01T", "trace_id": "", "spans": []}
     assert client.otel.calls[0] == ("get_trace", {"trace_id": "abc"})
-    assert client.otel.calls[1] == ("query_logs", {"trace_id": "abc", "limit": 5, "severity": None})
+    assert client.otel.calls[1] == (
+        "query_logs",
+        {"trace_id": "abc", "limit": 5, "severity": None},
+    )
 
 
 def test_metrics_read_the_service_levels_and_the_spans_for_one_agent() -> None:
@@ -153,7 +232,11 @@ def test_metrics_read_the_service_levels_and_the_spans_for_one_agent() -> None:
     assert one["slis"]["samples"]["calls"] == 1
     start = int(datetime(2026, 8, 27, tzinfo=timezone.utc).timestamp()) * 1_000_000_000
     read = [call for call in client.otel.calls if call[0] == "dashboard_data"]
-    assert read == [("dashboard_data", {"dashboard_id": "mcp-service-levels", "start": start})]
+    assert read == [
+        ("dashboard_data", {"dashboard_id": "mcp-service-levels", "start": start})
+    ]
     traced = [call for call in client.otel.calls if call[0] == "list_traces"]
     # The name the gateway registers under, which is where its spans are.
-    assert traced == [("list_traces", {"service_name": "jupyter-mcp-server", "limit": 500})]
+    assert traced == [
+        ("list_traces", {"service_name": "jupyter-mcp-server", "limit": 500})
+    ]

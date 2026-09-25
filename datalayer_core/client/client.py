@@ -223,7 +223,8 @@ class DatalayerClient(
         return res
 
     def get_secret_value(self, name: str) -> str:
-        """Return one secret value by name exactly as its owner stored it.
+        """
+        Return one secret value by name exactly as its owner stored it.
 
         This deliberately requires a name: the values endpoint is keyed by
         environment-variable name, while secret UIDs are metadata identifiers.

@@ -248,7 +248,9 @@ def sync_conflicts_table(items: Iterable[Any], *, title: str | None = None) -> T
     return table
 
 
-def datasource_queries_table(items: Iterable[Any], *, title: str | None = None) -> Table:
+def datasource_queries_table(
+    items: Iterable[Any], *, title: str | None = None
+) -> Table:
     """Datasource queries: what ran, what it cost, how it ended."""
     table = Table(title=title)
     table.add_column("UID", style="cyan", no_wrap=True)
@@ -262,7 +264,9 @@ def datasource_queries_table(items: Iterable[Any], *, title: str | None = None) 
         # A query that failed says why; a saved result says where it is.
         result = _field(item, "result") or {}
         detail = _text(item, "error") or (
-            f"object {_text(result, 'object_uid')}" if _field(result, "object_uid") else ""
+            f"object {_text(result, 'object_uid')}"
+            if _field(result, "object_uid")
+            else ""
         )
         table.add_row(
             _text(item, "uid"),
@@ -288,13 +292,17 @@ def datasource_schema_table(schema: Any, *, title: str | None = None) -> Table:
         if not columns:
             table.add_row(_text(entry, "name"), "-", "-")
         for column in columns:
-            table.add_row(_text(entry, "name"), _text(column, "name"), _text(column, "type", "-"))
+            table.add_row(
+                _text(entry, "name"), _text(column, "name"), _text(column, "type", "-")
+            )
     if not tables:
         table.add_row("No table was discovered.", "", "")
     return table
 
 
-def dataserver_connectors_table(items: Iterable[Any], *, title: str | None = None) -> Table:
+def dataserver_connectors_table(
+    items: Iterable[Any], *, title: str | None = None
+) -> Table:
     """The connectors a gateway advertises, with what each may be asked."""
     table = Table(title=title)
     table.add_column("Connector", style="cyan", no_wrap=True)

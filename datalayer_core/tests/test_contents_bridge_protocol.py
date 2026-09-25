@@ -49,17 +49,23 @@ def folder(tmp_path: Path) -> Path:
     return root
 
 
-def client_for(server: LocalRootServer, *, encrypted: bool = False) -> BridgeFileSystemClient:
+def client_for(
+    server: LocalRootServer, *, encrypted: bool = False
+) -> BridgeFileSystemClient:
     if not encrypted:
         return BridgeFileSystemClient(PipeTransport(server.handle))
-    client_channel = SecureChannel(role="client", bridge_uid="B1", session_key="ab" * 32)
+    client_channel = SecureChannel(
+        role="client", bridge_uid="B1", session_key="ab" * 32
+    )
     mount_channel = SecureChannel(role="mount", bridge_uid="B1", session_key="ab" * 32)
     client_channel.establish(mount_channel.hello())
     mount_channel.establish(client_channel.hello())
     # The "sandbox" holds the mount channel; the "computer" answers on the
     # client channel — the same pairing the relay produces.
     return BridgeFileSystemClient(
-        PipeTransport(lambda frame: client_channel.seal(server.handle(client_channel.open(frame)))),
+        PipeTransport(
+            lambda frame: client_channel.seal(server.handle(client_channel.open(frame)))
+        ),
         channel=mount_channel,
     )
 
@@ -81,7 +87,11 @@ def test_a_frame_carries_its_header_and_bytes_apart() -> None:
 
 def test_dot_dot_never_reaches_the_filesystem(tmp_path: Path) -> None:
     client = client_for(LocalRootServer(folder(tmp_path)))
-    for path in ("../outside/secret.txt", "docs/../../outside/secret.txt", "/../outside"):
+    for path in (
+        "../outside/secret.txt",
+        "docs/../../outside/secret.txt",
+        "/../outside",
+    ):
         with pytest.raises(BridgeRemoteError) as refused:
             client.stat(path)
         assert refused.value.code == "EACCES"
@@ -103,7 +113,9 @@ def test_a_symlink_out_of_the_root_is_refused_not_followed(tmp_path: Path) -> No
     assert [e["name"] for e in client.list("docs-link")] == ["notes.txt"]
 
 
-def test_a_listing_shows_an_escaping_link_as_a_link_and_nothing_behind_it(tmp_path: Path) -> None:
+def test_a_listing_shows_an_escaping_link_as_a_link_and_nothing_behind_it(
+    tmp_path: Path,
+) -> None:
     client = client_for(LocalRootServer(folder(tmp_path)))
     entries = {e["name"]: e for e in client.list("")}
     assert entries["escape"]["kind"] == "symlink"
@@ -209,13 +221,18 @@ def test_reads_are_capped_at_the_engine_block_size(tmp_path: Path) -> None:
     rest = client.read("big.bin", BLOCK_SIZE, BLOCK_SIZE)
     assert rest == content[BLOCK_SIZE:]
     assert b"".join(client.read_blocks("big.bin")) == content
-    assert [len(b) for b in client.read_blocks("big.bin", block_size=1024)][:2] == [1024, 1024]
+    assert [len(b) for b in client.read_blocks("big.bin", block_size=1024)][:2] == [
+        1024,
+        1024,
+    ]
 
 
 # -- the channel ---------------------------------------------------------------
 
 
-def test_the_channel_hides_the_frames_and_the_client_still_works(tmp_path: Path) -> None:
+def test_the_channel_hides_the_frames_and_the_client_still_works(
+    tmp_path: Path,
+) -> None:
     client = client_for(LocalRootServer(folder(tmp_path)), encrypted=True)
     assert client.read("docs/notes.txt") == b"hello, bridge"
     assert client.stat("data.bin")["size"] == 2560
@@ -266,9 +283,14 @@ def test_a_channel_for_another_bridge_cannot_read_this_one() -> None:
 # -- the fingerprint -------------------------------------------------------------
 
 
-def test_the_fingerprint_names_the_folder_without_saying_where_it_is(tmp_path: Path) -> None:
+def test_the_fingerprint_names_the_folder_without_saying_where_it_is(
+    tmp_path: Path,
+) -> None:
     root = folder(tmp_path)
-    spelled_twice = fingerprint_local_root(root), fingerprint_local_root(root / "docs" / "..")
+    spelled_twice = (
+        fingerprint_local_root(root),
+        fingerprint_local_root(root / "docs" / ".."),
+    )
     assert spelled_twice[0] == spelled_twice[1]
     assert len(spelled_twice[0]) == 64
     assert str(root) not in spelled_twice[0]

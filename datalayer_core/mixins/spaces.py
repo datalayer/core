@@ -38,18 +38,26 @@ class NotebookVersionsMixin:
         """The notebook's versions, newest first, as the spacer answers them."""
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/spacer/v1/notebooks/{}/versions".format(self.urls.spacer_url, notebook_uid),  # type: ignore
+                "{}/api/spacer/v1/notebooks/{}/versions".format(
+                    self.urls.spacer_url,  # type: ignore[attr-defined]
+                    notebook_uid,
+                ),
                 method="GET",
             )
             return response.json()
         except RuntimeError as e:
             return {"success": False, "message": str(e)}
 
-    def _snapshot_notebook(self, notebook_uid: str, message: str = "") -> dict[str, Any]:
+    def _snapshot_notebook(
+        self, notebook_uid: str, message: str = ""
+    ) -> dict[str, Any]:
         """Keep the notebook as it is now, with a message for the listing."""
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/spacer/v1/notebooks/{}/versions".format(self.urls.spacer_url, notebook_uid),  # type: ignore
+                "{}/api/spacer/v1/notebooks/{}/versions".format(
+                    self.urls.spacer_url,  # type: ignore[attr-defined]
+                    notebook_uid,
+                ),
                 method="POST",
                 json={"message": message or ""},
             )
@@ -57,12 +65,16 @@ class NotebookVersionsMixin:
         except RuntimeError as e:
             return {"success": False, "message": str(e)}
 
-    def _restore_notebook_version(self, notebook_uid: str, version_uid: str) -> dict[str, Any]:
+    def _restore_notebook_version(
+        self, notebook_uid: str, version_uid: str
+    ) -> dict[str, Any]:
         """Make a kept version current; the spacer keeps what it replaces."""
         try:
             response = self._fetch(  # type: ignore
                 "{}/api/spacer/v1/notebooks/{}/versions/{}/restore".format(
-                    self.urls.spacer_url, notebook_uid, version_uid  # type: ignore
+                    self.urls.spacer_url,  # type: ignore[attr-defined]
+                    notebook_uid,
+                    version_uid,
                 ),
                 method="POST",
             )

@@ -52,49 +52,92 @@ class TestTheUrl:
 class TestDescribe:
     def test_a_run_is_parsed_into_a_workflow_run(self) -> None:
         client = Client(
-            Answer({"uid": "wf_1", "workflow": "NotebookRunWorkflow", "status": "running", "task_uid": "tsk_1", "queue": "q"})
+            Answer(
+                {
+                    "uid": "wf_1",
+                    "workflow": "NotebookRunWorkflow",
+                    "status": "running",
+                    "task_uid": "tsk_1",
+                    "queue": "q",
+                }
+            )
         )
         run = client.describe_durable_workflow("wf_1")
-        assert run == WorkflowRun(uid="wf_1", workflow="NotebookRunWorkflow", status="running", task_uid="tsk_1", queue="q")
+        assert run == WorkflowRun(
+            uid="wf_1",
+            workflow="NotebookRunWorkflow",
+            status="running",
+            task_uid="tsk_1",
+            queue="q",
+        )
 
     def test_a_404_is_none_not_an_exception(self) -> None:
-        client = Client(RuntimeError("Failed to request the URL x (status=404, body=not found)"))
+        client = Client(
+            RuntimeError("Failed to request the URL x (status=404, body=not found)")
+        )
         assert client.describe_durable_workflow("no-such-uid") is None
 
     def test_another_failure_still_raises(self) -> None:
-        client = Client(RuntimeError("Failed to request the URL x (status=500, body=boom)"))
+        client = Client(
+            RuntimeError("Failed to request the URL x (status=500, body=boom)")
+        )
         with pytest.raises(RuntimeError, match="status=500"):
             client.describe_durable_workflow("wf_1")
 
 
 class TestDescribeExecution:
     def test_the_account_travels_as_a_query_param(self) -> None:
-        client = Client(Answer({"uid": "exec_1", "workflow": "OrchestrationWorkflow", "status": "running"}))
+        client = Client(
+            Answer(
+                {
+                    "uid": "exec_1",
+                    "workflow": "OrchestrationWorkflow",
+                    "status": "running",
+                }
+            )
+        )
         client.describe_durable_execution("exec_1", account_uid="org-1")
         url, kwargs = client.calls[0]
         assert url == "https://durable.test/api/durable/v1/executions/exec_1/run"
         assert kwargs["params"] == {"account_uid": "org-1"}
 
     def test_no_run_for_the_execution_is_none(self) -> None:
-        client = Client(RuntimeError("Failed to request the URL x (status=404, body=none)"))
-        assert client.describe_durable_execution("exec_missing", account_uid="org-1") is None
+        client = Client(
+            RuntimeError("Failed to request the URL x (status=404, body=none)")
+        )
+        assert (
+            client.describe_durable_execution("exec_missing", account_uid="org-1")
+            is None
+        )
 
 
 class TestStartSignalCancel:
     def test_start_sends_the_workflow_task_uid_queue_and_arguments(self) -> None:
         client = Client(Answer({"uid": "tsk_1", "workflow": "W", "status": "running"}))
-        run = client.start_durable_workflow("W", task_uid="tsk_1", queue="q", arguments={"a": 1})
+        run = client.start_durable_workflow(
+            "W", task_uid="tsk_1", queue="q", arguments={"a": 1}
+        )
         assert run.uid == "tsk_1"
         _, kwargs = client.calls[0]
         assert kwargs["method"] == "POST"
-        assert kwargs["json"] == {"workflow": "W", "task_uid": "tsk_1", "queue": "q", "arguments": {"a": 1}}
+        assert kwargs["json"] == {
+            "workflow": "W",
+            "task_uid": "tsk_1",
+            "queue": "q",
+            "arguments": {"a": 1},
+        }
 
     def test_signal_delivered_is_true(self) -> None:
         client = Client(Answer({"ok": True}))
-        assert client.signal_durable_workflow("wf_1", "approved", {"decision": True}) is True
+        assert (
+            client.signal_durable_workflow("wf_1", "approved", {"decision": True})
+            is True
+        )
 
     def test_signalling_an_ended_run_is_false_not_an_error(self) -> None:
-        client = Client(RuntimeError("Failed to request the URL x (status=409, body=already ended)"))
+        client = Client(
+            RuntimeError("Failed to request the URL x (status=409, body=already ended)")
+        )
         assert client.signal_durable_workflow("wf_1", "approved", {}) is False
 
     def test_cancel_stopped_is_true(self) -> None:
@@ -102,7 +145,9 @@ class TestStartSignalCancel:
         assert client.cancel_durable_workflow("wf_1", reason="asked") is True
 
     def test_cancelling_an_ended_run_is_false_not_an_error(self) -> None:
-        client = Client(RuntimeError("Failed to request the URL x (status=409, body=already ended)"))
+        client = Client(
+            RuntimeError("Failed to request the URL x (status=409, body=already ended)")
+        )
         assert client.cancel_durable_workflow("wf_1") is False
 
 
@@ -128,6 +173,8 @@ class TestOperations:
         assert client.durable_operations() == {"engine": "dbos", "durable": True}
 
     def test_unreachable_answers_durable_false_rather_than_raising(self) -> None:
-        client = Client(RuntimeError("Failed to request the URL x (status=None, body=timeout)"))
+        client = Client(
+            RuntimeError("Failed to request the URL x (status=None, body=timeout)")
+        )
         answer = client.durable_operations()
         assert answer["durable"] is False and "detail" in answer

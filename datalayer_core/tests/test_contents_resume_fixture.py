@@ -26,25 +26,42 @@ from datalayer_core.tests.test_contents_client import Client, Response
 
 FIXTURE = (
     Path(__file__).resolve().parents[5]
-    / "k8s" / "services" / "contents" / "tests" / "fixtures" / "interrupted-transfer.json"
+    / "k8s"
+    / "services"
+    / "contents"
+    / "tests"
+    / "fixtures"
+    / "interrupted-transfer.json"
 )
-pytestmark = pytest.mark.skipif(not FIXTURE.exists(), reason="the contents service checkout is not alongside")
+pytestmark = pytest.mark.skipif(
+    not FIXTURE.exists(), reason="the contents service checkout is not alongside"
+)
 
 
 def _content(size: int) -> bytes:
     return bytes((i * 7 + (i >> 16)) & 0xFF for i in range(size))
 
 
-def test_the_client_uploads_only_the_missing_part(tmp_path) -> None:
+def test_the_client_uploads_only_the_missing_part(tmp_path: Path) -> None:
     fixture = json.loads(FIXTURE.read_text())
     local = tmp_path / "interrupted.bin"
     local.write_bytes(_content(fixture["generator"]["size"]))
-    finished = {**fixture["transfer"], "status": "succeeded", "part_count": 3, "received_bytes": fixture["generator"]["size"]}
+    finished = {
+        **fixture["transfer"],
+        "status": "succeeded",
+        "part_count": 3,
+        "received_bytes": fixture["generator"]["size"],
+    }
     client = Client()
-    client.responses = [Response(fixture["transfer"]), Response(finished), Response(finished)]
+    client.responses = [
+        Response(fixture["transfer"]),
+        Response(finished),
+        Response(finished),
+    ]
 
     result = client.upload_home_folder_file(
-        local, "datasets/interrupted.bin",
+        local,
+        "datasets/interrupted.bin",
         idempotency_key="resume-fixture",
     )
 

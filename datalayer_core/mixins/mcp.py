@@ -5,8 +5,9 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Typed transport methods for the Jupyter MCP Server, IAM's connected agents
-and the observability of a run.
+Typed transport methods for the Jupyter MCP Server.
+
+Also IAM's connected agents and the observability of a run.
 
 The gateway's REST routes live under ``/api/mcp/v1`` on the host of the MCP
 resource; the configured URL is the resource itself and ends in ``/mcp``, so
@@ -22,11 +23,11 @@ from urllib.parse import urlencode
 from datalayer_core.models.mcp import (
     ConnectedAgent,
     McpActivity,
+    McpAlert,
+    McpAlertList,
     McpAuditEventList,
     McpBinding,
     McpBindingList,
-    McpAlert,
-    McpAlertList,
     McpEffectivePolicy,
     McpForwarding,
     McpJobSchedule,
@@ -257,7 +258,11 @@ class McpMixin:
         return McpEffectivePolicy.model_validate(response.json())
 
     def list_mcp_alerts(
-        self, *, org: str | None = None, team: str | None = None, unacknowledged: bool = False
+        self,
+        *,
+        org: str | None = None,
+        team: str | None = None,
+        unacknowledged: bool = False,
     ) -> McpAlertList:
         """The alert rules that fired, for an organization's owners and auditors."""
         response = self._fetch(  # type: ignore[attr-defined]
@@ -286,7 +291,8 @@ class McpMixin:
         return McpForwarding.model_validate(response.json())
 
     def get_mcp_job_schedule(self) -> McpJobSchedule:
-        """The periodic work of the replica that answers, and what it has done.
+        """
+        The periodic work of the replica that answers, and what it has done.
 
         Platform administrators only. Whichever replica the load balancer
         picks is the one that reports — the counts are that replica's, and
@@ -306,7 +312,9 @@ class McpMixin:
         payload = response.json()
         return [
             ConnectedAgent.model_validate(agent)
-            for agent in (payload.get("agents", []) if isinstance(payload, dict) else [])
+            for agent in (
+                payload.get("agents", []) if isinstance(payload, dict) else []
+            )
         ]
 
     def disconnect_agent(self, grant_uid: str) -> dict[str, Any]:
@@ -318,8 +326,11 @@ class McpMixin:
 
     # Policy layers (IAM) ----------------------------------------------------
 
-    def get_mcp_policy_layer(self, scope: str, subject_uid: str) -> dict[str, Any] | None:
-        """One layer's rules, or ``None`` where nobody has written it.
+    def get_mcp_policy_layer(
+        self, scope: str, subject_uid: str
+    ) -> dict[str, Any] | None:
+        """
+        One layer's rules, or ``None`` where nobody has written it.
 
         Distinct from :meth:`get_mcp_effective_policy`, which is every layer
         intersected with the layer that decided each rule. That one answers
@@ -347,7 +358,8 @@ class McpMixin:
         *,
         expected_version: int | None = None,
     ) -> dict[str, Any]:
-        """Replace one layer's rules.
+        """
+        Replace one layer's rules.
 
         Replace, not merge: a policy is read whole and small, and merging
         would leave no way to express *removing* a rule — clearing a denylist
@@ -382,7 +394,9 @@ class McpMixin:
         payload = response.json()
         return [dict(rule) for rule in (payload.get("rules") or [])]
 
-    def create_mcp_alert_rule(self, org_uid: str, rule: dict[str, Any]) -> dict[str, Any]:
+    def create_mcp_alert_rule(
+        self, org_uid: str, rule: dict[str, Any]
+    ) -> dict[str, Any]:
         """Write a rule. Refused when the evaluator could not evaluate it."""
         response = self._fetch(  # type: ignore[attr-defined]
             self._iam_url(f"/mcp-alert-rules/{org_uid}"), method="POST", json=rule
@@ -429,7 +443,8 @@ class McpMixin:
         slack: str | None = None,
         emails: str | None = None,
     ) -> dict[str, Any]:
-        """Change some of them. Only what is passed is sent.
+        """
+        Change some of them. Only what is passed is sent.
 
         IAM merges this document, and retention and SIEM forwarding live on
         it too — set by other people, on another surface. Sending the whole
@@ -450,7 +465,8 @@ class McpMixin:
     # Service agents (IAM) ---------------------------------------------------
 
     def list_service_agents(self, org_uid: str) -> list[dict[str, Any]]:
-        """One organization's service agents, revoked ones included.
+        """
+        One organization's service agents, revoked ones included.
 
         Revoked ones included because hiding them makes a revoked agent
         invisible to whoever is deciding whether it is still needed, while
@@ -472,7 +488,8 @@ class McpMixin:
         description: str = "",
         team_uid: str = "",
     ) -> dict[str, Any]:
-        """Create a service agent. **The key is in this answer and no other.**
+        """
+        Create a service agent; the key is in this answer and no other.
 
         IAM stores a hash of it, so nothing can return it later: a caller
         that drops it rotates rather than recovers.
@@ -533,7 +550,11 @@ class McpMixin:
             return {"task_uid": task_uid, "trace_id": "", "spans": []}
         trace = self._otel_client().get_trace(task.trace_id)
         spans = trace.get("data", trace) if isinstance(trace, dict) else trace
-        return {"task_uid": task_uid, "trace_id": task.trace_id, "spans": list(spans or [])}
+        return {
+            "task_uid": task_uid,
+            "trace_id": task.trace_id,
+            "spans": list(spans or []),
+        }
 
     def get_mcp_run_logs(
         self, task_uid: str, *, limit: int = 200, severity: str | None = None
@@ -586,12 +607,16 @@ class McpMixin:
             page = otel.list_traces(service_name=MCP_GATEWAY_SERVICE_NAME, limit=limit)
             spans = list(page.get("data", []) if isinstance(page, dict) else page)
             slis = summarize_request_spans(
-                spans, agent=agent, org=org, since=instant.isoformat() if instant else None
+                spans,
+                agent=agent,
+                org=org,
+                since=instant.isoformat() if instant else None,
             )
         else:
             slis = summarize_service_levels(
                 otel.dashboard_data(
-                    SERVICE_LEVELS_DASHBOARD, start=nanoseconds(instant) if instant else None
+                    SERVICE_LEVELS_DASHBOARD,
+                    start=nanoseconds(instant) if instant else None,
                 )
             )
         names = otel.metric_names()

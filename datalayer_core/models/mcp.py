@@ -189,7 +189,8 @@ class McpAlertList(_Wire):
 
 
 class McpForwardingState(_Wire):
-    """Whether an organization's audit is reaching its own system of record.
+    """
+    Whether an organization's audit is reaching its own system of record.
 
     No destination and no secret: a URL is not a credential, but it is where
     somebody's audit goes.
@@ -228,7 +229,8 @@ class McpJob(_Wire):
 
 
 class McpJobSchedule(_Wire):
-    """The periodic work of one replica.
+    """
+    The periodic work of one replica.
 
     There is no platform-wide view here on purpose: only one replica holds a
     job's lease at a time, so an aggregate would hide the case worth seeing,

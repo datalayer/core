@@ -271,7 +271,9 @@ def _command_name(info: Any) -> str | None:
 
     if info.name:
         return str(info.name)
-    return get_command_name(info.callback.__name__) if info.callback is not None else None
+    return (
+        get_command_name(info.callback.__name__) if info.callback is not None else None
+    )
 
 
 class _ExtensionHost:
@@ -356,7 +358,7 @@ def _register_extensions(cli: typer.Typer) -> None:
     # The reactor CLI's own registration path — skip-on-failure included —
     # rather than a local copy of it, into a view of this application that
     # merges a group it already has rather than letting it be replaced.
-    extend(_ExtensionHost(cli), platform)  # type: ignore[arg-type]
+    extend(_ExtensionHost(cli), platform)
 
 
 def _normalize_global_options(argv: list[str]) -> list[str]:

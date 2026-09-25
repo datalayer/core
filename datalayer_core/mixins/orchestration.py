@@ -90,7 +90,9 @@ class ExecutionRecord:
         return {
             "execution": self.execution.to_wire(),
             "attempts": [attempt.to_wire() for attempt in self.attempts],
-            "acknowledgements": [acknowledgement.to_wire() for acknowledgement in self.acknowledgements],
+            "acknowledgements": [
+                acknowledgement.to_wire() for acknowledgement in self.acknowledgements
+            ],
         }
 
 
@@ -110,7 +112,9 @@ class Collection:
         }
 
 
-def operation_path(operation: str, parameters: Mapping[str, str] | None = None) -> tuple[str, str]:
+def operation_path(
+    operation: str, parameters: Mapping[str, str] | None = None
+) -> tuple[str, str]:
     """
     The method and path of one operation, its parameters filled in and encoded.
 
@@ -138,6 +142,7 @@ def operation_path(operation: str, parameters: Mapping[str, str] | None = None) 
 
 
 def _query_value(value: Any) -> Any:
+    """Spell a query parameter the way the control plane reads it."""
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, ExecutionState):
@@ -145,7 +150,10 @@ def _query_value(value: Any) -> Any:
     return value
 
 
-def _receipt(answer: Mapping[str, Any], *, delivered_field: str = "delivered") -> Receipt:
+def _receipt(
+    answer: Mapping[str, Any], *, delivered_field: str = "delivered"
+) -> Receipt:
+    """Read the receipt a delivered command answers with."""
     return Receipt(
         execution=Execution.from_wire(answer["execution"]),
         acknowledgement=Acknowledgement.from_wire(answer["acknowledgement"]),
@@ -187,61 +195,121 @@ class OrchestrationMixin:
         query: Mapping[str, Any] | None = None,
         account_uid: str | None = None,
     ) -> dict[str, Any]:
-        method, url = self._orchestration_url(operation, parameters, query, account_uid=account_uid)
+        method, url = self._orchestration_url(
+            operation, parameters, query, account_uid=account_uid
+        )
         arguments: dict[str, Any] = {"method": method}
         if body is not None:
             arguments["json"] = dict(body)
         response = self._fetch(url, **arguments)  # type: ignore[attr-defined]
         return dict(response.json())
 
-    def discover_agents(self, command: AgentsDiscover, *, account_uid: str | None = None) -> list[AgentDescriptor]:
+    def discover_agents(
+        self, command: AgentsDiscover, *, account_uid: str | None = None
+    ) -> list[AgentDescriptor]:
         """``agents.discover``: the workers meeting every constraint the command states."""
-        answer = self._orchestration_call("agents.discover", body=command.to_wire(), account_uid=account_uid)
-        return [AgentDescriptor.from_wire(agent) for agent in answer.get("agents") or []]
+        answer = self._orchestration_call(
+            "agents.discover", body=command.to_wire(), account_uid=account_uid
+        )
+        return [
+            AgentDescriptor.from_wire(agent) for agent in answer.get("agents") or []
+        ]
 
-    def delegate_execution(self, command: ExecutionsDelegate, *, account_uid: str | None = None) -> Receipt:
+    def delegate_execution(
+        self, command: ExecutionsDelegate, *, account_uid: str | None = None
+    ) -> Receipt:
         """``executions.delegate``: an objective and its context, to a worker."""
-        answer = self._orchestration_call("executions.delegate", body=command.to_wire(), account_uid=account_uid)
+        answer = self._orchestration_call(
+            "executions.delegate", body=command.to_wire(), account_uid=account_uid
+        )
         return _receipt(answer, delivered_field="dispatched")
 
-    def steer_execution(self, command: ExecutionsSteer, *, account_uid: str | None = None) -> Receipt:
+    def steer_execution(
+        self, command: ExecutionsSteer, *, account_uid: str | None = None
+    ) -> Receipt:
         """``executions.steer``: instructions added while the work runs."""
-        return _receipt(self._orchestration_call("executions.steer", body=command.to_wire(), account_uid=account_uid))
-
-    def cancel_execution(self, command: ExecutionsCancel, *, account_uid: str | None = None) -> Receipt:
-        """``executions.cancel``: stop the work, and by default everything below it."""
-        return _receipt(self._orchestration_call("executions.cancel", body=command.to_wire(), account_uid=account_uid))
-
-    def pause_execution(self, command: ExecutionsPause, *, account_uid: str | None = None) -> Receipt:
-        """``executions.pause``: ask the worker to stop at its next checkpoint, keeping what it has."""
-        return _receipt(self._orchestration_call("executions.pause", body=command.to_wire(), account_uid=account_uid))
-
-    def resume_execution(self, command: ExecutionsResume, *, account_uid: str | None = None) -> Receipt:
-        """``executions.resume``: go on from where it paused, or from a checkpoint it kept."""
-        return _receipt(self._orchestration_call("executions.resume", body=command.to_wire(), account_uid=account_uid))
-
-    def terminate_execution(self, command: ExecutionsTerminate, *, account_uid: str | None = None) -> Receipt:
-        """``executions.terminate``: end it and release its worker, where that is permitted."""
-        return _receipt(self._orchestration_call("executions.terminate", body=command.to_wire(), account_uid=account_uid))
-
-    def collect_execution(self, command: ExecutionsCollect, *, account_uid: str | None = None) -> Collection:
-        """``executions.collect``: the artifacts of an execution, and of its children."""
-        answer = self._orchestration_call("executions.collect", body=command.to_wire(), account_uid=account_uid)
-        return Collection(
-            execution=Execution.from_wire(answer["execution"]),
-            artifacts=[Artifact.from_wire(artifact) for artifact in answer.get("artifacts") or []],
-            children=[Execution.from_wire(child) for child in answer.get("children") or []],
+        return _receipt(
+            self._orchestration_call(
+                "executions.steer", body=command.to_wire(), account_uid=account_uid
+            )
         )
 
-    def get_execution(self, execution_id: str, *, account_uid: str | None = None) -> ExecutionRecord:
+    def cancel_execution(
+        self, command: ExecutionsCancel, *, account_uid: str | None = None
+    ) -> Receipt:
+        """``executions.cancel``: stop the work, and by default everything below it."""
+        return _receipt(
+            self._orchestration_call(
+                "executions.cancel", body=command.to_wire(), account_uid=account_uid
+            )
+        )
+
+    def pause_execution(
+        self, command: ExecutionsPause, *, account_uid: str | None = None
+    ) -> Receipt:
+        """``executions.pause``: ask the worker to stop at its next checkpoint, keeping what it has."""
+        return _receipt(
+            self._orchestration_call(
+                "executions.pause", body=command.to_wire(), account_uid=account_uid
+            )
+        )
+
+    def resume_execution(
+        self, command: ExecutionsResume, *, account_uid: str | None = None
+    ) -> Receipt:
+        """``executions.resume``: go on from where it paused, or from a checkpoint it kept."""
+        return _receipt(
+            self._orchestration_call(
+                "executions.resume", body=command.to_wire(), account_uid=account_uid
+            )
+        )
+
+    def terminate_execution(
+        self, command: ExecutionsTerminate, *, account_uid: str | None = None
+    ) -> Receipt:
+        """``executions.terminate``: end it and release its worker, where that is permitted."""
+        return _receipt(
+            self._orchestration_call(
+                "executions.terminate", body=command.to_wire(), account_uid=account_uid
+            )
+        )
+
+    def collect_execution(
+        self, command: ExecutionsCollect, *, account_uid: str | None = None
+    ) -> Collection:
+        """``executions.collect``: the artifacts of an execution, and of its children."""
+        answer = self._orchestration_call(
+            "executions.collect", body=command.to_wire(), account_uid=account_uid
+        )
+        return Collection(
+            execution=Execution.from_wire(answer["execution"]),
+            artifacts=[
+                Artifact.from_wire(artifact)
+                for artifact in answer.get("artifacts") or []
+            ],
+            children=[
+                Execution.from_wire(child) for child in answer.get("children") or []
+            ],
+        )
+
+    def get_execution(
+        self, execution_id: str, *, account_uid: str | None = None
+    ) -> ExecutionRecord:
         """One execution, its attempts, and the milestones it reached."""
         answer = self._orchestration_call(
-            "executions.get", parameters={"execution_id": execution_id}, account_uid=account_uid
+            "executions.get",
+            parameters={"execution_id": execution_id},
+            account_uid=account_uid,
         )
         return ExecutionRecord(
             execution=Execution.from_wire(answer["execution"]),
-            attempts=[Attempt.from_wire(attempt) for attempt in answer.get("attempts") or []],
-            acknowledgements=[Acknowledgement.from_wire(one) for one in answer.get("acknowledgements") or []],
+            attempts=[
+                Attempt.from_wire(attempt) for attempt in answer.get("attempts") or []
+            ],
+            acknowledgements=[
+                Acknowledgement.from_wire(one)
+                for one in answer.get("acknowledgements") or []
+            ],
         )
 
     def list_executions(
@@ -255,10 +323,17 @@ class OrchestrationMixin:
         """The account's executions, oldest first: a tree by its root, a level by its parent."""
         answer = self._orchestration_call(
             "executions.list",
-            query={"rootExecutionId": root_execution_id, "parentExecutionId": parent_execution_id, "status": status},
+            query={
+                "rootExecutionId": root_execution_id,
+                "parentExecutionId": parent_execution_id,
+                "status": status,
+            },
             account_uid=account_uid,
         )
-        return [Execution.from_wire(execution) for execution in answer.get("executions") or []]
+        return [
+            Execution.from_wire(execution)
+            for execution in answer.get("executions") or []
+        ]
 
     def subscribe_execution(
         self,
@@ -302,12 +377,16 @@ class OrchestrationMixin:
             try:
                 # No read timeout: an execution whose worker is thinking sends
                 # nothing for as long as it thinks, and that is not a drop.
-                response = self._fetch(url, method="GET", headers=headers, stream=True, timeout=(10, None))  # type: ignore[attr-defined]
+                response = self._fetch(  # type: ignore[attr-defined]
+                    url, method="GET", headers=headers, stream=True, timeout=(10, None)
+                )
             except requests.exceptions.RequestException:
                 response = None
             if response is not None:
                 try:
-                    for framed in read_server_sent_events(response.iter_lines(decode_unicode=True)):
+                    for framed in read_server_sent_events(
+                        response.iter_lines(decode_unicode=True)
+                    ):
                         if framed.event == "end":
                             ended = True
                             break
@@ -320,7 +399,10 @@ class OrchestrationMixin:
                             if on_tree is not None:
                                 on_tree(json.loads(framed.data), framed.id or "")
                             continue
-                        yield ExecutionEvent.from_wire(json.loads(framed.data)), framed.id or ""
+                        yield (
+                            ExecutionEvent.from_wire(json.loads(framed.data)),
+                            framed.id or "",
+                        )
                 except requests.exceptions.RequestException:
                     pass
                 finally:

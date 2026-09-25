@@ -29,7 +29,8 @@ RESERVED_RESPONSE_FIELDS = ("success", "message")
 
 
 def _as_fields(data: Any) -> Optional[Dict[str, Any]]:
-    """The payload as fields, or `None` when it has none to spread.
+    """
+    The payload as fields, or `None` when it has none to spread.
 
     A mapping is already fields; a Pydantic model of either generation answers
     them. Anything else — a string, a list, a number — has none.
@@ -84,7 +85,9 @@ class DataResponse(BaseResponse, Generic[T]):
                 # there are no fields to spread.
                 fields["data"] = data
             else:
-                shadowed = [name for name in RESERVED_RESPONSE_FIELDS if name in payload]
+                shadowed = [
+                    name for name in RESERVED_RESPONSE_FIELDS if name in payload
+                ]
                 if shadowed:
                     raise ValueError(
                         "This response flattens "

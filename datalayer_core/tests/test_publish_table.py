@@ -9,12 +9,13 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Callable, cast
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from datalayer_core.client.client import DatalayerClient
 from datalayer_core.contents import Contents
 from datalayer_core.mixins.contents import _as_arrow_table
 
@@ -36,6 +37,9 @@ class FakeClient:
     `AttributeError` that its own `except` swallowed, and the test watched a
     feature fail for a reason that exists nowhere but in this fake.
     """
+
+    #: Bound from `ContentsMixin` by the `client` fixture.
+    publish_table: Callable[..., Any]
 
     def __init__(self) -> None:
         self.calls: list[tuple[str, str, dict[str, Any]]] = []
@@ -67,15 +71,21 @@ class FakeClient:
             # live publication as a snapshot — and did.
             named = (options.get("json") or {}).get("live_server_uid")
             datasource = {"live_server_uid": named} if named else {}
-            return FakeResponse({"relation": "sales", "parts": 1, "datasource": datasource})
+            return FakeResponse(
+                {"relation": "sales", "parts": 1, "datasource": datasource}
+            )
         if path == "/published-tables":
             # The reservation, which is the only thing that knows the owner
             # uid — and the live connector's name has to be owner-scoped.
             return FakeResponse(
-                {"relation": "sales", "owner_uid": "01OWNER", "directory": "/d", "first_part": "part-00000.parquet"}
+                {
+                    "relation": "sales",
+                    "owner_uid": "01OWNER",
+                    "directory": "/d",
+                    "first_part": "part-00000.parquet",
+                }
             )
         return FakeResponse({"relation": "sales", "parts": 1, "datasource": {}})
-
 
 
 @pytest.fixture
@@ -87,12 +97,17 @@ def client() -> FakeClient:
     return fake
 
 
+def _contents(client: FakeClient) -> Contents:
+    """`Contents` over the fake, which offers what it reads of the real client."""
+    return Contents(cast(DatalayerClient, client))
+
+
 def frame() -> pa.Table:
     return pa.table({"id": [1, 2, 3], "region": ["eu", "us", "eu"]})
 
 
 def test_it_reserves_writes_and_completes_in_that_order(client: FakeClient) -> None:
-    Contents(client).publish(frame(), name="sales")
+    _contents(client).publish(frame(), name="sales")
 
     methods_and_paths = [(method, path) for method, path, _ in client.calls]
     # The order is the design: the record is created last, so a publication
@@ -105,7 +120,7 @@ def test_it_reserves_writes_and_completes_in_that_order(client: FakeClient) -> N
 
 
 def test_the_caller_never_names_a_path(client: FakeClient) -> None:
-    Contents(client).publish(frame(), name="sales")
+    _contents(client).publish(frame(), name="sales")
 
     reserve = client.calls[0][2]
     # A relation, and nothing else. The directory is derived from the
@@ -116,7 +131,7 @@ def test_the_caller_never_names_a_path(client: FakeClient) -> None:
 def test_a_large_frame_is_written_in_parts(client: FakeClient) -> None:
     big = pa.table({"id": list(range(10))})
 
-    Contents(client).publish(big, name="sales", row_group_rows=4)
+    _contents(client).publish(big, name="sales", row_group_rows=4)
 
     parts = [path for method, path, _ in client.calls if method == "PUT"]
     # A frame worth publishing is one worth streaming: a single part would put
@@ -129,7 +144,7 @@ def test_a_large_frame_is_written_in_parts(client: FakeClient) -> None:
 
 
 def test_what_is_written_is_readable_parquet(client: FakeClient) -> None:
-    Contents(client).publish(frame(), name="sales")
+    _contents(client).publish(frame(), name="sales")
 
     (_method, _path, options) = client.calls[1]
     _name, payload = options["files"]["file"]
@@ -140,7 +155,7 @@ def test_what_is_written_is_readable_parquet(client: FakeClient) -> None:
 def test_an_empty_frame_still_publishes_its_schema(client: FakeClient) -> None:
     empty = pa.table({"id": pa.array([], type=pa.int64())})
 
-    Contents(client).publish(empty, name="sales")
+    _contents(client).publish(empty, name="sales")
 
     parts = [path for method, path, _ in client.calls if method == "PUT"]
     # A table with no rows is a table: its schema is what somebody queries
@@ -172,15 +187,18 @@ def test_something_that_is_not_a_table_says_what_it_was() -> None:
 # --- Publishing live ---------------------------------------------------------
 
 
-def test_live_still_writes_the_snapshot(client: FakeClient, monkeypatch) -> None:
+def test_live_still_writes_the_snapshot(
+    client: FakeClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     served: list[tuple[str, Any]] = []
-    monkeypatch.setattr(
-        Contents,
-        "_serve_live",
-        lambda self, name, table: served.append((name, table)) or "01LIVESERVER",
-    )
 
-    result = Contents(client).publish(frame(), name="sales", live=True)
+    def serve_live(self: Contents, name: str, table: Any) -> str:
+        served.append((name, table))
+        return "01LIVESERVER"
+
+    monkeypatch.setattr(Contents, "_serve_live", serve_live)
+
+    result = _contents(client).publish(frame(), name="sales", live=True)
 
     # The snapshot is what queries fall back to once the sandbox stops, so it
     # is written either way — a live table must not vanish from under the
@@ -194,11 +212,15 @@ def test_live_still_writes_the_snapshot(client: FakeClient, monkeypatch) -> None
     assert served[0][0] == "01OWNER.sales"
 
 
-def test_a_callable_follows_the_name(client: FakeClient, monkeypatch) -> None:
+def test_a_callable_follows_the_name(
+    client: FakeClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     current = frame()
-    monkeypatch.setattr(Contents, "_serve_live", lambda self, name, table: "01LIVESERVER")
+    monkeypatch.setattr(
+        Contents, "_serve_live", lambda self, name, table: "01LIVESERVER"
+    )
 
-    Contents(client).publish(lambda: current, name="sales", live=True)
+    _contents(client).publish(lambda: current, name="sales", live=True)
 
     # The snapshot came from calling it once; the live half keeps the callable,
     # so a rebound name is followed rather than frozen.
@@ -207,7 +229,9 @@ def test_a_callable_follows_the_name(client: FakeClient, monkeypatch) -> None:
     assert pq.read_table(pa.BufferReader(payload)).num_rows == 3
 
 
-def test_a_sandbox_that_cannot_serve_live_publishes_and_says_so(client: FakeClient) -> None:
+def test_a_sandbox_that_cannot_serve_live_publishes_and_says_so(
+    client: FakeClient,
+) -> None:
     """The snapshot succeeds; `live` reports what actually happened.
 
     This is the only test that runs the real `_serve_live` — the others
@@ -224,19 +248,24 @@ def test_a_sandbox_that_cannot_serve_live_publishes_and_says_so(client: FakeClie
     `False`. There is no arrangement in which an unserved table may report
     itself served.
     """
-    result = Contents(client).publish(frame(), name="sales", live=True)
+    result = _contents(client).publish(frame(), name="sales", live=True)
 
     assert result["live"] is False
     assert any(m == "POST" and p.endswith("/complete") for m, p, _ in client.calls)
 
 
-def test_a_snapshot_publication_serves_nothing_live(client: FakeClient, monkeypatch) -> None:
+def test_a_snapshot_publication_serves_nothing_live(
+    client: FakeClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     called: list[str] = []
-    monkeypatch.setattr(
-        Contents, "_serve_live", lambda self, name, table: called.append(name) or True
-    )
 
-    result = Contents(client).publish(frame(), name="sales")
+    def serve_live(self: Contents, name: str, table: Any) -> bool:
+        called.append(name)
+        return True
+
+    monkeypatch.setattr(Contents, "_serve_live", serve_live)
+
+    result = _contents(client).publish(frame(), name="sales")
 
     assert called == []
     assert "live" not in result
@@ -256,9 +285,9 @@ def test_a_part_upload_is_not_labelled_json() -> None:
     """
     from datalayer_core.utils import network
 
-    sent: dict = {}
+    sent: dict[str, Any] = {}
 
-    def record(url, **kwargs):
+    def record(url: str, **kwargs: Any) -> Any:
         sent.update(kwargs)
 
         class _Answer:
@@ -266,15 +295,17 @@ def test_a_part_upload_is_not_labelled_json() -> None:
 
             def raise_for_status(self) -> None: ...
 
-            def json(self) -> dict:
+            def json(self) -> dict[str, Any]:
                 return {}
 
         return _Answer()
 
     original = network.requests.put
-    network.requests.put = record
+    network.requests.put = record  # type: ignore[assignment]  # a recorder, not requests
     try:
-        network.fetch("https://example.invalid/x", method="PUT", files={"file": ("p", b"x")})
+        network.fetch(
+            "https://example.invalid/x", method="PUT", files={"file": ("p", b"x")}
+        )
         assert "Content-Type" not in sent["headers"], sent["headers"]
         network.fetch("https://example.invalid/x", method="PUT", json={"a": 1})
         assert sent["headers"]["Content-Type"] == "application/json"
@@ -293,18 +324,27 @@ def test_a_query_says_which_answerer_served_it() -> None:
 
     from datalayer_core.contents import Query
 
-    live = Query(None, SimpleNamespace(answered="live", answered_reason="the sandbox holding this table was up"))
+    # No client, and a stand-in for the record: only the two fields are read.
+    live = Query(
+        None,  # type: ignore[arg-type]
+        SimpleNamespace(  # type: ignore[arg-type]
+            answered="live", answered_reason="the sandbox holding this table was up"
+        ),
+    )
     assert live.answered == "live"
+    assert live.answered_reason is not None
     assert "up" in live.answered_reason
 
     # A snapshot-only table was never a choice, and says nothing rather than
     # reporting a decision nobody made.
-    plain = Query(None, SimpleNamespace())
+    plain = Query(None, SimpleNamespace())  # type: ignore[arg-type]
     assert plain.answered is None
     assert plain.answered_reason is None
 
 
-def test_publishing_live_installs_the_runner_factory(monkeypatch, client: FakeClient) -> None:
+def test_publishing_live_installs_the_runner_factory(
+    monkeypatch: pytest.MonkeyPatch, client: FakeClient
+) -> None:
     """The seam that was missing, checked from the side that fills it.
 
     `live_server` starts its Data Server through a `runner_factory`, and
@@ -314,6 +354,8 @@ def test_publishing_live_installs_the_runner_factory(monkeypatch, client: FakeCl
     invisible from that side too: a collaborator always injected in tests and
     never provided in production.
     """
+    # The Data Server package is not published, so CI has no copy of it.
+    pytest.importorskip("datalayer_dataservers")
     from datalayer_dataservers.live_server import LiveTableServer
 
     server = LiveTableServer()
@@ -324,7 +366,7 @@ def test_publishing_live_installs_the_runner_factory(monkeypatch, client: FakeCl
     monkeypatch.setenv("DATALAYER_CONTENTS_DATASERVER_API_KEY", "the-service-key")
 
     assert server.runner_factory is None
-    Contents(client).publish(frame(), name="sales", live=True)
+    _contents(client).publish(frame(), name="sales", live=True)
 
     assert server.runner_factory is not None, (
         "publishing live left the server with no way to start, which is the "
@@ -333,7 +375,7 @@ def test_publishing_live_installs_the_runner_factory(monkeypatch, client: FakeCl
 
 
 def test_a_factory_that_cannot_be_built_does_not_lose_the_publication(
-    monkeypatch, client: FakeClient
+    monkeypatch: pytest.MonkeyPatch, client: FakeClient
 ) -> None:
     """The snapshot is the thing that must survive.
 
@@ -341,6 +383,8 @@ def test_a_factory_that_cannot_be_built_does_not_lose_the_publication(
     do it with, still published a table — and raising here would throw that
     away to make a point about the half that did not work.
     """
+    # The Data Server package is not published, so CI has no copy of it.
+    pytest.importorskip("datalayer_dataservers")
     from datalayer_dataservers.live_server import LiveTableServer
 
     server = LiveTableServer()
@@ -350,7 +394,7 @@ def test_a_factory_that_cannot_be_built_does_not_lose_the_publication(
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("no credentials here")),
     )
 
-    result = Contents(client).publish(frame(), name="sales", live=True)
+    result = _contents(client).publish(frame(), name="sales", live=True)
 
     assert result["live"] is False
     assert any(m == "POST" and p.endswith("/complete") for m, p, _ in client.calls)
@@ -383,7 +427,7 @@ def test_the_fake_client_only_offers_what_the_real_one_offers() -> None:
 
 
 def test_a_sandbox_without_the_service_credential_publishes_a_snapshot(
-    monkeypatch, client: FakeClient
+    monkeypatch: pytest.MonkeyPatch, client: FakeClient
 ) -> None:
     """`register` speaks for the platform about which Data Servers exist.
 
@@ -392,13 +436,15 @@ def test_a_sandbox_without_the_service_credential_publishes_a_snapshot(
     False` — the truthful answer — rather than registering something that would
     answer `401` on every heartbeat for as long as it ran.
     """
+    # The Data Server package is not published, so CI has no copy of it.
+    pytest.importorskip("datalayer_dataservers")
     from datalayer_dataservers.live_server import LiveTableServer
 
     server = LiveTableServer()
     monkeypatch.setattr("datalayer_dataservers.live_server.live_server", server)
     monkeypatch.delenv("DATALAYER_CONTENTS_DATASERVER_API_KEY", raising=False)
 
-    result = Contents(client).publish(frame(), name="sales", live=True)
+    result = _contents(client).publish(frame(), name="sales", live=True)
 
     assert result["live"] is False
     assert server.runner_factory is None

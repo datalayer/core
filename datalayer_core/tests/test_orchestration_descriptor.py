@@ -175,7 +175,8 @@ def test_the_card_agent_runtimes_serves_today_has_no_skills() -> None:
     # no skills, so nothing the platform publishes can be discovered by one.
     mapping = from_agent_card(cards()["served"], agent_id="agent_researcher")
     assert mapping.descriptor.skills == []
-    assert mapping.descriptor.endpoints[0].url.startswith("https://oss.datalayer.run")
+    url = mapping.descriptor.endpoints[0].url
+    assert url is not None and url.startswith("https://oss.datalayer.run")
     assert mapping.descriptor.endpoints[0].transport == "JSONRPC"
     assert mapping.descriptor.endpoints[0].protocol_version == "1.0"
 
@@ -405,7 +406,6 @@ def test_a_worker_can_be_found_by_capability_and_an_example_cannot() -> None:
             assert "descriptor.capabilities" in gaps, name
     assert workers, "no spec declares delegable work, so discovery matches nothing"
     assert examples, "every spec declared some, which the catalogue does not"
-
 
 
 @catalogued

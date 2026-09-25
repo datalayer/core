@@ -229,7 +229,12 @@ def test_a_query_is_watched_until_it_succeeds() -> None:
         ]
     )
     states = asyncio.run(collect(stream_query(client, "01QUERY", poll_seconds=0)))
-    assert [state["status"] for state in states] == ["pending", "running", "running", "succeeded"]
+    assert [state["status"] for state in states] == [
+        "pending",
+        "running",
+        "running",
+        "succeeded",
+    ]
     assert client.calls == 4
 
 
@@ -243,7 +248,10 @@ def arrow_stream(rows: int, batch_rows: int) -> bytes:
             end = min(start + batch_rows, rows)
             writer.write(
                 pyarrow.record_batch(
-                    {"id": list(range(start, end)), "value": [float(i) for i in range(start, end)]},
+                    {
+                        "id": list(range(start, end)),
+                        "value": [float(i) for i in range(start, end)],
+                    },
                     schema=schema,
                 )
             )
@@ -309,6 +317,8 @@ def test_the_async_and_sync_decoders_agree_on_a_real_stream() -> None:
 
     sync_rows = [
         batch.num_rows
-        for batch in iter_arrow_batches(payload[i : i + 17] for i in range(0, len(payload), 17))
+        for batch in iter_arrow_batches(
+            payload[i : i + 17] for i in range(0, len(payload), 17)
+        )
     ]
     assert asyncio.run(via_async()) == sync_rows == [100, 100, 100]

@@ -45,7 +45,9 @@ def _sha(data: bytes) -> str:
 def _refusal(code: str, message: str) -> RuntimeError:
     """An error the way the transport raises one: the body inside the message."""
     body = json.dumps({"code": code, "message": message})
-    return RuntimeError(f"Failed to request the URL http://test (status=409, body={body})")
+    return RuntimeError(
+        f"Failed to request the URL http://test (status=409, body={body})"
+    )
 
 
 class FakeContents:
@@ -143,7 +145,10 @@ class FakeContents:
         value["object_uid"] = f"o-{action.path}"
         value["version_uid"] = self.version_of(remote_path)
         if action.kind == "upload":
-            here, there = local.entries.get(action.path), remote.entries.get(action.path)
+            here, there = (
+                local.entries.get(action.path),
+                remote.entries.get(action.path),
+            )
             if here is not None and there is not None:
                 value["blocks"] = list(changed_blocks(there, here))
         return value
@@ -264,7 +269,9 @@ class FakeContents:
             if _sha(piece) != expected:
                 raise _refusal("SYNC_BLOCK_MISSING", f"block {index} is nowhere")
             assembled += piece
-        assert len(assembled) == request["size"] and _sha(assembled) == request["checksum"]
+        assert (
+            len(assembled) == request["size"] and _sha(assembled) == request["checksum"]
+        )
         self.files[remote_path] = assembled
         self.bump(remote_path)
         return SimpleNamespace(
@@ -426,8 +433,11 @@ def test_a_local_deletion_propagates_only_with_delete_and_leaves_a_tombstone(
 
 def _entry(path: str, checksum: str, size: int = 3) -> FileEntry:
     return FileEntry(
-        path=path, size=size, modified_at="2026-09-06T10:00:00Z",
-        checksum=checksum, blocks=(checksum,),
+        path=path,
+        size=size,
+        modified_at="2026-09-06T10:00:00Z",
+        checksum=checksum,
+        blocks=(checksum,),
     )
 
 
@@ -444,7 +454,8 @@ def test_a_file_recreated_after_an_agreed_deletion_is_not_deleted_again() -> Non
         Manifest(entries={}, tombstones=dict(buried)),
         Manifest(entries={"x": _entry("x", "new")}),
         Manifest(entries={}, tombstones=dict(buried)),
-        direction="bidirectional", delete=True,
+        direction="bidirectional",
+        delete=True,
     )
     assert [(a.kind, a.path) for a in plan.actions] == [("download", "x")]
 
@@ -453,7 +464,8 @@ def test_a_file_recreated_after_an_agreed_deletion_is_not_deleted_again() -> Non
         Manifest(entries={"x": _entry("x", "new")}),
         Manifest(entries={}, tombstones=dict(buried)),
         Manifest(entries={}, tombstones=dict(buried)),
-        direction="bidirectional", delete=True,
+        direction="bidirectional",
+        delete=True,
     )
     assert [(a.kind, a.path) for a in plan.actions] == [("upload", "x")]
 
@@ -462,7 +474,9 @@ def test_a_file_recreated_after_an_agreed_deletion_is_not_deleted_again() -> Non
         Manifest(entries={"x": _entry("x", "mine")}),
         Manifest(entries={"x": _entry("x", "theirs")}),
         Manifest(entries={}, tombstones=dict(buried)),
-        direction="bidirectional", conflict_policy="manual", delete=True,
+        direction="bidirectional",
+        conflict_policy="manual",
+        delete=True,
     )
     assert [(a.kind, a.path) for a in plan.actions] == [("conflict", "x")]
 
@@ -472,7 +486,8 @@ def test_a_file_recreated_after_an_agreed_deletion_is_not_deleted_again() -> Non
         Manifest(entries={}, tombstones={"x": "2026-09-05T00:00:00Z"}),
         Manifest(entries={"x": _entry("x", "v1")}),
         Manifest(entries={"x": _entry("x", "v1")}),
-        direction="bidirectional", delete=True,
+        direction="bidirectional",
+        delete=True,
     )
     assert [(a.kind, a.path) for a in plan.actions] == [("delete_remote", "x")]
 
@@ -666,7 +681,15 @@ def test_a_stale_base_is_reconciled_again_once_and_then_pushed(tmp_path: Path) -
     assert outcome.status == "succeeded", outcome.failed
     assert outcome.uploaded == ["big.bin"]
     assert fake.files["research/big.bin"] == FIVE_BLOCKS_EDITED
-    assert fake.calls == ["create", "block", "compose", "reconcile", "block", "compose", "report"]
+    assert fake.calls == [
+        "create",
+        "block",
+        "compose",
+        "reconcile",
+        "block",
+        "compose",
+        "report",
+    ]
     assert fake.block_uploads == [("big.bin", 2, BLOCK), ("big.bin", 2, BLOCK)]
     assert fake.whole_uploads == ["research/big.bin"]
 
@@ -701,7 +724,10 @@ def test_a_composition_the_service_cannot_make_falls_back_to_the_whole_file(
 
     def refuse(session_uid: str, request: dict[str, Any]) -> SimpleNamespace:
         fake.calls.append("compose")
-        raise _refusal("SYNC_BLOCK_MISSING", "block 2 of big.bin is neither staged nor in the base version")
+        raise _refusal(
+            "SYNC_BLOCK_MISSING",
+            "block 2 of big.bin is neither staged nor in the base version",
+        )
 
     fake.compose_content_sync_version = refuse  # type: ignore[method-assign]
 

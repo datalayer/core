@@ -63,7 +63,11 @@ def an_execution(status: ExecutionState = ExecutionState.RUNNING) -> Execution:
     return Execution(
         execution_id="exec_1",
         root_execution_id="exec_1",
-        agent=AgentBinding(agent_id="validator", capability="notebook.validate", protocol=AgentProtocol.A2A),
+        agent=AgentBinding(
+            agent_id="validator",
+            capability="notebook.validate",
+            protocol=AgentProtocol.A2A,
+        ),
         objective=Objective(goal="Validate the notebook"),
         status=status,
         created_at=NOW,
@@ -73,37 +77,58 @@ def an_execution(status: ExecutionState = ExecutionState.RUNNING) -> Execution:
 
 def a_receipt(command: CommandName, **fields: Any) -> Receipt:
     acknowledgement = Acknowledgement(
-        kind=AcknowledgementKind.RECEIVED, execution_id="exec_1", command=command, acknowledged_at=NOW
+        kind=AcknowledgementKind.RECEIVED,
+        execution_id="exec_1",
+        command=command,
+        acknowledged_at=NOW,
     )
-    return Receipt(execution=fields.pop("execution", an_execution()), acknowledgement=acknowledgement, **fields)
+    return Receipt(
+        execution=fields.pop("execution", an_execution()),
+        acknowledgement=acknowledgement,
+        **fields,
+    )
 
 
 class Client:
-    def discover_agents(self, command: Any, *, account_uid: str | None = None) -> list[AgentDescriptor]:
+    def discover_agents(
+        self, command: Any, *, account_uid: str | None = None
+    ) -> list[AgentDescriptor]:
         RECORDED.setdefault("discovered", []).append((command, account_uid))
         return ANSWERS.get("agents", [VALIDATOR])
 
-    def delegate_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+    def delegate_execution(
+        self, command: Any, *, account_uid: str | None = None
+    ) -> Receipt:
         RECORDED.setdefault("delegated", []).append((command, account_uid))
         return a_receipt(CommandName.EXECUTIONS_DELEGATE, delivered=True)
 
-    def steer_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+    def steer_execution(
+        self, command: Any, *, account_uid: str | None = None
+    ) -> Receipt:
         RECORDED["steered"] = command
         return a_receipt(CommandName.EXECUTIONS_STEER, delivered=True)
 
-    def pause_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+    def pause_execution(
+        self, command: Any, *, account_uid: str | None = None
+    ) -> Receipt:
         RECORDED["paused"] = command
         return a_receipt(CommandName.EXECUTIONS_PAUSE, delivered=True)
 
-    def resume_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+    def resume_execution(
+        self, command: Any, *, account_uid: str | None = None
+    ) -> Receipt:
         RECORDED["resumed"] = command
         return a_receipt(CommandName.EXECUTIONS_RESUME, delivered=True)
 
-    def terminate_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+    def terminate_execution(
+        self, command: Any, *, account_uid: str | None = None
+    ) -> Receipt:
         RECORDED["terminated"] = command
         return a_receipt(CommandName.EXECUTIONS_TERMINATE, delivered=False)
 
-    def cancel_execution(self, command: Any, *, account_uid: str | None = None) -> Receipt:
+    def cancel_execution(
+        self, command: Any, *, account_uid: str | None = None
+    ) -> Receipt:
         RECORDED["cancelled"] = command
         return a_receipt(
             CommandName.EXECUTIONS_CANCEL,
@@ -112,7 +137,9 @@ class Client:
             cancelled_execution_ids=["exec_1", "exec_2"],
         )
 
-    def collect_execution(self, command: Any, *, account_uid: str | None = None) -> Collection:
+    def collect_execution(
+        self, command: Any, *, account_uid: str | None = None
+    ) -> Collection:
         RECORDED["collected"] = command
         artifact = Artifact(
             artifact_id="art_profile",
@@ -123,7 +150,9 @@ class Client:
         )
         return Collection(execution=an_execution(), artifacts=[artifact], children=[])
 
-    def subscribe_execution(self, execution_id: str, **kwargs: Any) -> Iterator[tuple[ExecutionEvent, str]]:
+    def subscribe_execution(
+        self, execution_id: str, **kwargs: Any
+    ) -> Iterator[tuple[ExecutionEvent, str]]:
         RECORDED["subscribed"] = (execution_id, kwargs)
         yield from ANSWERS.get("events", [])
 
@@ -158,7 +187,14 @@ def an_event(execution_id: str, **fields: Any) -> ExecutionEvent:
 class TestDiscover:
     def test_it_lists_the_workers_found_under_the_constraints_given(self) -> None:
         result = invoke(
-            "agents", "discover", "--capability", "notebook.validate", "--protocol", "acp", "--account", "org-1"
+            "agents",
+            "discover",
+            "--capability",
+            "notebook.validate",
+            "--protocol",
+            "acp",
+            "--account",
+            "org-1",
         )
         assert result.exit_code == 0, result.output
         assert "validator" in plain(result.stdout)
@@ -177,17 +213,28 @@ class TestDiscover:
 class TestRun:
     def test_it_delegates_to_the_discovered_worker_with_its_context(self) -> None:
         result = invoke(
-            "executions", "run",
-            "--agent", "validator",
-            "--goal", "Validate the notebook",
-            "--protocol", "acp",
-            "--context", "notebook:nb-1@3",
-            "--context", "datalayer:notebook/nb-2@1",
-            "--criterion", "No failing cell",
+            "executions",
+            "run",
+            "--agent",
+            "validator",
+            "--goal",
+            "Validate the notebook",
+            "--protocol",
+            "acp",
+            "--context",
+            "notebook:nb-1@3",
+            "--context",
+            "datalayer:notebook/nb-2@1",
+            "--criterion",
+            "No failing cell",
         )
         assert result.exit_code == 0, result.output
         [(command, _)] = RECORDED["delegated"]
-        assert (command.agent.agent_id, command.agent.protocol, command.agent.endpoint) == (
+        assert (
+            command.agent.agent_id,
+            command.agent.protocol,
+            command.agent.endpoint,
+        ) == (
             "validator",
             AgentProtocol.ACP,
             "wss://agents.example/acp",
@@ -201,21 +248,43 @@ class TestRun:
         assert "Delegated" in plain(result.stdout)
 
     def test_the_same_command_twice_is_one_key_and_a_named_key_is_kept(self) -> None:
-        arguments = ("executions", "run", "--agent", "validator", "--goal", "Validate the notebook")
+        arguments = (
+            "executions",
+            "run",
+            "--agent",
+            "validator",
+            "--goal",
+            "Validate the notebook",
+        )
         invoke(*arguments)
         invoke(*arguments)
         invoke(*arguments, "--idempotency-key", "mine")
         keys = [command.idempotency_key for command, _ in RECORDED["delegated"]]
         assert keys[0] == keys[1] and keys[2] == "mine"
 
-    def test_a_worker_nobody_discovered_is_refused_and_nothing_is_delegated(self) -> None:
-        result = invoke("executions", "run", "--agent", "someone-else", "--goal", "Validate")
+    def test_a_worker_nobody_discovered_is_refused_and_nothing_is_delegated(
+        self,
+    ) -> None:
+        result = invoke(
+            "executions", "run", "--agent", "someone-else", "--goal", "Validate"
+        )
         assert result.exit_code == 1
         assert "datalayer agents discover" in plain(result.output)
         assert "delegated" not in RECORDED
 
-    def test_a_context_that_is_not_a_reference_is_refused_before_anything_is_asked(self) -> None:
-        result = invoke("executions", "run", "--agent", "validator", "--goal", "Validate", "--context", "the notebook")
+    def test_a_context_that_is_not_a_reference_is_refused_before_anything_is_asked(
+        self,
+    ) -> None:
+        result = invoke(
+            "executions",
+            "run",
+            "--agent",
+            "validator",
+            "--goal",
+            "Validate",
+            "--context",
+            "the notebook",
+        )
         assert result.exit_code == 1
         assert "not a context reference" in plain(result.output)
         assert "discovered" not in RECORDED
@@ -223,49 +292,83 @@ class TestRun:
 
 class TestSteerCancelAndArtifacts:
     def test_steer_and_cancel_carry_what_they_ask_under_a_derived_key(self) -> None:
-        assert invoke("executions", "steer", "exec_1", "Check the statistical assumptions").exit_code == 0
+        assert (
+            invoke(
+                "executions", "steer", "exec_1", "Check the statistical assumptions"
+            ).exit_code
+            == 0
+        )
         steered = RECORDED["steered"]
         assert steered.instructions == "Check the statistical assumptions"
         assert steered.idempotency_key.startswith("cmd-")
-        result = invoke("executions", "cancel", "exec_1", "--reason", "The question changed", "--no-cascade")
+        result = invoke(
+            "executions",
+            "cancel",
+            "exec_1",
+            "--reason",
+            "The question changed",
+            "--no-cascade",
+        )
         cancelled = RECORDED["cancelled"]
-        assert (cancelled.execution_id, cancelled.reason, cancelled.cascade) == ("exec_1", "The question changed", False)
+        assert (cancelled.execution_id, cancelled.reason, cancelled.cascade) == (
+            "exec_1",
+            "The question changed",
+            False,
+        )
         assert "Cancelled 2 executions: exec_1, exec_2." in plain(result.stdout)
 
     def test_pause_resume_and_terminate_carry_what_they_ask(self) -> None:
-        paused = invoke("executions", "pause", "exec_1", "--reason", "Waiting for the data owner")
+        paused = invoke(
+            "executions", "pause", "exec_1", "--reason", "Waiting for the data owner"
+        )
         assert paused.exit_code == 0, paused.output
-        assert (RECORDED["paused"].execution_id, RECORDED["paused"].reason) == ("exec_1", "Waiting for the data owner")
+        assert (RECORDED["paused"].execution_id, RECORDED["paused"].reason) == (
+            "exec_1",
+            "Waiting for the data owner",
+        )
         assert RECORDED["paused"].idempotency_key.startswith("cmd-")
         assert "the worker was asked to pause" in plain(paused.stdout)
-        assert invoke("executions", "resume", "exec_1", "--checkpoint", "ckpt_2").exit_code == 0
+        assert (
+            invoke("executions", "resume", "exec_1", "--checkpoint", "ckpt_2").exit_code
+            == 0
+        )
         assert RECORDED["resumed"].checkpoint_id == "ckpt_2"
         ended = invoke("executions", "terminate", "exec_1", "--keep-worker")
         assert ended.exit_code == 0, ended.output
         assert RECORDED["terminated"].release_worker is False
         assert "it has not been ended yet" in plain(ended.stdout)
 
-    def test_artifacts_lists_what_was_registered_with_its_children_by_default(self) -> None:
+    def test_artifacts_lists_what_was_registered_with_its_children_by_default(
+        self,
+    ) -> None:
         table = invoke("executions", "artifacts", "exec_1")
         assert table.exit_code == 0, table.output
         assert "Artifact" in plain(table.stdout)
         assert RECORDED["collected"].include_children is True
         # The table fits the terminal; what was registered is read from the JSON.
-        emitted = json.loads(plain(invoke("executions", "artifacts", "exec_1", "-o", "json").stdout))
-        assert [(one["name"], one["status"], one["committedBy"]) for one in emitted["artifacts"]] == [
-            ("profile-report", "committed", "att_1_1")
-        ]
+        emitted = json.loads(
+            plain(invoke("executions", "artifacts", "exec_1", "-o", "json").stdout)
+        )
+        assert [
+            (one["name"], one["status"], one["committedBy"])
+            for one in emitted["artifacts"]
+        ] == [("profile-report", "committed", "att_1_1")]
 
 
 class TestWatch:
-    def test_it_prints_each_event_in_the_page_s_words_and_says_when_it_is_over(self) -> None:
+    def test_it_prints_each_event_in_the_page_s_words_and_says_when_it_is_over(
+        self,
+    ) -> None:
         ANSWERS["events"] = [
             (an_event("exec_1", message="Re-attached to task-1."), "exec_1:1"),
             (
                 an_event(
                     "exec_2",
                     type=ExecutionEventType.ERROR,
-                    error=OrchestrationError(code=ErrorCode.APPROVAL_TIMED_OUT, message="Nobody approved it in time."),
+                    error=OrchestrationError(
+                        code=ErrorCode.APPROVAL_TIMED_OUT,
+                        message="Nobody approved it in time.",
+                    ),
                 ),
                 "exec_1:1,exec_2:1",
             ),
@@ -274,16 +377,25 @@ class TestWatch:
         assert result.exit_code == 0, result.output
         text = plain(result.stdout)
         assert f"{NOW}  Re-attached to task-1." in text
-        assert f"{NOW}  [exec_2] approval_timed_out: Nobody approved it in time." in text
+        assert (
+            f"{NOW}  [exec_2] approval_timed_out: Nobody approved it in time." in text
+        )
         assert "Over: every execution exec_1 covers has ended." in text
         assert RECORDED["subscribed"] == (
             "exec_1",
-            {"include_children": True, "from_sequence": None, "last_event_id": None, "account_uid": None},
+            {
+                "include_children": True,
+                "from_sequence": None,
+                "last_event_id": None,
+                "account_uid": None,
+            },
         )
 
     def test_as_json_it_is_one_line_per_event_with_its_cursor(self) -> None:
         ANSWERS["events"] = [(an_event("exec_1", message="Started."), "exec_1:1")]
-        result = invoke("executions", "watch", "exec_1", "-o", "json", "--last-event-id", "exec_1:0")
+        result = invoke(
+            "executions", "watch", "exec_1", "-o", "json", "--last-event-id", "exec_1:0"
+        )
         assert result.exit_code == 0, result.output
         [line] = [one for one in result.stdout.splitlines() if one.strip()]
         assert json.loads(line)["cursor"] == "exec_1:1"

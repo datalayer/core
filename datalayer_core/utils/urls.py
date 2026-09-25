@@ -334,7 +334,9 @@ class DatalayerURLs:
         resolved_success_url = resolved_success_url.rstrip("/")
         resolved_status_url = resolved_status_url.rstrip("/")
         resolved_support_url = resolved_support_url.rstrip("/")
-        resolved_datalayer_mcp_server_url = resolved_datalayer_mcp_server_url.rstrip("/")
+        resolved_datalayer_mcp_server_url = resolved_datalayer_mcp_server_url.rstrip(
+            "/"
+        )
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
         resolved_contents_url = resolved_contents_url.rstrip("/")
         resolved_durable_url = resolved_durable_url.rstrip("/")
@@ -383,7 +385,8 @@ class DatalayerURLs:
 
     @classmethod
     def from_single_origin(cls, origin: str) -> "DatalayerURLs":
-        """Every service under one host, each on its own path prefix.
+        """
+        Every service under one host, each on its own path prefix.
 
         A run — a sandbox, an agent, anything served from one deployment —
         addresses all of Datalayer through a single origin, so one URL is

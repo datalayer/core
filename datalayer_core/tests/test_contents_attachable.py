@@ -115,7 +115,9 @@ class Client:
         self.listed.append((prefix, cursor))
         if cursor is None:
             return {
-                "items": [{"path": f"{prefix}a.parquet", "size": 1, "is_directory": False}],
+                "items": [
+                    {"path": f"{prefix}a.parquet", "size": 1, "is_directory": False}
+                ],
                 "next_cursor": "more",
             }
         return {
@@ -127,7 +129,12 @@ class Client:
         return {"path": path, "size": 9, "is_directory": False, "etag": "abc"}
 
     def iter_cloud_storage_object(
-        self, source_uid: str, path: str, *, byte_range: str | None = None, **kwargs: Any
+        self,
+        source_uid: str,
+        path: str,
+        *,
+        byte_range: str | None = None,
+        **kwargs: Any,
     ) -> Iterator[bytes]:
         self.ranges.append(byte_range)
         yield b"par"
@@ -136,7 +143,9 @@ class Client:
     def test_cloud_storage_connection(self, source_uid: str) -> dict[str, Any]:
         return {"ok": True}
 
-    def presign_cloud_storage_object(self, source_uid: str, path: str, **kwargs: Any) -> Any:
+    def presign_cloud_storage_object(
+        self, source_uid: str, path: str, **kwargs: Any
+    ) -> Any:
         return {"url": "https://example.invalid/one-object"}
 
     # Dataset -----------------------------------------------------------
@@ -374,9 +383,9 @@ def test_all_three_attach_the_same_way(method: str, uid: str) -> None:
 def test_an_attachment_matches_what_the_cli_sends() -> None:
     # The CLI's `_attach_source` and this build the same request. Two ways to
     # attach that disagree is the defect this repository keeps finding.
-    from datalayer_core.cli.commands import contents as cli
-
     import inspect
+
+    from datalayer_core.cli.commands import contents as cli
 
     sent = inspect.getsource(cli._attach_source)
     client = Client()

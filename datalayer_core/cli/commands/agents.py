@@ -2,8 +2,9 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The ``datalayer agents`` command group: the workers work is delegated to
-(ORCHESTRATOR.md, section 11 and O1-13).
+The ``datalayer agents`` command group.
+
+The workers work is delegated to (ORCHESTRATOR.md, section 11 and O1-13).
 
 ``discover`` asks the orchestration control plane, which reads the agentspec
 library and fills each worker's operations from its protocol's adapter.
@@ -76,10 +77,17 @@ def discover(
         help="An operation the worker's protocol must support, such as steer; repeatable.",
     ),
     minimum_trust: Optional[TrustLevel] = typer.Option(
-        None, "--minimum-trust", case_sensitive=False, help="The lowest trust level accepted."
+        None,
+        "--minimum-trust",
+        case_sensitive=False,
+        help="The lowest trust level accepted.",
     ),
-    region: Optional[str] = typer.Option(None, "--region", help="The region the worker must run in."),
-    limit: int = typer.Option(20, "--limit", "-n", min=1, help="The most workers to list."),
+    region: Optional[str] = typer.Option(
+        None, "--region", help="The region the worker must run in."
+    ),
+    limit: int = typer.Option(
+        20, "--limit", "-n", min=1, help="The most workers to list."
+    ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
@@ -94,7 +102,9 @@ def discover(
             limit=limit,
         )
     )
-    agents: list[Any] = call(lambda: client().discover_agents(command, account_uid=account))
+    agents: list[Any] = call(
+        lambda: client().discover_agents(command, account_uid=account)
+    )
     if emit([agent.to_wire() for agent in agents], output):
         return
     if not agents:

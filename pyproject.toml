@@ -75,11 +75,18 @@ test = [
     "datamodel-code-generator",
     # So the fsspec filesystem is exercised rather than skipped in CI.
     "fsspec>=2024.6.0",
+    # `contents.publish()`, the Arrow readers and `to_pandas()`: optional at
+    # runtime, and `test_publish_table` imports pyarrow at module level.
+    "pandas",
+    "pyarrow",
 ]
 docs = [
     "click>=8.3.1",  # Use latest version, 8.2.2 issue has been fixed
     "npdoc_to_md",
     "pydoc-markdown>=4.0",  # Use modern version with proper module structure
+    # pydoc imports every module it documents, and `contents_fsspec` refuses
+    # to import without fsspec.
+    "fsspec>=2024.6.0",
 ]
 examples = [
     "fastapi",

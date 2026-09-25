@@ -32,21 +32,57 @@ def render(table: RenderableType) -> str:
 
 
 def test_agents_rows_from_a_model_and_a_dictionary() -> None:
-    model = ConnectedAgent(uid="01G", client_id="https://claude.ai/c.json", client_name="Claude Code", scopes=["notebooks:read"])
+    model = ConnectedAgent(
+        uid="01G",
+        client_id="https://claude.ai/c.json",
+        client_name="Claude Code",
+        scopes=["notebooks:read"],
+    )
     output = render(connected_agents_table([model, model.model_dump()]))
     assert output.count("Claude Code") == 2
     assert "notebooks:read" in output and "never" in output
 
 
 def test_tasks_and_bindings_name_what_they_touch() -> None:
-    tasks = render(tasks_table([McpTask(uid="01T", status="input_required", tool="execute_cell", notebook_uid="01NB")]))
+    tasks = render(
+        tasks_table(
+            [
+                McpTask(
+                    uid="01T",
+                    status="input_required",
+                    tool="execute_cell",
+                    notebook_uid="01NB",
+                )
+            ]
+        )
+    )
     assert "input_required" in tasks and "01NB" in tasks
-    bindings = render(bindings_table([McpBinding(uid="sb_1", kind="sandbox", sandbox_uid="01R", sandbox_provider="e2b"), {"uid": "nb_1", "kind": "notebook", "item_uid": "01NB"}]))
+    bindings = render(
+        bindings_table(
+            [
+                McpBinding(
+                    uid="sb_1",
+                    kind="sandbox",
+                    sandbox_uid="01R",
+                    sandbox_provider="e2b",
+                ),
+                {"uid": "nb_1", "kind": "notebook", "item_uid": "01NB"},
+            ]
+        )
+    )
     assert "01R" in bindings and "e2b" in bindings and "01NB" in bindings
 
 
 def test_audit_rows_carry_the_decision_and_its_reason() -> None:
-    row = McpAuditEvent(uid="01A", at="t", user_uid="01U", method="tools/call", tool="delete_cell", decision="refused", refusal_reason="organization: tool_denylist")
+    row = McpAuditEvent(
+        uid="01A",
+        at="t",
+        user_uid="01U",
+        method="tools/call",
+        tool="delete_cell",
+        decision="refused",
+        refusal_reason="organization: tool_denylist",
+    )
     output = render(audit_events_table([row]))
     assert "refused (organization: tool_denylist)" in output
     # Without a client id the row is attributed to the person.
@@ -54,14 +90,59 @@ def test_audit_rows_carry_the_decision_and_its_reason() -> None:
 
 
 def test_policy_and_slis_read_as_a_person_says_them() -> None:
-    policy = render(policy_table({"scope": "organization", "rules": [{"name": "calls_per_minute", "value": 60, "decided_by": "platform"}], "tools": [{"tool": "delete_cell", "scope": "notebooks:write", "allowed": False, "decided_by": "organization"}]}))
-    assert "calls_per_minute" in policy and "denied" in policy and "organization" in policy
-    slis = render(slis_table({"availability": 0.995, "p95_call_duration_ms": 80.4, "task_success_rate": None, "p95_sandbox_launch_seconds": {}, "samples": {"calls": 10, "tasks": 0, "launches": 0}}))
+    policy = render(
+        policy_table(
+            {
+                "scope": "organization",
+                "rules": [
+                    {"name": "calls_per_minute", "value": 60, "decided_by": "platform"}
+                ],
+                "tools": [
+                    {
+                        "tool": "delete_cell",
+                        "scope": "notebooks:write",
+                        "allowed": False,
+                        "decided_by": "organization",
+                    }
+                ],
+            }
+        )
+    )
+    assert (
+        "calls_per_minute" in policy and "denied" in policy and "organization" in policy
+    )
+    slis = render(
+        slis_table(
+            {
+                "availability": 0.995,
+                "p95_call_duration_ms": 80.4,
+                "task_success_rate": None,
+                "p95_sandbox_launch_seconds": {},
+                "samples": {"calls": 10, "tasks": 0, "launches": 0},
+            }
+        )
+    )
     assert "99.5%" in slis and "80 ms" in slis and "-" in slis
 
 
 def test_spans_are_drawn_as_a_tree() -> None:
-    tree = span_tree([{"span_id": "r", "span_name": "mcp.request", "duration_ms": 10, "start_time": "1"}, {"span_id": "c", "parent_span_id": "r", "span_name": "mcp.worker", "duration_ms": 5, "start_time": "2"}])
+    tree = span_tree(
+        [
+            {
+                "span_id": "r",
+                "span_name": "mcp.request",
+                "duration_ms": 10,
+                "start_time": "1",
+            },
+            {
+                "span_id": "c",
+                "parent_span_id": "r",
+                "span_name": "mcp.worker",
+                "duration_ms": 5,
+                "start_time": "2",
+            },
+        ]
+    )
     output = render(spans_table(tree))
     assert "mcp.request" in output and "└ mcp.worker" in output and "5.0 ms" in output
 
@@ -71,7 +152,7 @@ def test_spans_are_drawn_as_a_tree() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _rendered_rows(table) -> list[str]:
+def _rendered_rows(table: RenderableType) -> list[str]:
     """The table's body lines, so a cell can be asserted rather than a
     substring of the whole render."""
     return [
@@ -81,8 +162,8 @@ def _rendered_rows(table) -> list[str]:
     ]
 
 
-def test_an_alert_says_who_acknowledged_it_and_an_unacknowledged_one_says_no():
-    """"Who saw this" is the question, and a tick answers a different one.
+def test_an_alert_says_who_acknowledged_it_and_an_unacknowledged_one_says_no() -> None:
+    """ "Who saw this" is the question, and a tick answers a different one.
 
     Asserted per row rather than against the whole render: "no" appears in
     plenty of English, and a check that passes on the word somewhere in the
@@ -91,11 +172,23 @@ def test_an_alert_says_who_acknowledged_it_and_an_unacknowledged_one_says_no():
     rows = _rendered_rows(
         alerts_table(
             [
-                {"uid": "a1", "rule_uid": "spend-cap", "severity": "critical",
-                 "org_uid": "01ORG", "value": 120, "at": "t1"},
-                {"uid": "a2", "rule_uid": "task-failures", "severity": "warning",
-                 "org_uid": "01ORG", "value": 9, "at": "t2",
-                 "acknowledged_by": "01USER"},
+                {
+                    "uid": "a1",
+                    "rule_uid": "spend-cap",
+                    "severity": "critical",
+                    "org_uid": "01ORG",
+                    "value": 120,
+                    "at": "t1",
+                },
+                {
+                    "uid": "a2",
+                    "rule_uid": "task-failures",
+                    "severity": "warning",
+                    "org_uid": "01ORG",
+                    "value": 9,
+                    "at": "t2",
+                    "acknowledged_by": "01USER",
+                },
             ]
         )
     )
@@ -105,7 +198,7 @@ def test_an_alert_says_who_acknowledged_it_and_an_unacknowledged_one_says_no():
     assert "01USER" in acknowledged
 
 
-def test_an_alert_with_no_team_shows_the_organization_it_fired_for():
+def test_an_alert_with_no_team_shows_the_organization_it_fired_for() -> None:
     """An organization-scope alert has no team uid, and a blank scope column
     leaves the reader with nothing to act on."""
     rows = _rendered_rows(
@@ -114,11 +207,11 @@ def test_an_alert_with_no_team_shows_the_organization_it_fired_for():
     assert any("01ORG" in row for row in rows)
 
 
-def test_no_alerts_says_so_rather_than_drawing_an_empty_table():
+def test_no_alerts_says_so_rather_than_drawing_an_empty_table() -> None:
     assert "(none)" in render(alerts_table([]))
 
 
-def test_forwarding_that_has_never_been_attempted_does_not_read_as_healthy():
+def test_forwarding_that_has_never_been_attempted_does_not_read_as_healthy() -> None:
     """The worst state for an organization that configured a destination,
     and the one that reads most like fine."""
     drawn = render(forwarding_table({"configured": False, "state": None}))
@@ -126,10 +219,13 @@ def test_forwarding_that_has_never_been_attempted_does_not_read_as_healthy():
     assert "Healthy" not in drawn
 
 
-def test_forwarding_that_is_working_says_healthy_yes():
+def test_forwarding_that_is_working_says_healthy_yes() -> None:
     drawn = render(
         forwarding_table(
-            {"configured": True, "state": {"healthy": True, "delivered": 3, "failed": 0}}
+            {
+                "configured": True,
+                "state": {"healthy": True, "delivered": 3, "failed": 0},
+            }
         )
     )
     assert "Healthy" in drawn and "yes" in drawn

@@ -5,8 +5,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Authenticated transport for `datalayer-durable`'s own workflow API
-(``datalayer durable ...``, ORCHESTRATOR.md's note on `auth.py`, 2026-09-13).
+Authenticated transport for `datalayer-durable`'s own workflow API.
+
+The API behind ``datalayer durable ...`` (ORCHESTRATOR.md's note on
+`auth.py`, 2026-09-13).
 
 Every other caller of durable is a service presenting its own workload key —
 `durable/datalayer_durable/auth.py` says so explicitly, and stays that way.
@@ -33,8 +35,11 @@ TERMINAL = frozenset({"completed", "failed", "cancelled"})
 
 @dataclass
 class WorkflowRun:
-    """One durable run, as a caller sees it — the shape `/api/durable/v1`
-    answers with, whichever operation asked."""
+    """
+    One durable run, as a caller sees it.
+
+    The shape `/api/durable/v1` answers with, whichever operation asked.
+    """
 
     uid: str
     workflow: str
@@ -45,6 +50,7 @@ class WorkflowRun:
 
     @classmethod
     def of(cls, payload: dict[str, Any]) -> "WorkflowRun":
+        """Read a run from the JSON durable answers with."""
         return cls(
             uid=str(payload.get("uid") or ""),
             workflow=str(payload.get("workflow") or ""),
@@ -55,6 +61,7 @@ class WorkflowRun:
         )
 
     def open(self) -> bool:
+        """Tell whether the run is still going: not in a terminal state."""
         return self.status not in TERMINAL
 
 
@@ -67,6 +74,7 @@ class DurableMixin:
     """Authenticated transport for durable's own workflow API."""
 
     def _durable_url(self, path: str) -> str:
+        """Build the URL of a route of durable's API from its path."""
         origin = self.urls.durable_url.rstrip("/")  # type: ignore[attr-defined]
         return f"{origin}/api/durable{path}"
 
@@ -78,8 +86,12 @@ class DurableMixin:
         queue: str = "",
         arguments: Optional[dict[str, Any]] = None,
     ) -> WorkflowRun:
-        """Start a workflow under `task_uid` — the same request twice answers
-        the run that already exists, never a second one for one task."""
+        """
+        Start a workflow under `task_uid`.
+
+        The same request twice answers the run that already exists, never a
+        second one for one task.
+        """
         response = self._fetch(  # type: ignore[attr-defined]
             self._durable_url("/v1/workflows"),
             method="POST",
@@ -93,10 +105,13 @@ class DurableMixin:
         return WorkflowRun.of(dict(response.json()))
 
     def describe_durable_workflow(self, uid: str) -> Optional[WorkflowRun]:
-        """A literal workflow uid. For an execution's *current* attempt, once
-        it may have retried, use `describe_durable_execution` instead — this
-        only ever answers about the uid given, which for an execution means
-        attempt 1 (`run_key`, unsuffixed)."""
+        """
+        A literal workflow uid.
+
+        For an execution's *current* attempt, once it may have retried, use
+        `describe_durable_execution` instead — this only ever answers about the uid
+        given, which for an execution means attempt 1 (`run_key`, unsuffixed).
+        """
         try:
             response = self._fetch(self._durable_url(f"/v1/workflows/{uid}"))  # type: ignore[attr-defined]
         except RuntimeError as error:
@@ -105,10 +120,15 @@ class DurableMixin:
             raise
         return WorkflowRun.of(dict(response.json()))
 
-    def describe_durable_execution(self, execution_id: str, *, account_uid: str) -> Optional[WorkflowRun]:
-        """The run of an orchestration execution's *current* attempt — the
-        one durable route that is execution-aware rather than a literal
-        workflow uid (ORCHESTRATOR.md, O4-05)."""
+    def describe_durable_execution(
+        self, execution_id: str, *, account_uid: str
+    ) -> Optional[WorkflowRun]:
+        """
+        Describe the run of an orchestration execution's *current* attempt.
+
+        The one durable route that is execution-aware rather than a literal
+        workflow uid (ORCHESTRATOR.md, O4-05).
+        """
         try:
             response = self._fetch(  # type: ignore[attr-defined]
                 self._durable_url(f"/v1/executions/{execution_id}/run"),
@@ -134,7 +154,9 @@ class DurableMixin:
             raise
         return True
 
-    def signal_durable_workflow(self, uid: str, name: str, payload: dict[str, Any]) -> bool:
+    def signal_durable_workflow(
+        self, uid: str, name: str, payload: dict[str, Any]
+    ) -> bool:
         """Tell a waiting run something. Already over is `False`, not an error."""
         try:
             self._fetch(  # type: ignore[attr-defined]
@@ -148,7 +170,10 @@ class DurableMixin:
             raise
         return True
 
-    def list_open_durable_workflows(self, *, task_uid: str = "", limit: int = 50) -> list[WorkflowRun]:
+    def list_open_durable_workflows(
+        self, *, task_uid: str = "", limit: int = 50
+    ) -> list[WorkflowRun]:
+        """List the runs still open, optionally only those under `task_uid`."""
         response = self._fetch(  # type: ignore[attr-defined]
             self._durable_url("/v1/workflows"),
             params={"task_uid": task_uid, "limit": limit},

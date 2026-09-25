@@ -2,8 +2,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Rich displays for the orchestration control plane: the workers discovered, an
-execution, its artifacts, and its event stream as lines (ORCHESTRATOR.md, O1-13).
+Rich displays for the orchestration control plane.
+
+The workers discovered, an execution, its artifacts, and its event stream as
+lines (ORCHESTRATOR.md, O1-13).
 
 The words for an event are the ones the app's execution page uses
 (``ui/src/views/orchestration/executionViews.ts``), so ``datalayer executions
@@ -47,9 +49,15 @@ def event_words(event: ExecutionEvent) -> str:
     """One event in words. What a worker put in ``data`` is never read into them."""
     kind = event.type
     if kind is ExecutionEventType.STATE_CHANGED:
-        return _with_message(_capitalized(event.state.value if event.state else "moved"), event.message)
+        return _with_message(
+            _capitalized(event.state.value if event.state else "moved"), event.message
+        )
     if kind is ExecutionEventType.ACKNOWLEDGED:
-        milestone = event.acknowledgement.kind.value if event.acknowledgement else "acknowledged"
+        milestone = (
+            event.acknowledgement.kind.value
+            if event.acknowledgement
+            else "acknowledged"
+        )
         return _with_message(_capitalized(milestone), event.message)
     if kind is ExecutionEventType.ARTIFACT_REGISTERED:
         return f"Registered {event.artifact.name if event.artifact else 'an artifact'}"
@@ -64,11 +72,15 @@ def event_words(event: ExecutionEvent) -> str:
 
 def event_line(event: ExecutionEvent, *, root_execution_id: str | None = None) -> str:
     """One event as a line of ``executions watch``: when, whose when it is a child's, and what."""
-    whose = "" if event.execution_id == root_execution_id else f"[{event.execution_id}] "
+    whose = (
+        "" if event.execution_id == root_execution_id else f"[{event.execution_id}] "
+    )
     return f"{event.emitted_at}  {whose}{event_words(event)}"
 
 
-def agents_table(agents: Iterable[AgentDescriptor], *, title: str | None = None) -> Table:
+def agents_table(
+    agents: Iterable[AgentDescriptor], *, title: str | None = None
+) -> Table:
     table = Table(title=title)
     # An id is what somebody copies into the next command: folded when the
     # terminal is narrow, never cut to an ellipsis.
@@ -85,7 +97,10 @@ def agents_table(agents: Iterable[AgentDescriptor], *, title: str | None = None)
             Text(agent.name),
             Text(", ".join(agent.capabilities) or "-"),
             Text(", ".join(protocols) or "-"),
-            Text(", ".join(operation.value for operation in agent.supported_operations) or "-"),
+            Text(
+                ", ".join(operation.value for operation in agent.supported_operations)
+                or "-"
+            ),
             Text(agent.trust_level.value),
         )
     return table
@@ -109,13 +124,17 @@ def execution_table(execution: Execution, *, title: str | None = None) -> Table:
     if execution.status_message:
         rows.append(("Status message", execution.status_message))
     if execution.error:
-        rows.append(("Error", f"{execution.error.code.value}: {execution.error.message}"))
+        rows.append(
+            ("Error", f"{execution.error.code.value}: {execution.error.message}")
+        )
     for label, value in rows:
         table.add_row(label, Text(str(value)))
     return table
 
 
-def artifacts_table(artifacts: Iterable[Artifact], *, title: str | None = None) -> Table:
+def artifacts_table(
+    artifacts: Iterable[Artifact], *, title: str | None = None
+) -> Table:
     table = Table(title=title)
     table.add_column("Artifact", style="cyan", overflow="fold")
     table.add_column("Name", style="cyan", overflow="fold")

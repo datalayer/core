@@ -2,9 +2,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-What the ``agents`` and ``executions`` command groups share (ORCHESTRATOR.md, O1-13):
-the client, the error boundary, the options every command takes, and the
-machine-readable output.
+What the ``agents`` and ``executions`` command groups share.
+
+The client, the error boundary, the options every command takes, and the
+machine-readable output (ORCHESTRATOR.md, O1-13).
 """
 
 from __future__ import annotations
@@ -96,7 +97,11 @@ def emit(value: Any, output: OutputFormat) -> bool:
         console.print_json(json.dumps(value, default=str))
         return True
     if output is OutputFormat.YAML:
-        console.print(yaml.safe_dump(value, sort_keys=False).rstrip(), markup=False, highlight=False)
+        console.print(
+            yaml.safe_dump(value, sort_keys=False).rstrip(),
+            markup=False,
+            highlight=False,
+        )
         return True
     return False
 

@@ -16,14 +16,14 @@ from pathlib import Path
 import pytest
 
 from datalayer_core.mcp import (
-    Mcp,
-    derived_idempotency_key,
-    CLIENT_METADATA_URLS,
     CLI_CLIENT_METADATA_URL,
+    CLIENT_METADATA_URLS,
     MCP_CLIENT_IDS,
     MCP_CLIENTS,
     METRIC_CATALOG,
+    Mcp,
     default_config_path,
+    derived_idempotency_key,
     mcp_endpoint_url,
     nanoseconds,
     percentile,
@@ -69,15 +69,29 @@ def test_the_facade_offers_every_operation_the_cli_has() -> None:
     and no more". A method that exists in one and not the other is a scripted
     workflow that cannot be written."""
     for name in (
-        "tasks", "task", "cancel", "answer", "bindings", "policy", "jobs",
-        "audit", "alerts", "acknowledge", "forwarding",
+        "tasks",
+        "task",
+        "cancel",
+        "answer",
+        "bindings",
+        "policy",
+        "jobs",
+        "audit",
+        "alerts",
+        "acknowledge",
+        "forwarding",
     ):
         assert callable(getattr(Mcp, name)), name
 
 
 def test_the_gateway_origin_is_the_resource_without_its_path() -> None:
-    assert mcp_gateway_origin("https://r1.datalayer.run/mcp") == "https://r1.datalayer.run"
-    assert mcp_gateway_origin("https://r1.datalayer.run/mcp/") == "https://r1.datalayer.run"
+    assert (
+        mcp_gateway_origin("https://r1.datalayer.run/mcp") == "https://r1.datalayer.run"
+    )
+    assert (
+        mcp_gateway_origin("https://r1.datalayer.run/mcp/")
+        == "https://r1.datalayer.run"
+    )
     assert mcp_gateway_origin("http://localhost:4404") == "http://localhost:4404"
 
 
@@ -97,7 +111,9 @@ def test_terminal_tasks_are_the_three_that_end() -> None:
     assert not is_task_terminal(task)
     assert is_task_terminal(task.model_copy(update={"status": "completed"}))
     # A field the gateway adds later is carried, not refused.
-    carried = McpTask.model_validate({"uid": "01T", "status": "failed", "tool": "x", "new_field": 1})
+    carried = McpTask.model_validate(
+        {"uid": "01T", "status": "failed", "tool": "x", "new_field": 1}
+    )
     assert carried.model_dump()["new_field"] == 1
 
 
@@ -109,7 +125,12 @@ def test_percentile_is_nearest_rank() -> None:
 
 
 def _panel(panel_id: str, summaries: dict[str, float | None]) -> dict[str, object]:
-    return {"id": panel_id, "series": [{"label": label, "summary": summary} for label, summary in summaries.items()]}
+    return {
+        "id": panel_id,
+        "series": [
+            {"label": label, "summary": summary} for label, summary in summaries.items()
+        ],
+    }
 
 
 def test_the_slis_are_read_off_the_service_levels_dashboard() -> None:
@@ -118,9 +139,16 @@ def test_the_slis_are_read_off_the_service_levels_dashboard() -> None:
             "panels": [
                 _panel("mcp-calls-by-outcome", {"ok": 8, "error": 2}),
                 _panel("mcp-call-duration-p95", {"": 0.9}),
-                _panel("mcp-tasks-by-status", {"completed": 3, "failed": 1, "working": 5}),
-                _panel("sandbox-launch_seconds-by-provider-p95", {"datalayer": 4, "e2b": 9}),
-                _panel("sandbox-launch_seconds-by-provider-count", {"datalayer": 1, "e2b": 1}),
+                _panel(
+                    "mcp-tasks-by-status", {"completed": 3, "failed": 1, "working": 5}
+                ),
+                _panel(
+                    "sandbox-launch_seconds-by-provider-p95", {"datalayer": 4, "e2b": 9}
+                ),
+                _panel(
+                    "sandbox-launch_seconds-by-provider-count",
+                    {"datalayer": 1, "e2b": 1},
+                ),
             ]
         }
     )
@@ -132,7 +160,9 @@ def test_the_slis_are_read_off_the_service_levels_dashboard() -> None:
 
 
 def test_nothing_measured_is_not_a_zero() -> None:
-    assert summarize_service_levels({"panels": [_panel("mcp-call-duration-p95", {"": None})]}) == {
+    assert summarize_service_levels(
+        {"panels": [_panel("mcp-call-duration-p95", {"": None})]}
+    ) == {
         "availability": None,
         "p95_call_duration_ms": None,
         "task_success_rate": None,
@@ -144,16 +174,27 @@ def test_nothing_measured_is_not_a_zero() -> None:
 def test_a_reading_starts_at_an_instant_or_a_span_back_from_now() -> None:
     now = datetime(2026, 9, 11, 12, 0, tzinfo=timezone.utc)
     assert since_instant(None) is None
-    assert since_instant("1h", now=now) == datetime(2026, 9, 11, 11, 0, tzinfo=timezone.utc)
-    assert since_instant("7d", now=now) == datetime(2026, 9, 4, 12, 0, tzinfo=timezone.utc)
-    assert since_instant("2026-08-27T00:00:00Z") == datetime(2026, 8, 27, tzinfo=timezone.utc)
-    assert nanoseconds(datetime(1970, 1, 1, 0, 0, 1, 500000, tzinfo=timezone.utc)) == 1_500_000_000
+    assert since_instant("1h", now=now) == datetime(
+        2026, 9, 11, 11, 0, tzinfo=timezone.utc
+    )
+    assert since_instant("7d", now=now) == datetime(
+        2026, 9, 4, 12, 0, tzinfo=timezone.utc
+    )
+    assert since_instant("2026-08-27T00:00:00Z") == datetime(
+        2026, 8, 27, tzinfo=timezone.utc
+    )
+    assert (
+        nanoseconds(datetime(1970, 1, 1, 0, 0, 1, 500000, tzinfo=timezone.utc))
+        == 1_500_000_000
+    )
 
 
 def test_the_catalog_is_the_one_core_s_typescript_names() -> None:
     """Two copies in one repository, held together here: the Python one had
     kept names the gateway renamed, and a CLI listing them reports nothing."""
-    source = (Path(__file__).resolve().parents[2] / "src" / "api" / "mcp" / "observability.ts").read_text()
+    source = (
+        Path(__file__).resolve().parents[2] / "src" / "api" / "mcp" / "observability.ts"
+    ).read_text()
     block = source.split("export const MCP_METRIC_CATALOG = [", 1)[1].split("]", 1)[0]
     assert METRIC_CATALOG == tuple(re.findall(r"'([^']+)'", block))
 
@@ -170,10 +211,25 @@ def test_a_per_agent_reading_comes_from_the_request_spans() -> None:
         return base
 
     spans = [
-        span(span_id="a", attributes={"client.id": "agent-1", "http.response.status_code": 200}, duration_ms=20),
-        span(span_id="b", attributes={"client.id": "agent-1", "rpc.jsonrpc.error_code": "-32001"}, duration_ms=30),
+        span(
+            span_id="a",
+            attributes={"client.id": "agent-1", "http.response.status_code": 200},
+            duration_ms=20,
+        ),
+        span(
+            span_id="b",
+            attributes={"client.id": "agent-1", "rpc.jsonrpc.error_code": "-32001"},
+            duration_ms=30,
+        ),
         span(span_id="c", attributes={"client.id": "agent-2"}, duration_ms=5000),
-        span(span_id="d", attributes={"client.id": "agent-1", "mcp.task.id": "t1", "mcp.task.status": "completed"}),
+        span(
+            span_id="d",
+            attributes={
+                "client.id": "agent-1",
+                "mcp.task.id": "t1",
+                "mcp.task.status": "completed",
+            },
+        ),
         span(span_id="e", span_name="mcp.policy", attributes={"client.id": "agent-1"}),
     ]
     summary = summarize_request_spans(spans, agent="agent-1")
@@ -186,20 +242,40 @@ def test_a_per_agent_reading_comes_from_the_request_spans() -> None:
 def test_spans_become_a_tree_roots_first_siblings_by_start() -> None:
     tree = span_tree(
         [
-            {"span_id": "child-2", "parent_span_id": "root", "start_time": "2026-08-27T10:00:02Z"},
+            {
+                "span_id": "child-2",
+                "parent_span_id": "root",
+                "start_time": "2026-08-27T10:00:02Z",
+            },
             {"span_id": "root", "start_time": "2026-08-27T10:00:00Z"},
-            {"span_id": "child-1", "parent_span_id": "root", "start_time": "2026-08-27T10:00:01Z"},
-            {"span_id": "orphan", "parent_span_id": "elsewhere", "start_time": "2026-08-27T10:00:03Z"},
+            {
+                "span_id": "child-1",
+                "parent_span_id": "root",
+                "start_time": "2026-08-27T10:00:01Z",
+            },
+            {
+                "span_id": "orphan",
+                "parent_span_id": "elsewhere",
+                "start_time": "2026-08-27T10:00:03Z",
+            },
         ]
     )
     assert [node["span"]["span_id"] for node in tree] == ["root", "orphan"]
-    assert [node["span"]["span_id"] for node in tree[0]["children"]] == ["child-1", "child-2"]
+    assert [node["span"]["span_id"] for node in tree[0]["children"]] == [
+        "child-1",
+        "child-2",
+    ]
 
 
 def test_scopes_are_named_in_the_url() -> None:
-    assert mcp_endpoint_url("https://r1.datalayer.run/mcp") == "https://r1.datalayer.run/mcp"
     assert (
-        mcp_endpoint_url("https://r1.datalayer.run/mcp", ["notebooks:read", " code:execute "])
+        mcp_endpoint_url("https://r1.datalayer.run/mcp")
+        == "https://r1.datalayer.run/mcp"
+    )
+    assert (
+        mcp_endpoint_url(
+            "https://r1.datalayer.run/mcp", ["notebooks:read", " code:execute "]
+        )
         == "https://r1.datalayer.run/mcp?scopes=notebooks:read,code:execute"
     )
 
@@ -223,10 +299,21 @@ def test_every_client_has_a_path_and_a_rendering(client: str, tmp_path: Path) ->
     assert "client_metadata_url" not in rendered
 
 
-def test_json_clients_keep_the_other_servers_and_replace_datalayer(tmp_path: Path) -> None:
+def test_json_clients_keep_the_other_servers_and_replace_datalayer(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / ".cursor" / "mcp.json"
     path.parent.mkdir()
-    path.write_text(json.dumps({"mcpServers": {"github": {"url": "https://github.example/mcp"}, "datalayer": {"url": "old"}}}))
+    path.write_text(
+        json.dumps(
+            {
+                "mcpServers": {
+                    "github": {"url": "https://github.example/mcp"},
+                    "datalayer": {"url": "old"},
+                }
+            }
+        )
+    )
     written = write_client_configuration("cursor", URL, path=path)
     document = json.loads(written.read_text())
     assert document["mcpServers"]["github"] == {"url": "https://github.example/mcp"}

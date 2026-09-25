@@ -90,7 +90,8 @@ class BridgeProtocolError(Exception):
 
 
 class BridgeRemoteError(OSError):
-    """The other end refused an operation, with a POSIX name for why.
+    """
+    The other end refused an operation, with a POSIX name for why.
 
     Raised on the client, so a FUSE layer can hand `errno` straight back to
     the kernel and a script can `except FileNotFoundError` as it would for a
@@ -111,7 +112,8 @@ class BridgeRemoteError(OSError):
 
 
 def encode_frame(header: Mapping[str, Any], payload: bytes = b"") -> bytes:
-    """One frame: a length-prefixed JSON header and the raw bytes after it.
+    """
+    One frame: a length-prefixed JSON header and the raw bytes after it.
 
     Bytes travel beside the JSON rather than inside it, so a block read is a
     block of bytes on the wire and not four thirds of one in base64.
@@ -181,7 +183,9 @@ class SecureChannel:
         self.role: Role = role
         self.bridge_uid = bridge_uid
         self._session_key = (
-            bytes.fromhex(session_key) if isinstance(session_key, str) else bytes(session_key)
+            bytes.fromhex(session_key)
+            if isinstance(session_key, str)
+            else bytes(session_key)
         )
         self._private = X25519PrivateKey.generate()
         self._send_key: bytes | None = None
@@ -286,7 +290,9 @@ def _relative(path: str) -> str:
         return normalize_object_path(collapsed)
     except ValueError as error:
         # `..`, a backslash, an empty segment: names nothing inside the root.
-        raise BridgeRemoteError("EACCES", f"path leaves the bound root: {error}") from error
+        raise BridgeRemoteError(
+            "EACCES", f"path leaves the bound root: {error}"
+        ) from error
 
 
 class RootBinding:
@@ -301,12 +307,18 @@ class RootBinding:
     listing does not name a file a `stat` then fails to find.
     """
 
-    def __init__(self, root: str | os.PathLike[str], exclusions: Exclusions | Iterable[str] | None = None) -> None:
+    def __init__(
+        self,
+        root: str | os.PathLike[str],
+        exclusions: Exclusions | Iterable[str] | None = None,
+    ) -> None:
         self.root = Path(os.path.realpath(os.path.abspath(os.fspath(root))))
         if not self.root.is_dir():
             raise NotADirectoryError(str(root))
         self.exclusions = (
-            exclusions if isinstance(exclusions, Exclusions) else Exclusions(exclusions or ())
+            exclusions
+            if isinstance(exclusions, Exclusions)
+            else Exclusions(exclusions or ())
         )
 
     def resolve(self, path: str) -> tuple[Path, str]:
@@ -397,21 +409,32 @@ class LocalRootServer:
         arguments = header.get("args") or {}
         if not isinstance(arguments, dict):
             return encode_frame(
-                {"id": request_id, "error": {"code": "EINVAL", "message": "args must be an object"}}
+                {
+                    "id": request_id,
+                    "error": {"code": "EINVAL", "message": "args must be an object"},
+                }
             )
         try:
             if operation not in OPERATIONS:
                 raise BridgeRemoteError("ENOSYS", f"unknown operation: {operation!r}")
-            result, out = getattr(self, f"_op_{operation}")(payload=payload, **arguments)
+            result, out = getattr(self, f"_op_{operation}")(
+                payload=payload, **arguments
+            )
         except BridgeRemoteError as error:
             return encode_frame(
-                {"id": request_id, "error": {"code": error.code, "message": error.message}}
+                {
+                    "id": request_id,
+                    "error": {"code": error.code, "message": error.message},
+                }
             )
         except OSError as error:
             return encode_frame(
                 {
                     "id": request_id,
-                    "error": {"code": _oserror_code(error), "message": error.strerror or str(error)},
+                    "error": {
+                        "code": _oserror_code(error),
+                        "message": error.strerror or str(error),
+                    },
                 }
             )
         except TypeError as error:
@@ -429,16 +452,24 @@ class LocalRootServer:
 
     def _op_ping(self, *, payload: bytes = b"") -> tuple[dict[str, Any], bytes]:
         return (
-            {"protocol": PROTOCOL_VERSION, "mode": self.mode, "block_size": self.block_size},
+            {
+                "protocol": PROTOCOL_VERSION,
+                "mode": self.mode,
+                "block_size": self.block_size,
+            },
             b"",
         )
 
-    def _op_stat(self, *, path: str, payload: bytes = b"") -> tuple[dict[str, Any], bytes]:
+    def _op_stat(
+        self, *, path: str, payload: bytes = b""
+    ) -> tuple[dict[str, Any], bytes]:
         real, relative = self.binding.resolve(path)
         status = real.stat()
         return _entry(relative.rsplit("/", 1)[-1] if relative else "", status), b""
 
-    def _op_list(self, *, path: str = "", payload: bytes = b"") -> tuple[dict[str, Any], bytes]:
+    def _op_list(
+        self, *, path: str = "", payload: bytes = b""
+    ) -> tuple[dict[str, Any], bytes]:
         real, relative = self.binding.resolve(path)
         if not real.is_dir():
             raise BridgeRemoteError("ENOTDIR", "not a directory")
@@ -465,7 +496,12 @@ class LocalRootServer:
         return {"entries": entries}, b""
 
     def _op_read(
-        self, *, path: str, offset: int = 0, length: int | None = None, payload: bytes = b""
+        self,
+        *,
+        path: str,
+        offset: int = 0,
+        length: int | None = None,
+        payload: bytes = b"",
     ) -> tuple[dict[str, Any], bytes]:
         real, _ = self.binding.resolve(path)
         if real.is_dir():
@@ -473,7 +509,9 @@ class LocalRootServer:
         offset = int(offset)
         if offset < 0:
             raise BridgeRemoteError("EINVAL", "offset must not be negative")
-        wanted = self.block_size if length is None else min(int(length), self.block_size)
+        wanted = (
+            self.block_size if length is None else min(int(length), self.block_size)
+        )
         if wanted < 0:
             raise BridgeRemoteError("EINVAL", "length must not be negative")
         with real.open("rb") as stream:
@@ -482,7 +520,12 @@ class LocalRootServer:
         return {"offset": offset, "length": len(data), "eof": len(data) < wanted}, data
 
     def _op_write(
-        self, *, path: str, offset: int = 0, truncate: bool = False, payload: bytes = b""
+        self,
+        *,
+        path: str,
+        offset: int = 0,
+        truncate: bool = False,
+        payload: bytes = b"",
     ) -> tuple[dict[str, Any], bytes]:
         self._writable()
         real, _ = self.binding.resolve(path)
@@ -512,7 +555,9 @@ class LocalRootServer:
         real.mkdir(parents=bool(parents), exist_ok=False)
         return {}, b""
 
-    def _op_unlink(self, *, path: str, payload: bytes = b"") -> tuple[dict[str, Any], bytes]:
+    def _op_unlink(
+        self, *, path: str, payload: bytes = b""
+    ) -> tuple[dict[str, Any], bytes]:
         self._writable()
         real, relative = self.binding.resolve(path)
         if not relative:
@@ -522,7 +567,9 @@ class LocalRootServer:
         real.unlink()
         return {}, b""
 
-    def _op_rmdir(self, *, path: str, payload: bytes = b"") -> tuple[dict[str, Any], bytes]:
+    def _op_rmdir(
+        self, *, path: str, payload: bytes = b""
+    ) -> tuple[dict[str, Any], bytes]:
         self._writable()
         real, relative = self.binding.resolve(path)
         if not relative:
@@ -586,26 +633,36 @@ class BridgeFileSystemClient:
     `BridgeRemoteError`, which is an `OSError` with the right `errno`.
     """
 
-    def __init__(self, transport: Transport, *, channel: SecureChannel | None = None) -> None:
+    def __init__(
+        self, transport: Transport, *, channel: SecureChannel | None = None
+    ) -> None:
         self.transport = transport
         self.channel = channel
         self._next_id = 1
         self._lock = threading.Lock()
         self.block_size = BLOCK_SIZE
 
-    def _call(self, operation: str, payload: bytes = b"", **arguments: Any) -> _Response:
+    def _call(
+        self, operation: str, payload: bytes = b"", **arguments: Any
+    ) -> _Response:
         with self._lock:
             request_id = self._next_id
             self._next_id += 1
-            frame = encode_frame({"id": request_id, "op": operation, "args": arguments}, payload)
+            frame = encode_frame(
+                {"id": request_id, "op": operation, "args": arguments}, payload
+            )
             self.transport.send(self.channel.seal(frame) if self.channel else frame)
             raw = self.transport.recv()
             header, out = decode_frame(self.channel.open(raw) if self.channel else raw)
         if header.get("id") != request_id:
-            raise BridgeProtocolError("response does not answer the request that was sent")
+            raise BridgeProtocolError(
+                "response does not answer the request that was sent"
+            )
         error = header.get("error")
         if error:
-            raise BridgeRemoteError(str(error.get("code") or "EIO"), str(error.get("message") or ""))
+            raise BridgeRemoteError(
+                str(error.get("code") or "EIO"), str(error.get("message") or "")
+            )
         return _Response(header.get("result") or {}, out)
 
     def ping(self) -> dict[str, Any]:
@@ -622,7 +679,9 @@ class BridgeFileSystemClient:
     def read(self, path: str, offset: int = 0, length: int | None = None) -> bytes:
         return self._call("read", path=path, offset=offset, length=length).payload
 
-    def read_blocks(self, path: str, *, block_size: int | None = None) -> Iterator[bytes]:
+    def read_blocks(
+        self, path: str, *, block_size: int | None = None
+    ) -> Iterator[bytes]:
         """The whole file, one block at a time, in the engine's block size."""
         size = block_size or self.block_size
         offset = 0
@@ -634,8 +693,14 @@ class BridgeFileSystemClient:
                 return
             offset += len(chunk)
 
-    def write(self, path: str, offset: int, data: bytes, *, truncate: bool = False) -> int:
-        return int(self._call("write", data, path=path, offset=offset, truncate=truncate).header["written"])
+    def write(
+        self, path: str, offset: int, data: bytes, *, truncate: bool = False
+    ) -> int:
+        return int(
+            self._call(
+                "write", data, path=path, offset=offset, truncate=truncate
+            ).header["written"]
+        )
 
     def mkdir(self, path: str, *, parents: bool = False) -> None:
         self._call("mkdir", path=path, parents=parents)

@@ -26,6 +26,13 @@ on:
 
 jobs:
   check-generated:
+    # The script also reads the control plane's OpenAPI document, which the
+    # private services repository checks in (`services/ai-agents`, `make
+    # openapi-orchestration`) and no public deployment serves, so a plain
+    # checkout of this repository has nothing to compare against. Set the
+    # repository variable `DATALAYER_ORCHESTRATION_OPENAPI_URL` to a URL of
+    # that document to turn the check on.
+    if: vars.DATALAYER_ORCHESTRATION_OPENAPI_URL != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -39,5 +46,12 @@ jobs:
       - name: Install datalayer_core
         run: uv pip install .
 
+      - name: Fetch the control plane's OpenAPI document
+        env:
+          DOCUMENT_URL: ${{ vars.DATALAYER_ORCHESTRATION_OPENAPI_URL }}
+        run: curl -fsSL "$DOCUMENT_URL" -o "$RUNNER_TEMP/orchestration-openapi.json"
+
       - name: Check src/api/orchestration/generated.ts is current
-        run: python scripts/generate-orchestration-types.py --check
+        run: |
+          DATALAYER_ORCHESTRATION_OPENAPI="$RUNNER_TEMP/orchestration-openapi.json" \
+            python scripts/generate-orchestration-types.py --check

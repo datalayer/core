@@ -50,8 +50,8 @@ from datalayer_core.models.contents.mcp import (
     is_call_terminal,
 )
 
-
 logger = logging.getLogger(__name__)
+
 
 class HomeFolder:
     def __init__(self, client: DatalayerClient) -> None:
@@ -138,7 +138,8 @@ class HomeFolder:
 def wait_for_mcp_call(
     client: Any, call: McpCall, *, timeout: float = 600.0, interval: float = 2.0
 ) -> McpCall:
-    """Poll a call until the service is done with it, or time runs out.
+    """
+    Poll a call until the service is done with it, or time runs out.
 
     A call is found by its session and its own uid — nothing about the source
     is needed to follow it, which is why this is not a method of `McpSource`:
@@ -148,7 +149,9 @@ def wait_for_mcp_call(
     deadline = time.monotonic() + timeout
     while not is_call_terminal(call):
         if time.monotonic() >= deadline:
-            raise TimeoutError(f"call {call.uid} is still {call.status} after {timeout:.0f}s")
+            raise TimeoutError(
+                f"call {call.uid} is still {call.status} after {timeout:.0f}s"
+            )
         time.sleep(interval)
         call = client.get_mcp_call(call.session_uid, call.uid)
     return call
@@ -279,7 +282,8 @@ class Query:
 
     @property
     def answered(self) -> str | None:
-        """`live` or `snapshot` for a published table with two answerers.
+        """
+        `live` or `snapshot` for a published table with two answerers.
 
         `None` for every other query, where there was only ever one answerer
         and reporting a choice would invite the reader to wonder which they
@@ -468,7 +472,7 @@ class Datasource:
         self.source_uid = source_uid
 
     def test(self) -> DatasourceTest:
-        """Does the database answer through this source, right now?"""
+        """Check that the database answers through this source, right now."""
         return self.client.test_datasource(self.source_uid)
 
     def schema(self) -> DatasourceSchema:
@@ -511,7 +515,9 @@ class Datasource:
             query.wait(timeout=timeout, interval=interval)
         return query
 
-    def queries(self, *, cursor: str | None = None, limit: int = 50) -> DatasourceQueryList:
+    def queries(
+        self, *, cursor: str | None = None, limit: int = 50
+    ) -> DatasourceQueryList:
         """The queries run against this source, newest first."""
         return self.client.list_datasource_queries(
             self.source_uid, cursor=cursor, limit=limit
@@ -573,7 +579,8 @@ class _Attached:
     source_uid: str
 
     def source(self) -> Any:
-        """The catalog record, fetched now.
+        """
+        The catalog record, fetched now.
 
         Not cached: a source can be renamed, re-scoped or revoked between two
         calls, and a stale copy of that is worse than a second request.
@@ -591,7 +598,8 @@ class _Attached:
         provider: str = "datalayer",
         revision_uid: str | None = None,
     ) -> ContentAttachment:
-        """Put this source into a sandbox.
+        """
+        Put this source into a sandbox.
 
         `path` is where it appears. A sandbox that is **already running**
         receives it under the home directory instead, so an absolute path
@@ -624,7 +632,8 @@ class _Attached:
 
 
 class CloudStorageObject:
-    """One object, opened for reading.
+    """
+    One object, opened for reading.
 
     A file-like the standard readers accept — `pandas.read_parquet`,
     `pyarrow`, `json.load` — that pulls through Contents rather than from the
@@ -699,11 +708,12 @@ class CloudStorage(_Attached):
         self.source_uid = source_uid
 
     def test(self) -> dict[str, Any]:
-        """Does the bucket answer with this credential, right now?"""
+        """Check that the bucket answers with this credential, right now."""
         return self.client.test_cloud_storage_connection(self.source_uid)
 
     def ls(self, prefix: str = "", *, recursive: bool = False) -> list[dict[str, Any]]:
-        """The objects under `prefix`, following pagination to the end.
+        """
+        The objects under `prefix`, following pagination to the end.
 
         Paths are relative to the source's own prefix; the source's prefix is
         never a thing the caller has to know or repeat.
@@ -729,7 +739,8 @@ class CloudStorage(_Attached):
         return self.client.stat_cloud_storage_object(self.source_uid, path)
 
     def open(self, path: str, mode: str = "rb") -> CloudStorageObject:
-        """One object as a file-like, streamed.
+        """
+        One object as a file-like, streamed.
 
         Binary and read-only. A text mode or a write mode is refused here
         rather than at the first `read` — there is no write route on a Cloud
@@ -764,7 +775,8 @@ class CloudStorage(_Attached):
         )
 
     def filesystem(self, implementation: str = "auto") -> Any:
-        """An `fsspec` filesystem over this source, for libraries that want one.
+        """
+        An `fsspec` filesystem over this source, for libraries that want one.
 
         `implementation` exists because the answer is not always the same
         thing, and today there is one: `"auto"`, which reads through Contents.
@@ -807,7 +819,8 @@ class Dataset(_Attached):
     def create_revision(
         self, request: Mapping[str, Any] | None = None, **fields: Any
     ) -> DatasetRevision:
-        """Pin the current contents as a revision.
+        """
+        Pin the current contents as a revision.
 
         The idempotency key is generated here. That is safe because a retry
         of *this* call is a retry of one intent; a second deliberate revision
@@ -825,7 +838,8 @@ class Dataset(_Attached):
     def publish(
         self, request: Mapping[str, Any] | None = None, **fields: Any
     ) -> DatasetPublication:
-        """Publish a revision of this Dataset.
+        """
+        Publish a revision of this Dataset.
 
         Not to be confused with `contents.publish(frame, name=...)`, which
         publishes a table for querying. This one makes a Dataset visible
@@ -849,7 +863,8 @@ class Dataset(_Attached):
         overwrite: str = "reject",
         progress: Callable[[int, int, str], None] | None = None,
     ) -> TransferView:
-        """Capture a local file into this Dataset.
+        """
+        Capture a local file into this Dataset.
 
         Run it where the file is — usually inside the sandbox — and the bytes
         go up through the same verified, resumable transfer the Home Folder
@@ -909,7 +924,8 @@ class Volume(_Attached):
         provider: str = "datalayer",
         revision_uid: str | None = None,
     ) -> ContentAttachment:
-        """Mount this Volume in a sandbox.
+        """
+        Mount this Volume in a sandbox.
 
         A read-write attachment of a Volume configured read-only is refused
         here, with the configuration as the reason. The service refuses it
@@ -955,7 +971,8 @@ class Contents:
         live: bool = False,
         **options: Any,
     ) -> dict[str, Any]:
-        """Publish a table so other people can query it.
+        """
+        Publish a table so other people can query it.
 
         ``contents.publish(frame, name="sales")`` writes the frame out and
         registers it. What comes back is a **Datasource** — nothing new to
@@ -990,11 +1007,14 @@ class Contents:
             **options,
         )
         if live:
-            published["live"] = bool(published.get("datasource", {}).get("live_server_uid"))
+            published["live"] = bool(
+                published.get("datasource", {}).get("live_server_uid")
+            )
         return published
 
     def _serve_live(self, name: str, table: Any) -> str | None:
-        """Serve `table` from this sandbox, if this process can.
+        """
+        Serve `table` from this sandbox, if this process can.
 
         Answers whether it is **actually being served**, which is not the same
         question as whether the package imported. This used to return `True`
@@ -1036,9 +1056,7 @@ class Contents:
                     # have it, and cannot serve live tables — which is the
                     # right shape, since `register` speaks for the platform
                     # about which Data Servers exist.
-                    api_key=os.environ.get(
-                        "DATALAYER_CONTENTS_DATASERVER_API_KEY", ""
-                    ),
+                    api_key=os.environ.get("DATALAYER_CONTENTS_DATASERVER_API_KEY", ""),
                 )
             except Exception:  # noqa: BLE001 - publishing must survive this
                 logger.debug("This sandbox cannot serve live tables", exc_info=True)
@@ -1073,7 +1091,11 @@ class Contents:
                 if len(owned) == 1:
                     matches = owned
             if len(matches) != 1:
-                qualifier = f"Several {label} sources are" if matches else f"No {label} source is"
+                qualifier = (
+                    f"Several {label} sources are"
+                    if matches
+                    else f"No {label} source is"
+                )
                 raise LookupError(
                     f"{qualifier} named or identified by '{source}'"
                 ) from None
@@ -1089,11 +1111,15 @@ class Contents:
 
     def datasource(self, source: str) -> Datasource:
         """A Datasource by uid or unambiguous name."""
-        return Datasource(self.client, self._resolve(source, "datasource", "Datasource"))
+        return Datasource(
+            self.client, self._resolve(source, "datasource", "Datasource")
+        )
 
     def dataserver(self, source: str) -> Dataserver:
         """A Dataserver registration by uid or unambiguous name."""
-        return Dataserver(self.client, self._resolve(source, "data-server", "Dataserver"))
+        return Dataserver(
+            self.client, self._resolve(source, "data-server", "Dataserver")
+        )
 
     def cloud_storage(self, source: str) -> CloudStorage:
         """A Cloud Storage source by uid or unambiguous name."""

@@ -2,8 +2,9 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The protocol-neutral agent descriptor and its mappings
-(PLAN_ORCHESTRATOR.md, sections 5.1, O0-01, O0-08).
+The protocol-neutral agent descriptor and its mappings.
+
+See PLAN_ORCHESTRATOR.md, sections 5.1, O0-01, O0-08.
 
 What a worker is, said once, so that the scheduler can compare an A2A agent
 card, an ACP registry entry and a Datalayer agentspec without knowing which
@@ -71,7 +72,8 @@ class DataClassification(str, Enum):
 
 
 class WorkerOperation(str, Enum):
-    """A lifecycle operation a worker supports, named as section 6.2 names it.
+    """
+    A lifecycle operation a worker supports, named as section 6.2 names it.
 
     The bare verb of an ``executions.*`` command. A worker that does not
     declare an operation is not asked for it, and an adapter that cannot
@@ -950,8 +952,7 @@ def to_agent_card(descriptor: AgentDescriptor) -> AgentCardMapping:
         "url": preferred.url,
         "supportedInterfaces": supported,
         "capabilities": {
-            "streaming": WorkerOperation.SUBSCRIBE
-            in descriptor.supported_operations
+            "streaming": WorkerOperation.SUBSCRIBE in descriptor.supported_operations
         },
         "defaultInputModes": list(descriptor.input_content_types),
         "defaultOutputModes": list(descriptor.output_content_types),
@@ -1092,7 +1093,7 @@ def from_acp_agent(
         in a server, not published at a URL — so the caller, which reached
         the registry, is the one that knows.
     transport : str | None
-        stdio, websocket or http: ACP has the choice and the entry does not
+        One of stdio, websocket or http: ACP has the choice and the entry does not
         record which one was used.
 
     Returns

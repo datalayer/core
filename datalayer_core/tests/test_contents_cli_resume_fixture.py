@@ -27,20 +27,34 @@ from datalayer_core.tests.test_contents_client import Client, Response
 
 FIXTURE = (
     Path(__file__).resolve().parents[5]
-    / "k8s" / "services" / "contents" / "tests" / "fixtures" / "interrupted-transfer.json"
+    / "k8s"
+    / "services"
+    / "contents"
+    / "tests"
+    / "fixtures"
+    / "interrupted-transfer.json"
 )
-pytestmark = pytest.mark.skipif(not FIXTURE.exists(), reason="the contents service checkout is not alongside")
+pytestmark = pytest.mark.skipif(
+    not FIXTURE.exists(), reason="the contents service checkout is not alongside"
+)
 
 
 def _content(size: int) -> bytes:
     return bytes((i * 7 + (i >> 16)) & 0xFF for i in range(size))
 
 
-def test_the_command_uploads_only_the_missing_part(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_the_command_uploads_only_the_missing_part(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     fixture = json.loads(FIXTURE.read_text())
     local = tmp_path / "interrupted.bin"
     local.write_bytes(_content(fixture["generator"]["size"]))
-    finished = {**fixture["transfer"], "status": "succeeded", "part_count": 3, "received_bytes": fixture["generator"]["size"]}
+    finished = {
+        **fixture["transfer"],
+        "status": "succeeded",
+        "part_count": 3,
+        "received_bytes": fixture["generator"]["size"],
+    }
     seen: list[Client] = []
 
     class Resuming(Client):
@@ -48,12 +62,24 @@ def test_the_command_uploads_only_the_missing_part(monkeypatch: pytest.MonkeyPat
 
         def __init__(self) -> None:
             super().__init__()
-            self.responses = [Response(fixture["transfer"]), Response(finished), Response(finished)]
+            self.responses = [
+                Response(fixture["transfer"]),
+                Response(finished),
+                Response(finished),
+            ]
             seen.append(self)
 
     monkeypatch.setattr(contents_commands, "DatalayerClient", Resuming)
     result = CliRunner().invoke(
-        app, ["contents", "--output", "json", "upload", str(local), "home-folder:///datasets/interrupted.bin"],
+        app,
+        [
+            "contents",
+            "--output",
+            "json",
+            "upload",
+            str(local),
+            "home-folder:///datasets/interrupted.bin",
+        ],
     )
 
     assert result.exit_code == 0, result.output
@@ -61,5 +87,10 @@ def test_the_command_uploads_only_the_missing_part(monkeypatch: pytest.MonkeyPat
     client = seen[0]
     part_calls = [(url, kwargs) for url, kwargs in client.calls if "/parts/" in url]
     assert [url.rsplit("/", 1)[1] for url, _ in part_calls] == ["2"]
-    assert part_calls[0][1]["headers"]["Content-SHA256"] == fixture["parts"][2]["checksum"]
-    assert hashlib.sha256(part_calls[0][1]["data"]).hexdigest() == fixture["parts"][2]["checksum"]
+    assert (
+        part_calls[0][1]["headers"]["Content-SHA256"] == fixture["parts"][2]["checksum"]
+    )
+    assert (
+        hashlib.sha256(part_calls[0][1]["data"]).hexdigest()
+        == fixture["parts"][2]["checksum"]
+    )

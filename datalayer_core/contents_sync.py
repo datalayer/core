@@ -251,7 +251,11 @@ class Synchronizer:
                         source = self.root / path[: -len(".local")]
                     entry = local.entries.get(path)
                     base_version = getattr(action, "version_uid", None)
-                    if base_version and entry is not None and source == self.root / path:
+                    if (
+                        base_version
+                        and entry is not None
+                        and source == self.root / path
+                    ):
                         # The remote holds an older version of this very
                         # file: only the blocks it lacks go up.
                         self.progress(f"Pushing changed blocks of {path}")

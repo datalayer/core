@@ -2,8 +2,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The ``datalayer executions`` command group: work delegated to an agent over A2A
-or ACP (ORCHESTRATOR.md, section 11 and O1-13)::
+The ``datalayer executions`` command group.
+
+Work delegated to an agent over A2A or ACP (ORCHESTRATOR.md, section 11 and
+O1-13)::
 
     datalayer executions run --agent validator --goal "Validate it" --context notebook:nb-1@3
     datalayer executions watch exec_123
@@ -94,7 +96,9 @@ def context_reference(value: str) -> ContextReference:
 
 def keyed(command: MutatingCommand, idempotency_key: Optional[str]) -> MutatingCommand:
     """The command under the key given, or under the one derived from what it asks."""
-    return command.model_copy(update={"idempotency_key": idempotency_key or command_idempotency_key(command)})
+    return command.model_copy(
+        update={"idempotency_key": idempotency_key or command_idempotency_key(command)}
+    )
 
 
 def resolve_binding(
@@ -118,9 +122,16 @@ def resolve_binding(
     )
     for descriptor in discovered:
         if descriptor.agent_id == agent_id:
-            return call(lambda: binding_for(descriptor, protocol=protocol, capability=capability))
+            return call(
+                lambda: binding_for(
+                    descriptor, protocol=protocol, capability=capability
+                )
+            )
     constraints = "".join(
-        [f" with the capability {capability}" if capability else "", f" over {protocol.value}" if protocol else ""]
+        [
+            f" with the capability {capability}" if capability else "",
+            f" over {protocol.value}" if protocol else "",
+        ]
     )
     raise OrchestrationCommandError(
         f"No worker '{agent_id}' was discovered{constraints}: `datalayer agents discover` lists the "
@@ -128,12 +139,18 @@ def resolve_binding(
     )
 
 
-def show_receipt(receipt: Receipt, output: OutputFormat, *, delivered: str, undelivered: str) -> None:
+def show_receipt(
+    receipt: Receipt, output: OutputFormat, *, delivered: str, undelivered: str
+) -> None:
     if emit(receipt.to_wire(), output):
         return
     console.print(execution_table(receipt.execution))
     words = delivered if receipt.delivered else undelivered
-    console.print(f"{words} {receipt.detail}" if receipt.detail else words, markup=False, highlight=False)
+    console.print(
+        f"{words} {receipt.detail}" if receipt.detail else words,
+        markup=False,
+        highlight=False,
+    )
 
 
 def stream(
@@ -160,7 +177,10 @@ def stream(
                 # One event, one line, however long: a watch is read and piped
                 # line by line.
                 console.print(
-                    event_line(event, root_execution_id=execution_id), markup=False, highlight=False, soft_wrap=True
+                    event_line(event, root_execution_id=execution_id),
+                    markup=False,
+                    highlight=False,
+                    soft_wrap=True,
                 )
             else:
                 emit_line({"cursor": cursor, "event": event.to_wire()}, output)
@@ -169,13 +189,22 @@ def stream(
     except Exception as error:
         raise OrchestrationCommandError(str(error)) from error
     if output is OutputFormat.TABLE:
-        console.print(f"Over: every execution {execution_id} covers has ended.", markup=False, highlight=False)
+        console.print(
+            f"Over: every execution {execution_id} covers has ended.",
+            markup=False,
+            highlight=False,
+        )
 
 
 @app.command("run")
 @orchestration_command
 def run(
-    agent: str = typer.Option(..., "--agent", "-a", help="The worker's agent id, as `datalayer agents discover` lists it."),
+    agent: str = typer.Option(
+        ...,
+        "--agent",
+        "-a",
+        help="The worker's agent id, as `datalayer agents discover` lists it.",
+    ),
     goal: str = typer.Option(..., "--goal", "-g", help="What the worker is to do."),
     context: Optional[list[str]] = typer.Option(
         None,
@@ -183,39 +212,66 @@ def run(
         help="What the worker may read: datalayer:<kind>/<uid>@<version>, or <kind>:<uid>@<version>; repeatable.",
     ),
     capability: Optional[str] = typer.Option(
-        None, "--capability", "-c", help="The capability the work is for; the worker's first when omitted."
+        None,
+        "--capability",
+        "-c",
+        help="The capability the work is for; the worker's first when omitted.",
     ),
     protocol: Optional[AgentProtocol] = typer.Option(
-        None, "--protocol", "-p", case_sensitive=False, help="The protocol to reach the worker over; its first endpoint's when omitted."
+        None,
+        "--protocol",
+        "-p",
+        case_sensitive=False,
+        help="The protocol to reach the worker over; its first endpoint's when omitted.",
     ),
-    instructions: Optional[str] = typer.Option(None, "--instructions", help="Steering that applies from the start."),
-    criterion: Optional[list[str]] = typer.Option(None, "--criterion", help="An acceptance criterion; repeatable."),
-    deadline: Optional[str] = typer.Option(None, "--deadline", help="When the work must be over, as an RFC 3339 instant."),
-    parent: Optional[str] = typer.Option(None, "--parent", help="The execution this one is delegated from."),
+    instructions: Optional[str] = typer.Option(
+        None, "--instructions", help="Steering that applies from the start."
+    ),
+    criterion: Optional[list[str]] = typer.Option(
+        None, "--criterion", help="An acceptance criterion; repeatable."
+    ),
+    deadline: Optional[str] = typer.Option(
+        None, "--deadline", help="When the work must be over, as an RFC 3339 instant."
+    ),
+    parent: Optional[str] = typer.Option(
+        None, "--parent", help="The execution this one is delegated from."
+    ),
     idempotency_key: Optional[str] = typer.Option(
         None,
         "--idempotency-key",
         help="The key of this delegation; derived from what it asks when omitted, so running the same command again is the same execution.",
     ),
-    watch_after: bool = typer.Option(False, "--watch", "-w", help="Then stream its events until it is over."),
+    watch_after: bool = typer.Option(
+        False, "--watch", "-w", help="Then stream its events until it is over."
+    ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
     """Delegate an objective, and the context it may use, to a worker."""
     the_client = client()
     references = [context_reference(value) for value in context or []]
-    binding = resolve_binding(the_client, agent, capability=capability, protocol=protocol, account=account)
+    binding = resolve_binding(
+        the_client, agent, capability=capability, protocol=protocol, account=account
+    )
     command = call(
         lambda: ExecutionsDelegate(
             idempotency_key=_PENDING_KEY,
             parent_execution_id=parent,
             agent=binding,
-            objective=Objective(goal=goal, acceptance_criteria=criterion or [], instructions=instructions),
+            objective=Objective(
+                goal=goal,
+                acceptance_criteria=criterion or [],
+                instructions=instructions,
+            ),
             context=ContextManifest(references=references),
             policy=Policy(deadline=deadline),
         )
     )
-    receipt: Receipt = call(lambda: the_client.delegate_execution(keyed(command, idempotency_key), account_uid=account))
+    receipt: Receipt = call(
+        lambda: the_client.delegate_execution(
+            keyed(command, idempotency_key), account_uid=account
+        )
+    )
     show_receipt(
         receipt,
         output,
@@ -238,10 +294,21 @@ def run(
 @orchestration_command
 def watch(
     execution_id: str = typer.Argument(..., help="The execution to watch."),
-    children: bool = typer.Option(True, "--children/--no-children", help="The events of the executions it delegated to as well."),
-    from_sequence: Optional[int] = typer.Option(None, "--from-sequence", min=0, help="Replay its own events after this sequence."),
+    children: bool = typer.Option(
+        True,
+        "--children/--no-children",
+        help="The events of the executions it delegated to as well.",
+    ),
+    from_sequence: Optional[int] = typer.Option(
+        None,
+        "--from-sequence",
+        min=0,
+        help="Replay its own events after this sequence.",
+    ),
     last_event_id: Optional[str] = typer.Option(
-        None, "--last-event-id", help="Resume after this cursor, as a JSON watch prints it."
+        None,
+        "--last-event-id",
+        help="Resume after this cursor, as a JSON watch prints it.",
     ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
@@ -262,18 +329,30 @@ def watch(
 @orchestration_command
 def steer(
     execution_id: str = typer.Argument(..., help="The execution to steer."),
-    instructions: str = typer.Argument(..., help="What to add to the worker's instructions."),
+    instructions: str = typer.Argument(
+        ..., help="What to add to the worker's instructions."
+    ),
     idempotency_key: Optional[str] = typer.Option(
-        None, "--idempotency-key", help="The key of this steer; derived from the execution and the instructions when omitted."
+        None,
+        "--idempotency-key",
+        help="The key of this steer; derived from the execution and the instructions when omitted.",
     ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
     """Add instructions to an execution while its worker works."""
     command = call(
-        lambda: ExecutionsSteer(idempotency_key=_PENDING_KEY, execution_id=execution_id, instructions=instructions)
+        lambda: ExecutionsSteer(
+            idempotency_key=_PENDING_KEY,
+            execution_id=execution_id,
+            instructions=instructions,
+        )
     )
-    receipt: Receipt = call(lambda: client().steer_execution(keyed(command, idempotency_key), account_uid=account))
+    receipt: Receipt = call(
+        lambda: client().steer_execution(
+            keyed(command, idempotency_key), account_uid=account
+        )
+    )
     show_receipt(
         receipt,
         output,
@@ -286,19 +365,34 @@ def steer(
 @orchestration_command
 def cancel(
     execution_id: str = typer.Argument(..., help="The execution to cancel."),
-    reason: Optional[str] = typer.Option(None, "--reason", help="Why, kept on the execution."),
-    cascade: bool = typer.Option(True, "--cascade/--no-cascade", help="Stop everything it delegated too."),
+    reason: Optional[str] = typer.Option(
+        None, "--reason", help="Why, kept on the execution."
+    ),
+    cascade: bool = typer.Option(
+        True, "--cascade/--no-cascade", help="Stop everything it delegated too."
+    ),
     idempotency_key: Optional[str] = typer.Option(
-        None, "--idempotency-key", help="The key of this cancel; derived from what it asks when omitted."
+        None,
+        "--idempotency-key",
+        help="The key of this cancel; derived from what it asks when omitted.",
     ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
     """Stop an execution, and by default everything below it, keeping its history."""
     command = call(
-        lambda: ExecutionsCancel(idempotency_key=_PENDING_KEY, execution_id=execution_id, reason=reason, cascade=cascade)
+        lambda: ExecutionsCancel(
+            idempotency_key=_PENDING_KEY,
+            execution_id=execution_id,
+            reason=reason,
+            cascade=cascade,
+        )
     )
-    receipt: Receipt = call(lambda: client().cancel_execution(keyed(command, idempotency_key), account_uid=account))
+    receipt: Receipt = call(
+        lambda: client().cancel_execution(
+            keyed(command, idempotency_key), account_uid=account
+        )
+    )
     if emit(receipt.to_wire(), output):
         return
     console.print(execution_table(receipt.execution))
@@ -315,16 +409,28 @@ def cancel(
 @orchestration_command
 def pause(
     execution_id: str = typer.Argument(..., help="The execution to pause."),
-    reason: Optional[str] = typer.Option(None, "--reason", help="Why, kept on the execution."),
+    reason: Optional[str] = typer.Option(
+        None, "--reason", help="Why, kept on the execution."
+    ),
     idempotency_key: Optional[str] = typer.Option(
-        None, "--idempotency-key", help="The key of this pause; derived from what it asks when omitted."
+        None,
+        "--idempotency-key",
+        help="The key of this pause; derived from what it asks when omitted.",
     ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
     """Ask an execution's worker to stop at its next checkpoint; nothing it did is lost."""
-    command = call(lambda: ExecutionsPause(idempotency_key=_PENDING_KEY, execution_id=execution_id, reason=reason))
-    receipt: Receipt = call(lambda: client().pause_execution(keyed(command, idempotency_key), account_uid=account))
+    command = call(
+        lambda: ExecutionsPause(
+            idempotency_key=_PENDING_KEY, execution_id=execution_id, reason=reason
+        )
+    )
+    receipt: Receipt = call(
+        lambda: client().pause_execution(
+            keyed(command, idempotency_key), account_uid=account
+        )
+    )
     show_receipt(
         receipt,
         output,
@@ -338,19 +444,31 @@ def pause(
 def resume(
     execution_id: str = typer.Argument(..., help="The execution to resume."),
     checkpoint: Optional[str] = typer.Option(
-        None, "--checkpoint", help="The checkpoint to go on from; where it paused when omitted."
+        None,
+        "--checkpoint",
+        help="The checkpoint to go on from; where it paused when omitted.",
     ),
     idempotency_key: Optional[str] = typer.Option(
-        None, "--idempotency-key", help="The key of this resume; derived from what it asks when omitted."
+        None,
+        "--idempotency-key",
+        help="The key of this resume; derived from what it asks when omitted.",
     ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
     """Let a paused execution go on, from where it stopped or from a checkpoint it kept."""
     command = call(
-        lambda: ExecutionsResume(idempotency_key=_PENDING_KEY, execution_id=execution_id, checkpoint_id=checkpoint)
+        lambda: ExecutionsResume(
+            idempotency_key=_PENDING_KEY,
+            execution_id=execution_id,
+            checkpoint_id=checkpoint,
+        )
     )
-    receipt: Receipt = call(lambda: client().resume_execution(keyed(command, idempotency_key), account_uid=account))
+    receipt: Receipt = call(
+        lambda: client().resume_execution(
+            keyed(command, idempotency_key), account_uid=account
+        )
+    )
     show_receipt(
         receipt,
         output,
@@ -363,12 +481,18 @@ def resume(
 @orchestration_command
 def terminate(
     execution_id: str = typer.Argument(..., help="The execution to terminate."),
-    reason: Optional[str] = typer.Option(None, "--reason", help="Why, kept on the execution."),
+    reason: Optional[str] = typer.Option(
+        None, "--reason", help="Why, kept on the execution."
+    ),
     release_worker: bool = typer.Option(
-        True, "--release-worker/--keep-worker", help="Release its worker or session too, where that is permitted."
+        True,
+        "--release-worker/--keep-worker",
+        help="Release its worker or session too, where that is permitted.",
     ),
     idempotency_key: Optional[str] = typer.Option(
-        None, "--idempotency-key", help="The key of this terminate; derived from what it asks when omitted."
+        None,
+        "--idempotency-key",
+        help="The key of this terminate; derived from what it asks when omitted.",
     ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
@@ -376,10 +500,17 @@ def terminate(
     """End an execution for good and release its worker; `cancel` stops it and keeps the worker."""
     command = call(
         lambda: ExecutionsTerminate(
-            idempotency_key=_PENDING_KEY, execution_id=execution_id, reason=reason, release_worker=release_worker
+            idempotency_key=_PENDING_KEY,
+            execution_id=execution_id,
+            reason=reason,
+            release_worker=release_worker,
         )
     )
-    receipt: Receipt = call(lambda: client().terminate_execution(keyed(command, idempotency_key), account_uid=account))
+    receipt: Receipt = call(
+        lambda: client().terminate_execution(
+            keyed(command, idempotency_key), account_uid=account
+        )
+    )
     show_receipt(
         receipt,
         output,
@@ -391,15 +522,22 @@ def terminate(
 @app.command("artifacts")
 @orchestration_command
 def artifacts(
-    execution_id: str = typer.Argument(..., help="The execution whose artifacts to list."),
-    children: bool = typer.Option(True, "--children/--no-children", help="The artifacts of the executions it delegated to as well."),
+    execution_id: str = typer.Argument(
+        ..., help="The execution whose artifacts to list."
+    ),
+    children: bool = typer.Option(
+        True,
+        "--children/--no-children",
+        help="The artifacts of the executions it delegated to as well.",
+    ),
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
     """The artifacts an execution registered, and its children's, with what each came to."""
     collection = call(
         lambda: client().collect_execution(
-            ExecutionsCollect(execution_id=execution_id, include_children=children), account_uid=account
+            ExecutionsCollect(execution_id=execution_id, include_children=children),
+            account_uid=account,
         )
     )
     if emit(collection.to_wire(), output):

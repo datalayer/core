@@ -19,6 +19,8 @@ first test sees rather than one a customer sees.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from pydantic import BaseModel
 
@@ -31,10 +33,10 @@ class _Payload(BaseModel):
 
 
 class _Shadowing(BaseModel):
-    message: dict | None = None
+    message: dict[str, Any] | None = None
 
 
-def test_a_payload_is_flattened_beside_the_envelopes_own_fields():
+def test_a_payload_is_flattened_beside_the_envelopes_own_fields() -> None:
     answered = DataResponse[_Payload](
         success=True, message="Done", data=_Payload()
     ).model_dump()
@@ -44,7 +46,7 @@ def test_a_payload_is_flattened_beside_the_envelopes_own_fields():
     assert answered["kind"] == "payload"
 
 
-def test_a_payload_that_would_shadow_the_envelope_is_refused():
+def test_a_payload_that_would_shadow_the_envelope_is_refused() -> None:
     with pytest.raises(ValueError) as refused:
         DataResponse[_Shadowing](
             success=True, message="Done", data=_Shadowing(message={"content": "hello"})
@@ -55,7 +57,7 @@ def test_a_payload_that_would_shadow_the_envelope_is_refused():
     assert "key=" in said, "the error says how to fix it"
 
 
-def test_the_same_payload_is_fine_nested_under_a_name_of_its_own():
+def test_the_same_payload_is_fine_nested_under_a_name_of_its_own() -> None:
     answered = DataResponse[_Shadowing](
         success=True,
         message="Done",
@@ -67,11 +69,13 @@ def test_the_same_payload_is_fine_nested_under_a_name_of_its_own():
     assert answered["result"]["message"] == {"content": "hello"}
 
 
-def test_the_reserved_names_are_the_envelopes_own():
+def test_the_reserved_names_are_the_envelopes_own() -> None:
     assert RESERVED_RESPONSE_FIELDS == ("success", "message")
 
 
-def test_a_chat_completion_carries_the_assistant_message_and_the_envelopes_own():
+def test_a_chat_completion_carries_the_assistant_message_and_the_envelopes_own() -> (
+    None
+):
     """What AI Inference answers, as its clients read it."""
     assistant = {"role": "assistant", "content": "OK.", "tool_calls": None}
 
@@ -95,7 +99,9 @@ def test_a_chat_completion_carries_the_assistant_message_and_the_envelopes_own()
     )
 
 
-def test_something_with_no_fields_goes_under_data():
-    answered = DataResponse[str](success=True, message="Done", data="plain").model_dump()
+def test_something_with_no_fields_goes_under_data() -> None:
+    answered = DataResponse[str](
+        success=True, message="Done", data="plain"
+    ).model_dump()
 
     assert answered["data"] == "plain" and answered["message"] == "Done"

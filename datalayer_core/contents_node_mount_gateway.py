@@ -4,7 +4,8 @@
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Datalayer License
 
-"""The Node Mount Gateway contract: what a grant is, and where it is written.
+"""
+The Node Mount Gateway contract: what a grant is, and where it is written.
 
 A Pod's volumes are fixed when it is created, so a launch that mounts content
 cannot be served from the prewarmed pool by adding a volume. Every pooled pod
@@ -41,10 +42,14 @@ from typing import Any, Iterable
 logger = logging.getLogger(__name__)
 
 #: The Pod annotation the Operator writes: the mount set a runtime is granted.
-NODE_MOUNT_GATEWAY_MOUNTS_ANNOTATION = "runtime-pools.datalayer.io/node-mount-gateway-mounts"
+NODE_MOUNT_GATEWAY_MOUNTS_ANNOTATION = (
+    "runtime-pools.datalayer.io/node-mount-gateway-mounts"
+)
 
 #: The Pod annotation the node agent writes back: what it actually mounted.
-NODE_MOUNT_GATEWAY_READY_ANNOTATION = "runtime-pools.datalayer.io/node-mount-gateway-ready"
+NODE_MOUNT_GATEWAY_READY_ANNOTATION = (
+    "runtime-pools.datalayer.io/node-mount-gateway-ready"
+)
 
 #: The Pod label that says this Pod carries the gateway volume. A pool built
 #: before the gateway shipped still holds Pods without it, and one of those
@@ -179,7 +184,8 @@ class NodeMountGatewayError(ValueError):
 
 
 def delivery_of(kind: Any) -> str:
-    """How the node agent produces a mount of this kind, or raise.
+    """
+    How the node agent produces a mount of this kind, or raise.
 
     A grant that names no kind is a plain bind, which is what every grant was
     before there were kinds; a grant that names one nobody serves is refused
@@ -205,7 +211,8 @@ def delivery_known(kind: Any) -> bool:
 
 
 def clean_source(value: Any, kind: Any = "") -> str:
-    """What a grant of this kind names, validated for that kind.
+    """
+    What a grant of this kind names, validated for that kind.
 
     A source is not one shape. A bind names a path beneath the shared
     filesystem, a bucket names a bucket and prefix, an NFS grant names a host
@@ -229,8 +236,10 @@ def clean_source(value: Any, kind: Any = "") -> str:
 
 #: `host:/export`, where the host is a name or address this cluster resolves
 #: and the export is absolute. Anything else is not an NFS source.
-_EXPORT_RE = re.compile(r"^(?P<host>[A-Za-z0-9][A-Za-z0-9._:-]{0,252})"
-                        r":(?P<export>/[A-Za-z0-9._/-]{0,1024})$")
+_EXPORT_RE = re.compile(
+    r"^(?P<host>[A-Za-z0-9][A-Za-z0-9._:-]{0,252})"
+    r":(?P<export>/[A-Za-z0-9._/-]{0,1024})$"
+)
 
 
 def _clean_export(value: Any) -> str:
@@ -291,7 +300,8 @@ def _clean_uid(value: Any) -> str:
 
 
 def _clean_relative(value: Any) -> str:
-    """A source path relative to the shared filesystem root, or raise.
+    """
+    A source path relative to the shared filesystem root, or raise.
 
     The agent resolves it beneath the root without following symlinks; this
     refuses the shapes that should never reach the resolution in the first
@@ -301,11 +311,16 @@ def _clean_relative(value: Any) -> str:
     if not raw:
         raise NodeMountGatewayError(ERROR_INVALID_SOURCE, "a grant needs a source path")
     if raw.startswith("/") or "\\" in raw or "\x00" in raw:
-        raise NodeMountGatewayError(ERROR_INVALID_SOURCE, f"source '{raw}' is not a relative path")
+        raise NodeMountGatewayError(
+            ERROR_INVALID_SOURCE, f"source '{raw}' is not a relative path"
+        )
     parts = [part for part in raw.split("/") if part]
     for part in parts:
         if part in (".", ".."):
-            raise NodeMountGatewayError(ERROR_INVALID_SOURCE, f"source '{raw}' walks outside the shared filesystem")
+            raise NodeMountGatewayError(
+                ERROR_INVALID_SOURCE,
+                f"source '{raw}' walks outside the shared filesystem",
+            )
     return "/".join(parts)
 
 
@@ -317,7 +332,8 @@ TARGET_MAX_SEGMENTS = 3
 
 
 def clean_target(value: Any) -> str:
-    """The relative path a grant appears under in the gateway.
+    """
+    The relative path a grant appears under in the gateway.
 
     One segment for most grants, and a path of clean segments for an
     Environment's contents, which the manual promises at `datasets/<name>`
@@ -329,11 +345,14 @@ def clean_target(value: Any) -> str:
     """
     raw = str(value or "").strip()
     if not raw or raw.startswith("/") or "\\" in raw:
-        raise NodeMountGatewayError(ERROR_INVALID_TARGET, f"target '{raw}' is not a relative path")
+        raise NodeMountGatewayError(
+            ERROR_INVALID_TARGET, f"target '{raw}' is not a relative path"
+        )
     parts = raw.split("/")
     if len(parts) > TARGET_MAX_SEGMENTS:
         raise NodeMountGatewayError(
-            ERROR_INVALID_TARGET, f"target '{raw}' is deeper than {TARGET_MAX_SEGMENTS} segments"
+            ERROR_INVALID_TARGET,
+            f"target '{raw}' is deeper than {TARGET_MAX_SEGMENTS} segments",
         )
     for part in parts:
         if not _TARGET_RE.match(part):
@@ -351,7 +370,9 @@ _SECRET_RE = re.compile(r"^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$")
 def clean_secret(value: Any) -> str:
     raw = str(value or "").strip()
     if not _SECRET_RE.match(raw):
-        raise NodeMountGatewayError(ERROR_SECRET_REFUSED, f"'{raw}' is not a Secret name")
+        raise NodeMountGatewayError(
+            ERROR_SECRET_REFUSED, f"'{raw}' is not a Secret name"
+        )
     return raw
 
 
@@ -386,7 +407,8 @@ def grant(
     secret: str = "",
     revision: str = "",
 ) -> dict[str, Any]:
-    """One entry of the mount set, validated.
+    """
+    One entry of the mount set, validated.
 
     `allow_exec` is true for a Home Folder and false for data: a home folder
     holds scripts and editable installs, and mounting it `noexec` breaks them.
@@ -420,7 +442,8 @@ def grant(
 
 
 def normalize_grants(grants: Iterable[Any] | None) -> list[dict[str, Any]]:
-    """Validate a mount set and put it in one deterministic order.
+    """
+    Validate a mount set and put it in one deterministic order.
 
     Two grants naming the same target are one grant: the first wins, the way
     the creation-time home folder mounts de-duplicate on mount path. Order is
@@ -485,7 +508,8 @@ def encode_grants(grants: Iterable[Any] | None) -> str:
 
 
 def decode_grants(value: Any) -> list[dict[str, Any]]:
-    """Read an annotation back. An unreadable one is an empty mount set.
+    """
+    Read an annotation back. An unreadable one is an empty mount set.
 
     A Pod whose annotation cannot be parsed must not keep whatever it had
     mounted from a previous shape of it: an empty set means the agent unmounts
@@ -549,7 +573,8 @@ def decode_ready(value: Any) -> dict[str, Any]:
 
 
 def is_ready_for(ready_value: Any, grants: Iterable[Any] | None) -> bool:
-    """Whether the agent has applied exactly the set that was asked for.
+    """
+    Whether the agent has applied exactly the set that was asked for.
 
     The hash is what makes this unambiguous: an agent that answered for the
     previous mount set has not answered for this one, however recently it did.

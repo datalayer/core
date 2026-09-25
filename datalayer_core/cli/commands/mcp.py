@@ -5,9 +5,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The ``datalayer mcp`` command group: the agents connected to the account,
-the audit log, the observability of a run, and the configuration of the MCP
-clients.
+The ``datalayer mcp`` command group.
+
+The agents connected to the account, the audit log, the observability of a
+run, and the configuration of the MCP clients.
 
 Every operation here is one the web application has too, over the same
 routes — the gateway's ``/api/mcp/v1``, IAM's connected agents and the
@@ -35,21 +36,21 @@ from datalayer_core.displays.mcp import (
     audit_events_table,
     bindings_table,
     connected_agents_table,
-    service_agents_table,
     forwarding_table,
     jobs_table,
     logs_table,
     policy_table,
+    service_agents_table,
     slis_table,
     spans_table,
     tasks_table,
 )
 from datalayer_core.mcp import (
     CLI_CLIENT_METADATA_URL,
-    derived_idempotency_key,
     MCP_CLIENT_IDS,
     MCP_CLIENTS,
     default_config_path,
+    derived_idempotency_key,
     mcp_endpoint_url,
     render_client_configuration,
     span_tree,
@@ -172,7 +173,9 @@ def _call(function: Callable[[], Any]) -> Any:
 # toolsets
 # ---------------------------------------------------------------------------
 
-toolsets_app = typer.Typer(name="toolsets", help="The tools your Content sources lend to agents.")
+toolsets_app = typer.Typer(
+    name="toolsets", help="The tools your Content sources lend to agents."
+)
 app.add_typer(toolsets_app)
 
 
@@ -186,15 +189,23 @@ def toolsets_list(ctx: typer.Context) -> None:
     by_source: dict[str, list[str]] = {}
     for session in open_sessions:
         if str(session.get("status") or "") == "active":
-            by_source.setdefault(str(session.get("source_uid") or ""), []).append(str(session.get("uid") or ""))
-    listed = [{**entry, "sessions": by_source.get(entry["uid"], [])} for entry in catalogue]
+            by_source.setdefault(str(session.get("source_uid") or ""), []).append(
+                str(session.get("uid") or "")
+            )
+    listed = [
+        {**entry, "sessions": by_source.get(entry["uid"], [])} for entry in catalogue
+    ]
     if _emit_machine(listed, _context(ctx)):
         return
     if not listed:
         console.print("No source of yours lends tools.")
         return
     for entry in listed:
-        state = f"enabled ({', '.join(entry['sessions'])})" if entry["sessions"] else "not enabled"
+        state = (
+            f"enabled ({', '.join(entry['sessions'])})"
+            if entry["sessions"]
+            else "not enabled"
+        )
         console.print(f"{entry['name']} [{entry['uid']}] {entry['kind']}: {state}")
         console.print(f"  tools: {', '.join(entry['tools'])}")
 
@@ -204,15 +215,23 @@ def toolsets_list(ctx: typer.Context) -> None:
 def toolsets_enable(
     ctx: typer.Context,
     source_uid: str = typer.Argument(..., help="The source, from `toolsets list`."),
-    tool: list[str] = typer.Option([], "--tool", help="Only this tool; repeatable. All the source allows when omitted."),
+    tool: list[str] = typer.Option(
+        [],
+        "--tool",
+        help="Only this tool; repeatable. All the source allows when omitted.",
+    ),
 ) -> None:
     """Open a session on a source so an agent can call its tools."""
-    session = _call(lambda: _client().enable_toolset(source_uid, tools=list(tool) or None))
+    session = _call(
+        lambda: _client().enable_toolset(source_uid, tools=list(tool) or None)
+    )
     if _emit_machine(session, _context(ctx)):
         return
     allowed = ", ".join(session.get("allowed_tools") or []) or "none"
     console.print(f"{session.get('uid', '')}: {allowed}")
-    console.print(f"  expires {session.get('expires_at', 'unknown')}; approvals: {session.get('approval_policy', 'unknown')}")
+    console.print(
+        f"  expires {session.get('expires_at', 'unknown')}; approvals: {session.get('approval_policy', 'unknown')}"
+    )
 
 
 @toolsets_app.command(name="disable")
@@ -228,25 +247,45 @@ def toolsets_disable(
     session = _call(lambda: _client().disable_toolset(session_uid))
     if _emit_machine(session, _context(ctx)):
         return
-    console.print(f"{session.get('uid', session_uid)}: {session.get('status', 'revoked')}")
+    console.print(
+        f"{session.get('uid', session_uid)}: {session.get('status', 'revoked')}"
+    )
 
 
 # ---------------------------------------------------------------------------
 # sandboxes
 # ---------------------------------------------------------------------------
 
-sandboxes_app = typer.Typer(name="sandboxes", help="Sharing the sandboxes you launched.")
+sandboxes_app = typer.Typer(
+    name="sandboxes", help="Sharing the sandboxes you launched."
+)
 app.add_typer(sandboxes_app)
 
 
-def _principals(users: list[str] | None, teams: list[str] | None, organizations: list[str] | None, agents: list[str] | None) -> dict[str, list[str]]:
-    return {"users": users or [], "teams": teams or [], "organizations": organizations or [], "agents": agents or []}
+def _principals(
+    users: list[str] | None,
+    teams: list[str] | None,
+    organizations: list[str] | None,
+    agents: list[str] | None,
+) -> dict[str, list[str]]:
+    return {
+        "users": users or [],
+        "teams": teams or [],
+        "organizations": organizations or [],
+        "agents": agents or [],
+    }
 
 
 def _sharing_lines(sharing: dict[str, Any]) -> str:
-    lines = [f"{sharing.get('runtime_name', '')}: {'shared' if sharing.get('shared') else 'not shared'} (owner {sharing.get('owner_uid', '')})"]
+    lines = [
+        f"{sharing.get('runtime_name', '')}: {'shared' if sharing.get('shared') else 'not shared'} (owner {sharing.get('owner_uid', '')})"
+    ]
     for level, grants in (sharing.get("access") or {}).items():
-        named = [f"{kind.removesuffix('Uids')} {', '.join(values)}" for kind, values in grants.items() if values]
+        named = [
+            f"{kind.removesuffix('Uids')} {', '.join(values)}"
+            for kind, values in grants.items()
+            if values
+        ]
         lines.append(f"  {level:8} {'; '.join(named) if named else '-'}")
     return "\n".join(lines)
 
@@ -255,19 +294,45 @@ def _sharing_lines(sharing: dict[str, Any]) -> str:
 @mcp_command
 def sandboxes_share(
     ctx: typer.Context,
-    runtime_name: str = typer.Argument(..., help="The sandbox, by the name it was launched under."),
-    level: str = typer.Option("view", "--level", help="view reads outputs, update may change files, execute may run code."),
-    user: list[str] = typer.Option([], "--user", help="A user uid to grant; repeatable."),
-    team: list[str] = typer.Option([], "--team", help="A team uid to grant; repeatable."),
-    organization: list[str] = typer.Option([], "--organization", help="An organization uid to grant; repeatable."),
-    agent: list[str] = typer.Option([], "--agent", help="A service-agent uid to grant — the agent alone, not its owner; repeatable."),
-    replace: bool = typer.Option(False, "--replace", help="Make these the whole grant at that level rather than adding to it."),
+    runtime_name: str = typer.Argument(
+        ..., help="The sandbox, by the name it was launched under."
+    ),
+    level: str = typer.Option(
+        "view",
+        "--level",
+        help="view reads outputs, update may change files, execute may run code.",
+    ),
+    user: list[str] = typer.Option(
+        [], "--user", help="A user uid to grant; repeatable."
+    ),
+    team: list[str] = typer.Option(
+        [], "--team", help="A team uid to grant; repeatable."
+    ),
+    organization: list[str] = typer.Option(
+        [], "--organization", help="An organization uid to grant; repeatable."
+    ),
+    agent: list[str] = typer.Option(
+        [],
+        "--agent",
+        help="A service-agent uid to grant — the agent alone, not its owner; repeatable.",
+    ),
+    replace: bool = typer.Option(
+        False,
+        "--replace",
+        help="Make these the whole grant at that level rather than adding to it.",
+    ),
 ) -> None:
     """Share a sandbox. They use it with `use_sandbox` and its name."""
     who = _principals(user, team, organization, agent)
     if not any(who.values()):
-        raise McpCommandError("Name somebody to share with: --user, --team, --organization or --agent.")
-    sharing = _call(lambda: _client().share_runtime(runtime_name, level=level, replace=replace, **who))
+        raise McpCommandError(
+            "Name somebody to share with: --user, --team, --organization or --agent."
+        )
+    sharing = _call(
+        lambda: _client().share_runtime(
+            runtime_name, level=level, replace=replace, **who
+        )
+    )
     if _emit_machine(sharing, _context(ctx)):
         return
     console.print(_sharing_lines(sharing))
@@ -277,15 +342,31 @@ def sandboxes_share(
 @mcp_command
 def sandboxes_unshare(
     ctx: typer.Context,
-    runtime_name: str = typer.Argument(..., help="The sandbox, by the name it was launched under."),
-    level: str = typer.Option("all", "--level", help="The level to revoke at; 'all' revokes every level."),
-    user: list[str] = typer.Option([], "--user", help="A user uid to revoke; repeatable."),
-    team: list[str] = typer.Option([], "--team", help="A team uid to revoke; repeatable."),
-    organization: list[str] = typer.Option([], "--organization", help="An organization uid to revoke; repeatable."),
-    agent: list[str] = typer.Option([], "--agent", help="A service-agent uid to revoke; repeatable."),
+    runtime_name: str = typer.Argument(
+        ..., help="The sandbox, by the name it was launched under."
+    ),
+    level: str = typer.Option(
+        "all", "--level", help="The level to revoke at; 'all' revokes every level."
+    ),
+    user: list[str] = typer.Option(
+        [], "--user", help="A user uid to revoke; repeatable."
+    ),
+    team: list[str] = typer.Option(
+        [], "--team", help="A team uid to revoke; repeatable."
+    ),
+    organization: list[str] = typer.Option(
+        [], "--organization", help="An organization uid to revoke; repeatable."
+    ),
+    agent: list[str] = typer.Option(
+        [], "--agent", help="A service-agent uid to revoke; repeatable."
+    ),
 ) -> None:
     """Take a share back. Name nobody to revoke everybody at the level."""
-    sharing = _call(lambda: _client().unshare_runtime(runtime_name, level=level, **_principals(user, team, organization, agent)))
+    sharing = _call(
+        lambda: _client().unshare_runtime(
+            runtime_name, level=level, **_principals(user, team, organization, agent)
+        )
+    )
     if _emit_machine(sharing, _context(ctx)):
         return
     console.print(_sharing_lines(sharing))
@@ -295,7 +376,9 @@ def sandboxes_unshare(
 @mcp_command
 def sandboxes_sharing(
     ctx: typer.Context,
-    runtime_name: str = typer.Argument(..., help="The sandbox, by the name it was launched under."),
+    runtime_name: str = typer.Argument(
+        ..., help="The sandbox, by the name it was launched under."
+    ),
 ) -> None:
     """Who a sandbox of yours is shared with."""
     sharing = _call(lambda: _client().runtime_sharing(runtime_name))
@@ -308,14 +391,24 @@ def sandboxes_sharing(
 @mcp_command
 def sandboxes_permissions(
     ctx: typer.Context,
-    runtime_name: str = typer.Argument(..., help="A sandbox, yours or somebody else's."),
+    runtime_name: str = typer.Argument(
+        ..., help="A sandbox, yours or somebody else's."
+    ),
 ) -> None:
     """What you may do with a sandbox: view, update, execute."""
     permissions = _call(lambda: _client().runtime_permissions(runtime_name))
     if _emit_machine(permissions, _context(ctx)):
         return
     held = [level for level in ("view", "update", "execute") if permissions.get(level)]
-    owner = " (yours)" if permissions.get("owner") else (f" (shared by {permissions['owner_uid']})" if permissions.get("owner_uid") else "")
+    owner = (
+        " (yours)"
+        if permissions.get("owner")
+        else (
+            f" (shared by {permissions['owner_uid']})"
+            if permissions.get("owner_uid")
+            else ""
+        )
+    )
     console.print(f"{runtime_name}: {', '.join(held) if held else 'nothing'}{owner}")
 
 
@@ -335,7 +428,9 @@ def agents_list(ctx: typer.Context) -> None:
     if _emit_machine(agents, _context(ctx)):
         return
     if not agents:
-        console.print("No agent is connected. Connect one from an MCP client: `datalayer mcp setup --help`.")
+        console.print(
+            "No agent is connected. Connect one from an MCP client: `datalayer mcp setup --help`."
+        )
         return
     console.print(connected_agents_table(agents))
 
@@ -344,7 +439,9 @@ def agents_list(ctx: typer.Context) -> None:
 @mcp_command
 def agents_revoke(
     ctx: typer.Context,
-    grant_uid: str = typer.Argument(..., help="The grant, from `datalayer mcp agents list`."),
+    grant_uid: str = typer.Argument(
+        ..., help="The grant, from `datalayer mcp agents list`."
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
     """Disconnect an agent: its refresh token stops working at once."""
@@ -401,9 +498,12 @@ def service_agents_create(
         ),
     ),
     description: str = typer.Option("", "--description", help="Optional."),
-    team_uid: str = typer.Option("", "--team", help="A team's rather than the organization's."),
+    team_uid: str = typer.Option(
+        "", "--team", help="A team's rather than the organization's."
+    ),
 ) -> None:
-    """Create a service agent and print its key — once.
+    """
+    Create a service agent and print its key — once.
 
     IAM stores a hash of the key and has no way back, so this is the only
     place it exists. Pipe it somewhere or copy it now; losing it means
@@ -491,20 +591,24 @@ def activity(
         return
     console.print(activity_summary_table(answer))
     if answer.clients:
-        console.print(connected_agents_table(
-            [
-                {
-                    "uid": client.grant_uid,
-                    "client_name": client.client_name,
-                    "client_id": client.client_id,
-                    "scopes": client.scopes,
-                    "created_at": client.connected_at,
-                    "last_used_at": client.last_call.at if client.last_call else None,
-                }
-                for client in answer.clients
-            ],
-            title="Connected clients",
-        ))
+        console.print(
+            connected_agents_table(
+                [
+                    {
+                        "uid": client.grant_uid,
+                        "client_name": client.client_name,
+                        "client_id": client.client_id,
+                        "scopes": client.scopes,
+                        "created_at": client.connected_at,
+                        "last_used_at": client.last_call.at
+                        if client.last_call
+                        else None,
+                    }
+                    for client in answer.clients
+                ],
+                title="Connected clients",
+            )
+        )
     if answer.sandboxes:
         console.print(bindings_table(answer.sandboxes, title="Bound sandboxes"))
     if answer.tasks:
@@ -521,10 +625,18 @@ app.add_typer(tasks_app)
 @mcp_command
 def tasks_list(
     ctx: typer.Context,
-    notebook: str | None = typer.Option(None, "--notebook", help="Filter by notebook uid."),
-    sandbox: str | None = typer.Option(None, "--sandbox", help="Filter by sandbox uid."),
-    agent: str | None = typer.Option(None, "--agent", help="Filter by the agent's client id."),
-    status: str | None = typer.Option(None, "--status", help="working, input_required, completed, failed, cancelled."),
+    notebook: str | None = typer.Option(
+        None, "--notebook", help="Filter by notebook uid."
+    ),
+    sandbox: str | None = typer.Option(
+        None, "--sandbox", help="Filter by sandbox uid."
+    ),
+    agent: str | None = typer.Option(
+        None, "--agent", help="Filter by the agent's client id."
+    ),
+    status: str | None = typer.Option(
+        None, "--status", help="working, input_required, completed, failed, cancelled."
+    ),
     org: str | None = typer.Option(None, "--org", help="An organization you own."),
     cursor: str | None = typer.Option(None, "--cursor", help="Continue a page."),
     limit: int = typer.Option(50, "--limit", min=1, max=200),
@@ -532,7 +644,13 @@ def tasks_list(
     """List the tasks, newest first."""
     page = _call(
         lambda: _client().list_mcp_tasks(
-            notebook=notebook, sandbox=sandbox, agent=agent, status=status, org=org, cursor=cursor, limit=limit
+            notebook=notebook,
+            sandbox=sandbox,
+            agent=agent,
+            status=status,
+            org=org,
+            cursor=cursor,
+            limit=limit,
         )
     )
     if _emit_machine(page, _context(ctx)):
@@ -551,7 +669,9 @@ def tasks_describe(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> N
         return
     console.print(tasks_table([task]))
     for output in task.outputs:
-        console.print(f"[{output.index}] {output.output_type}: {output.text or output.reference or ''}")
+        console.print(
+            f"[{output.index}] {output.output_type}: {output.text or output.reference or ''}"
+        )
     if task.error:
         console.print(f"[red]{task.error}[/red]")
 
@@ -574,7 +694,9 @@ def tasks_input(
     payload: str | None = typer.Option(
         None, "--input", help="The tool's own input, as JSON. `-` reads stdin."
     ),
-    file: Path | None = typer.Option(None, "--file", help="Read the JSON from this file."),
+    file: Path | None = typer.Option(
+        None, "--file", help="Read the JSON from this file."
+    ),
     key: str | None = typer.Option(
         None,
         "--key",
@@ -582,7 +704,8 @@ def tasks_input(
         "so re-running the same command after a timeout answers once.",
     ),
 ) -> None:
-    """Answer a task that is waiting on a person.
+    """
+    Answer a task that is waiting on a person.
 
     The input is whatever the tool asked for, so it is JSON rather than
     flags: this command cannot know the shape, and inventing one would make
@@ -594,8 +717,14 @@ def tasks_input(
     *second* answer to a question that was already answered.
     """
     if (payload is None) == (file is None):
-        raise McpCommandError("give the input with --input or --file, not both and not neither")
-    raw = file.read_text() if file is not None else (sys.stdin.read() if payload == "-" else payload)
+        raise McpCommandError(
+            "give the input with --input or --file, not both and not neither"
+        )
+    raw = (
+        file.read_text()
+        if file is not None
+        else (sys.stdin.read() if payload == "-" else payload)
+    )
     try:
         answer = json.loads(raw or "")
     except json.JSONDecodeError as error:
@@ -604,11 +733,15 @@ def tasks_input(
         # The gateway sends this on as the tool's arguments, and a tool's
         # arguments are an object. A bare list or string would be refused
         # there, one network round trip later and with a worse message.
-        raise McpCommandError("the input must be a JSON object, as the tool's arguments are")
+        raise McpCommandError(
+            "the input must be a JSON object, as the tool's arguments are"
+        )
 
     task = _call(
         lambda: _client().answer_mcp_task(
-            task_uid, answer, idempotency_key=key or derived_idempotency_key(task_uid, answer)
+            task_uid,
+            answer,
+            idempotency_key=key or derived_idempotency_key(task_uid, answer),
         )
     )
     if _emit_machine(task, _context(ctx)):
@@ -616,7 +749,9 @@ def tasks_input(
     console.print(f"{task.uid}: {task.status}")
 
 
-bindings_app = typer.Typer(name="bindings", help="The handles the agents hold: notebooks, toolsets, sandboxes.")
+bindings_app = typer.Typer(
+    name="bindings", help="The handles the agents hold: notebooks, toolsets, sandboxes."
+)
 app.add_typer(bindings_app)
 
 
@@ -624,13 +759,23 @@ app.add_typer(bindings_app)
 @mcp_command
 def bindings_list(
     ctx: typer.Context,
-    kind: str | None = typer.Option(None, "--kind", help="notebook, toolset or sandbox."),
-    state: str | None = typer.Option(None, "--state", help="active, lost, closed, expired."),
-    agent: str | None = typer.Option(None, "--agent", help="Filter by the agent's client id."),
+    kind: str | None = typer.Option(
+        None, "--kind", help="notebook, toolset or sandbox."
+    ),
+    state: str | None = typer.Option(
+        None, "--state", help="active, lost, closed, expired."
+    ),
+    agent: str | None = typer.Option(
+        None, "--agent", help="Filter by the agent's client id."
+    ),
     limit: int = typer.Option(50, "--limit", min=1, max=200),
 ) -> None:
     """List your handles."""
-    page = _call(lambda: _client().list_mcp_bindings(kind=kind, state=state, agent=agent, limit=limit))
+    page = _call(
+        lambda: _client().list_mcp_bindings(
+            kind=kind, state=state, agent=agent, limit=limit
+        )
+    )
     if _emit_machine(page, _context(ctx)):
         return
     console.print(bindings_table(page.items))
@@ -656,7 +801,9 @@ def bindings_terminate(
 @mcp_command
 def policy(
     ctx: typer.Context,
-    agent: str | None = typer.Option(None, "--agent", help="Preview the policy as this agent (client id)."),
+    agent: str | None = typer.Option(
+        None, "--agent", help="Preview the policy as this agent (client id)."
+    ),
 ) -> None:
     """The effective policy for your token, each rule naming the layer that decided it."""
     answer = _call(lambda: _client().get_mcp_effective_policy(agent=agent))
@@ -666,7 +813,8 @@ def policy(
 
 
 def _scope_of(org: str | None, team: str | None) -> tuple[str, str]:
-    """Which layer a command means, from the flags it was given.
+    """
+    Which layer a command means, from the flags it was given.
 
     One command with a scope flag rather than three commands for one
     document. The plan named `datalayer mcp policy`, `datalayer orgs
@@ -694,7 +842,8 @@ def policy_get(
     org: str | None = typer.Option(None, "--org", help="An organization you own."),
     team: str | None = typer.Option(None, "--team", help="A team you own."),
 ) -> None:
-    """One layer's own rules — what it narrows, not what applies to you.
+    """
+    One layer's own rules — what it narrows, not what applies to you.
 
     `datalayer mcp policy` is the other question: every layer intersected,
     with the layer that decided each rule. This is the one that can be
@@ -725,14 +874,23 @@ def policy_set(
     org: str | None = typer.Option(None, "--org", help="An organization you own."),
     team: str | None = typer.Option(None, "--team", help="A team you own."),
     deny: str = typer.Option("", "--deny", help="Comma-separated tools to deny."),
-    allow: str = typer.Option("", "--allow", help="Comma-separated tools to permit, to the exclusion of the rest."),
-    clients: str = typer.Option("", "--clients", help="Comma-separated CIMD URLs or hostnames to admit."),
+    allow: str = typer.Option(
+        "",
+        "--allow",
+        help="Comma-separated tools to permit, to the exclusion of the rest.",
+    ),
+    clients: str = typer.Option(
+        "", "--clients", help="Comma-separated CIMD URLs or hostnames to admit."
+    ),
     calls_per_minute: int | None = typer.Option(None, "--calls-per-minute"),
     credits_per_day: float | None = typer.Option(None, "--credits-per-day"),
-    sandboxes: int | None = typer.Option(None, "--sandboxes", help="Sandboxes at once."),
+    sandboxes: int | None = typer.Option(
+        None, "--sandboxes", help="Sandboxes at once."
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Replace one layer's rules.
+    """
+    Replace one layer's rules.
 
     **Replace, not merge.** A policy is small and read whole, and merging
     would leave no way to express removing a rule — so a flag you leave out
@@ -746,7 +904,11 @@ def policy_set(
         subject = _call(lambda: _client().get_profile()).uid
 
     rules: dict[str, Any] = {}
-    for flag, name in ((deny, "toolDenylist"), (allow, "toolAllowlist"), (clients, "allowedClients")):
+    for flag, name in (
+        (deny, "toolDenylist"),
+        (allow, "toolAllowlist"),
+        (clients, "allowedClients"),
+    ):
         entries = [entry.strip() for entry in flag.split(",") if entry.strip()]
         if entries:
             rules[name] = entries
@@ -770,9 +932,7 @@ def policy_set(
 
     current = _call(lambda: _client().get_mcp_policy_layer(scope, subject))
     cleared = sorted(
-        name
-        for name in (current or {})
-        if name != "version" and name not in rules
+        name for name in (current or {}) if name != "version" and name not in rules
     )
     if cleared and not yes:
         console.print(
@@ -803,13 +963,21 @@ app.add_typer(alerts_app)
 @mcp_command
 def alerts_list(
     ctx: typer.Context,
-    org: str | None = typer.Option(None, "--org", help="An organization you own or audit."),
-    team: str | None = typer.Option(None, "--team", help="A team of that organization."),
-    unacknowledged: bool = typer.Option(False, "--unacknowledged", help="Only what nobody has seen."),
+    org: str | None = typer.Option(
+        None, "--org", help="An organization you own or audit."
+    ),
+    team: str | None = typer.Option(
+        None, "--team", help="A team of that organization."
+    ),
+    unacknowledged: bool = typer.Option(
+        False, "--unacknowledged", help="Only what nobody has seen."
+    ),
 ) -> None:
     """What fired, newest first, for an organization's owners and auditors."""
     page = _call(
-        lambda: _client().list_mcp_alerts(org=org, team=team, unacknowledged=unacknowledged)
+        lambda: _client().list_mcp_alerts(
+            org=org, team=team, unacknowledged=unacknowledged
+        )
     )
     if _emit_machine(page, _context(ctx)):
         return
@@ -832,7 +1000,8 @@ def alerts_rules(
     ctx: typer.Context,
     org: str = typer.Argument(..., help="The organization."),
 ) -> None:
-    """The rules an organization asked to be told about, disabled included.
+    """
+    The rules an organization asked to be told about, disabled included.
 
     Switched off is a state, not a reason to hide a row: a rule somebody
     silenced for a migration is one they may want back.
@@ -864,10 +1033,13 @@ def alerts_watch(
     condition: str = typer.Option(..., "--condition", help="e.g. tasks.open"),
     threshold: float = typer.Option(..., "--threshold"),
     operator: str = typer.Option("gt", "--operator", help="gt, gte, lt, lte or eq."),
-    window: int = typer.Option(3600, "--window", help="Seconds the reading looks back over."),
+    window: int = typer.Option(
+        3600, "--window", help="Seconds the reading looks back over."
+    ),
     severity: str = typer.Option("warning", "--severity"),
 ) -> None:
-    """Write a rule.
+    """
+    Write a rule.
 
     Refused by name when the evaluator could not evaluate it. That refusal is
     the point: a rule that never fires because of a typo is
@@ -918,7 +1090,8 @@ def alerts_test(
     operator: str = typer.Option("gt", "--operator"),
     window: int = typer.Option(3600, "--window"),
 ) -> None:
-    """What a rule would see right now. Records nothing, tells nobody.
+    """
+    What a rule would see right now. Records nothing, tells nobody.
 
     The answer worth having is not the number but whether the condition can
     be **read at all**: a rule on something nothing reads never fires, and
@@ -954,11 +1127,18 @@ def alerts_test(
 def alerts_destinations(
     ctx: typer.Context,
     org: str = typer.Argument(..., help="The organization."),
-    webhook: str | None = typer.Option(None, "--webhook", help="An https endpoint that takes a JSON POST."),
-    slack: str | None = typer.Option(None, "--slack", help="A hooks.slack.com incoming webhook."),
-    emails: str | None = typer.Option(None, "--emails", help="Comma-separated, up to twenty."),
+    webhook: str | None = typer.Option(
+        None, "--webhook", help="An https endpoint that takes a JSON POST."
+    ),
+    slack: str | None = typer.Option(
+        None, "--slack", help="A hooks.slack.com incoming webhook."
+    ),
+    emails: str | None = typer.Option(
+        None, "--emails", help="Comma-separated, up to twenty."
+    ),
 ) -> None:
-    """Where fired alerts go, besides the notice in the app.
+    """
+    Where fired alerts go, besides the notice in the app.
 
     With no flags it shows them. With flags it changes **only what you
     pass** — IAM merges this document, and audit retention and SIEM
@@ -998,9 +1178,12 @@ def alerts_destinations(
 @mcp_command
 def forwarding(
     ctx: typer.Context,
-    org: str | None = typer.Option(None, "--org", help="An organization you own or audit."),
+    org: str | None = typer.Option(
+        None, "--org", help="An organization you own or audit."
+    ),
 ) -> None:
-    """Whether the audit is reaching your own system of record.
+    """
+    Whether the audit is reaching your own system of record.
 
     Forwarding never fails the call it describes, so a failure is invisible
     unless something reports it. This is that something.
@@ -1014,7 +1197,8 @@ def forwarding(
 @app.command(name="jobs")
 @mcp_command
 def jobs(ctx: typer.Context) -> None:
-    """The gateway's periodic work — retention, alerts — on the replica that answers.
+    """
+    The gateway's periodic work — retention, alerts — on the replica that answers.
 
     Platform administrators only. The counts belong to whichever replica the
     load balancer picked: only one holds each job's lease at a time, so a high
@@ -1036,20 +1220,30 @@ def jobs(ctx: typer.Context) -> None:
 @mcp_command
 def audit(
     ctx: typer.Context,
-    org: str | None = typer.Option(None, "--org", help="An organization you own or audit."),
-    team: str | None = typer.Option(None, "--team", help="A team of that organization."),
+    org: str | None = typer.Option(
+        None, "--org", help="An organization you own or audit."
+    ),
+    team: str | None = typer.Option(
+        None, "--team", help="A team of that organization."
+    ),
     agent: str | None = typer.Option(None, "--agent", help="The agent's client id."),
     user: str | None = typer.Option(None, "--user", help="A member's uid."),
     tool: str | None = typer.Option(None, "--tool", help="A tool name."),
     decision: str | None = typer.Option(None, "--decision", help="allowed or refused."),
-    outcome: str | None = typer.Option(None, "--outcome", help="ok, error or is_error."),
+    outcome: str | None = typer.Option(
+        None, "--outcome", help="ok, error or is_error."
+    ),
     since: str | None = typer.Option(None, "--since", help="ISO 8601, UTC."),
     until: str | None = typer.Option(None, "--until", help="ISO 8601, UTC."),
     task_id: str | None = typer.Option(None, "--task", help="The rows of one task."),
     cursor: str | None = typer.Option(None, "--cursor", help="Continue a page."),
     limit: int = typer.Option(50, "--limit", min=1, max=500),
-    export: str | None = typer.Option(None, "--export", help="Export everything the filters select: jsonl or csv."),
-    file: Path | None = typer.Option(None, "--file", help="Write the export here instead of stdout."),
+    export: str | None = typer.Option(
+        None, "--export", help="Export everything the filters select: jsonl or csv."
+    ),
+    file: Path | None = typer.Option(
+        None, "--file", help="Write the export here instead of stdout."
+    ),
 ) -> None:
     """The audit log: every call and decision, for security auditors and owners."""
     if export is not None:
@@ -1057,8 +1251,16 @@ def audit(
             raise McpCommandError("--export takes jsonl or csv")
         document = _call(
             lambda: _client().export_mcp_audit_events(
-                format=export, org=org, team=team, agent=agent, user=user, tool=tool,
-                decision=decision, outcome=outcome, since=since, until=until,
+                format=export,
+                org=org,
+                team=team,
+                agent=agent,
+                user=user,
+                tool=tool,
+                decision=decision,
+                outcome=outcome,
+                since=since,
+                until=until,
             )
         )
         if file is not None:
@@ -1070,8 +1272,18 @@ def audit(
         return
     page = _call(
         lambda: _client().list_mcp_audit_events(
-            org=org, team=team, agent=agent, user=user, tool=tool, decision=decision,
-            outcome=outcome, since=since, until=until, task_id=task_id, cursor=cursor, limit=limit,
+            org=org,
+            team=team,
+            agent=agent,
+            user=user,
+            tool=tool,
+            decision=decision,
+            outcome=outcome,
+            since=since,
+            until=until,
+            task_id=task_id,
+            cursor=cursor,
+            limit=limit,
         )
     )
     if _emit_machine(page, _context(ctx)):
@@ -1088,7 +1300,9 @@ def audit(
 
 @app.command(name="trace")
 @mcp_command
-def trace(ctx: typer.Context, task_uid: str = typer.Argument(..., help="The task (run) uid.")) -> None:
+def trace(
+    ctx: typer.Context, task_uid: str = typer.Argument(..., help="The task (run) uid.")
+) -> None:
     """The spans of a run — gateway, policy, worker and what they called — as a tree."""
     answer = _call(lambda: _client().get_mcp_run_trace(task_uid))
     if _emit_machine(answer, _context(ctx)):
@@ -1096,25 +1310,44 @@ def trace(ctx: typer.Context, task_uid: str = typer.Argument(..., help="The task
     if not answer.get("trace_id"):
         console.print(f"Task {task_uid} has no trace yet.")
         return
-    console.print(spans_table(span_tree(answer.get("spans", [])), title=f"Trace {answer['trace_id']}"))
+    console.print(
+        spans_table(
+            span_tree(answer.get("spans", [])), title=f"Trace {answer['trace_id']}"
+        )
+    )
 
 
 @app.command(name="metrics")
 @mcp_command
 def metrics(
     ctx: typer.Context,
-    agent: str | None = typer.Option(None, "--agent", help="The SLIs of one agent (client id), read from its spans."),
-    org: str | None = typer.Option(None, "--org", help="The SLIs of one organization, read from its spans."),
-    since: str | None = typer.Option(None, "--since", help="Where the reading starts: ISO 8601 (UTC), or a span back from now such as 30m, 1h or 7d."),
+    agent: str | None = typer.Option(
+        None, "--agent", help="The SLIs of one agent (client id), read from its spans."
+    ),
+    org: str | None = typer.Option(
+        None, "--org", help="The SLIs of one organization, read from its spans."
+    ),
+    since: str | None = typer.Option(
+        None,
+        "--since",
+        help="Where the reading starts: ISO 8601 (UTC), or a span back from now such as 30m, 1h or 7d.",
+    ),
 ) -> None:
     """The four service level indicators, and which catalog metrics are reporting."""
     answer = _call(lambda: _client().get_mcp_metrics(agent=agent, org=org, since=since))
     if _emit_machine(answer, _context(ctx)):
         return
-    scope = f" for agent {agent}" if agent else f" for organization {org}" if org else ""
-    console.print(slis_table(answer.get("slis", {}), title=f"MCP service level indicators{scope}"))
+    scope = (
+        f" for agent {agent}" if agent else f" for organization {org}" if org else ""
+    )
+    console.print(
+        slis_table(answer.get("slis", {}), title=f"MCP service level indicators{scope}")
+    )
     reporting = answer.get("reporting") or []
-    console.print("Reporting: " + (", ".join(reporting) if reporting else "no catalog metric has a point"))
+    console.print(
+        "Reporting: "
+        + (", ".join(reporting) if reporting else "no catalog metric has a point")
+    )
 
 
 @app.command(name="logs")
@@ -1126,13 +1359,19 @@ def logs(
     severity: str | None = typer.Option(None, "--severity", help="INFO, WARN, ERROR…"),
 ) -> None:
     """The log lines of a run, gateway and worker alike, by the trace they carry."""
-    answer = _call(lambda: _client().get_mcp_run_logs(task_uid, limit=limit, severity=severity))
+    answer = _call(
+        lambda: _client().get_mcp_run_logs(task_uid, limit=limit, severity=severity)
+    )
     if _emit_machine(answer, _context(ctx)):
         return
     if not answer.get("trace_id"):
         console.print(f"Task {task_uid} has no trace yet.")
         return
-    console.print(logs_table(answer.get("records", []), title=f"Logs of trace {answer['trace_id']}"))
+    console.print(
+        logs_table(
+            answer.get("records", []), title=f"Logs of trace {answer['trace_id']}"
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1140,19 +1379,38 @@ def logs(
 # ---------------------------------------------------------------------------
 
 
-@app.command(name="setup", help=f"Write an MCP client's configuration for the Datalayer endpoint.\n\n{_client_registration_notes()}")
+@app.command(
+    name="setup",
+    help=f"Write an MCP client's configuration for the Datalayer endpoint.\n\n{_client_registration_notes()}",
+)
 @mcp_command
 def setup(
     ctx: typer.Context,
     client: str = typer.Argument(..., help="One of: " + ", ".join(MCP_CLIENT_IDS)),
-    url: str | None = typer.Option(None, "--url", help="The MCP endpoint; defaults to the configured Jupyter MCP Server URL."),
-    scopes: str | None = typer.Option(None, "--scopes", help="Comma-separated scopes to name in the URL, e.g. notebooks:read."),
-    name: str = typer.Option("datalayer", "--name", help="The server entry's name in the client's file."),
-    path: Path | None = typer.Option(None, "--path", help="Write here instead of the client's default location."),
-    print_only: bool = typer.Option(False, "--print", help="Print the resulting file; write nothing."),
+    url: str | None = typer.Option(
+        None,
+        "--url",
+        help="The MCP endpoint; defaults to the configured Jupyter MCP Server URL.",
+    ),
+    scopes: str | None = typer.Option(
+        None,
+        "--scopes",
+        help="Comma-separated scopes to name in the URL, e.g. notebooks:read.",
+    ),
+    name: str = typer.Option(
+        "datalayer", "--name", help="The server entry's name in the client's file."
+    ),
+    path: Path | None = typer.Option(
+        None, "--path", help="Write here instead of the client's default location."
+    ),
+    print_only: bool = typer.Option(
+        False, "--print", help="Print the resulting file; write nothing."
+    ),
 ) -> None:
     if client not in MCP_CLIENTS:
-        raise McpCommandError(f"Unknown client '{client}'. Choose one of: {', '.join(MCP_CLIENT_IDS)}")
+        raise McpCommandError(
+            f"Unknown client '{client}'. Choose one of: {', '.join(MCP_CLIENT_IDS)}"
+        )
     setup_of = MCP_CLIENTS[client]
     endpoint_base = url or _urls().datalayer_mcp_server_url
     endpoint = mcp_endpoint_url(endpoint_base, scopes.split(",") if scopes else None)
@@ -1160,16 +1418,28 @@ def setup(
     if print_only:
         existing = target.read_text() if target.exists() else ""
         try:
-            rendered = render_client_configuration(client, endpoint, existing=existing, server_name=name)
+            rendered = render_client_configuration(
+                client, endpoint, existing=existing, server_name=name
+            )
         except ValueError as error:
             raise McpCommandError(f"{target}: {error}") from error
-        if _emit_machine({"client": client, "path": str(target), "endpoint": endpoint, "content": rendered}, _context(ctx)):
+        if _emit_machine(
+            {
+                "client": client,
+                "path": str(target),
+                "endpoint": endpoint,
+                "content": rendered,
+            },
+            _context(ctx),
+        ):
             return
         console.print(f"[dim]# {target}[/dim]")
         sys.stdout.write(rendered)
         return
     try:
-        written = write_client_configuration(client, endpoint, path=target, server_name=name)
+        written = write_client_configuration(
+            client, endpoint, path=target, server_name=name
+        )
     except (ValueError, OSError) as error:
         raise McpCommandError(f"{target}: {error}") from error
     answer = {

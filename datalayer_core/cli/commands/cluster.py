@@ -258,7 +258,9 @@ def show_cluster(
                     namespace = str(pod.get("namespace") or "")
                     pod_phase = str(pod.get("phase") or "Unknown")
                     line = Text()
-                    line.append(f"{namespace}/{runtime_name}" if namespace else runtime_name)
+                    line.append(
+                        f"{namespace}/{runtime_name}" if namespace else runtime_name
+                    )
                     line.append(" ")
                     line.append(f"[{pod_phase}]", style=_status_style(pod_phase))
                     if bool(pod.get("unschedulable")):

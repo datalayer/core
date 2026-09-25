@@ -115,12 +115,20 @@ def test_an_extension_group_the_host_has_joins_it_rather_than_replacing_it() -> 
 
     runner = CliRunner()
     assert runner.invoke(host, ["agents", "ls"]).stdout.strip() == "the extension's ls"
-    assert runner.invoke(host, ["agents", "discover"]).stdout.strip() == "the host's discover"
-    assert runner.invoke(host, ["sandboxes", "ls"]).stdout.strip() == "the extension's sandboxes"
+    assert (
+        runner.invoke(host, ["agents", "discover"]).stdout.strip()
+        == "the host's discover"
+    )
+    assert (
+        runner.invoke(host, ["sandboxes", "ls"]).stdout.strip()
+        == "the extension's sandboxes"
+    )
 
 
 def test_the_orchestration_commands_are_registered() -> None:
-    executions = _plain(CliRunner().invoke(cli_main.app, ["executions", "--help"]).stdout)
+    executions = _plain(
+        CliRunner().invoke(cli_main.app, ["executions", "--help"]).stdout
+    )
     for command in ("run", "watch", "steer", "cancel", "artifacts"):
         assert command in executions
     agents = _plain(CliRunner().invoke(cli_main.app, ["agents", "--help"]).stdout)

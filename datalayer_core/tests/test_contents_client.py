@@ -4,21 +4,22 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+from typing import Any, cast
 
 import pytest
-from pathlib import Path
-from typing import Any
 
+from datalayer_core.client.client import DatalayerClient
+from datalayer_core.mixins.contents import ContentsMixin
 from datalayer_core.models.contents.datasources import is_query_terminal
+from datalayer_core.models.contents.generated import (
+    ContentAttachmentManifest,
+    ContentSource,
+)
 from datalayer_core.models.contents.mcp import (
     call_artifacts,
     call_transfer_uids,
     is_call_terminal,
-)
-from datalayer_core.mixins.contents import ContentsMixin
-from datalayer_core.models.contents.generated import (
-    ContentAttachmentManifest,
-    ContentSource,
 )
 from datalayer_core.utils.urls import DatalayerURLs
 
@@ -259,30 +260,60 @@ def test_contents_client_reads_and_cancels_operations() -> None:
     assert client.calls[1][1]["method"] == "POST"
 
 
-def test_contents_client_captures_a_file_into_a_dataset_through_the_same_transfer(tmp_path: Path) -> None:
+def test_contents_client_captures_a_file_into_a_dataset_through_the_same_transfer(
+    tmp_path: Path,
+) -> None:
     """A Dataset destination is the Home Folder upload with another address."""
     local = tmp_path / "co2.csv"
     local.write_bytes(b"year,co2\n2024,422.5\n")
-    transfer = {
-        "uid": "01TRANSFER0000000000000000", "direction": "upload", "source_uid": "01DATASET00000000000000000",
-        "source_uri": None, "destination_uri": "dataset://01DATASET00000000000000000/results/co2.csv",
-        "path": "results/co2.csv", "media_type": "text/csv", "expected_size": 20, "expected_checksum": "a" * 64,
-        "overwrite_policy": "reject", "status": "pending", "received_bytes": 0, "part_count": 0, "parts": [],
-        "object_uid": None, "version_uid": None, "error_code": None, "error_message": None,
-        "created_at": "2026-08-26T00:00:00Z", "updated_at": "2026-08-26T00:00:00Z", "completed_at": None,
+    transfer: dict[str, Any] = {
+        "uid": "01TRANSFER0000000000000000",
+        "direction": "upload",
+        "source_uid": "01DATASET00000000000000000",
+        "source_uri": None,
+        "destination_uri": "dataset://01DATASET00000000000000000/results/co2.csv",
+        "path": "results/co2.csv",
+        "media_type": "text/csv",
+        "expected_size": 20,
+        "expected_checksum": "a" * 64,
+        "overwrite_policy": "reject",
+        "status": "pending",
+        "received_bytes": 0,
+        "part_count": 0,
+        "parts": [],
+        "object_uid": None,
+        "version_uid": None,
+        "error_code": None,
+        "error_message": None,
+        "created_at": "2026-08-26T00:00:00Z",
+        "updated_at": "2026-08-26T00:00:00Z",
+        "completed_at": None,
     }
     client = Client()
-    client.responses = [Response(transfer), Response(transfer), Response({**transfer, "status": "succeeded"})]
+    client.responses = [
+        Response(transfer),
+        Response(transfer),
+        Response({**transfer, "status": "succeeded"}),
+    ]
 
     result = client.upload_dataset_file(
-        local, "01DATASET00000000000000000", "/results/co2.csv", idempotency_key="capture", media_type="text/csv",
+        local,
+        "01DATASET00000000000000000",
+        "/results/co2.csv",
+        idempotency_key="capture",
+        media_type="text/csv",
     )
 
     assert result.status == "succeeded"
     created = client.calls[0][1]["json"]
-    assert created["destination_uri"] == "dataset://01DATASET00000000000000000/results/co2.csv"
+    assert (
+        created["destination_uri"]
+        == "dataset://01DATASET00000000000000000/results/co2.csv"
+    )
     assert created["size"] == 20
-    assert [url.rsplit("/", 1)[1] for url, _ in client.calls if "/parts/" in url] == ["0"]
+    assert [url.rsplit("/", 1)[1] for url, _ in client.calls if "/parts/" in url] == [
+        "0"
+    ]
 
 
 def test_contents_client_reads_environments_from_the_runtimes_service() -> None:
@@ -416,6 +447,7 @@ def test_contents_client_discovers_and_tests_an_mcp_source() -> None:
     health = client.test_mcp_source(MCP_SOURCE)
 
     assert discovered.tools[0].name == "search_earth_datasets"
+    assert discovered.tools[0].input_schema is not None
     assert discovered.tools[0].input_schema["properties"] == {
         "search_keywords": {"type": "string"}
     }
@@ -575,7 +607,12 @@ def query_payload(status: str = "pending") -> dict[str, Any]:
         "max_seconds": 60,
         "rows": 3 if status == "succeeded" else None,
         "bytes": 512 if status == "succeeded" else None,
-        "result": {"object_uid": "01OBJ", "version_uid": "01VER", "checksum": "c", "media_type": "application/vnd.apache.arrow.stream"}
+        "result": {
+            "object_uid": "01OBJ",
+            "version_uid": "01VER",
+            "checksum": "c",
+            "media_type": "application/vnd.apache.arrow.stream",
+        }
         if status == "succeeded"
         else None,
         "operation_uid": "01OP",
@@ -591,15 +628,31 @@ def query_payload(status: str = "pending") -> dict[str, Any]:
 def test_contents_client_tests_and_describes_a_datasource() -> None:
     client = Client()
     client.responses = [
-        Response({"ok": True, "connector_type": "bigquery", "detail": "answered in 120ms"}),
+        Response(
+            {"ok": True, "connector_type": "bigquery", "detail": "answered in 120ms"}
+        ),
         Response(
             {
-                "tables": [{"name": "observations", "columns": [{"name": "id", "type": "int64"}]}],
+                "tables": [
+                    {
+                        "name": "observations",
+                        "columns": [{"name": "id", "type": "int64"}],
+                    }
+                ],
                 "discovered_at": "2026-08-26T12:00:00Z",
             }
         ),
-        Response({"operations": ["select", "describe"], "streaming": True, "flight": True,
-                  "https_fallback": True, "row_limit": 10000, "max_bytes": 268435456, "max_seconds": 60}),
+        Response(
+            {
+                "operations": ["select", "describe"],
+                "streaming": True,
+                "flight": True,
+                "https_fallback": True,
+                "row_limit": 10000,
+                "max_bytes": 268435456,
+                "max_seconds": 60,
+            }
+        ),
     ]
 
     verdict = client.test_datasource(UID)
@@ -607,6 +660,7 @@ def test_contents_client_tests_and_describes_a_datasource() -> None:
     capabilities = client.get_datasource_capabilities(UID)
 
     assert verdict.ok and verdict.connector_type == "bigquery"
+    assert schema.tables[0].columns is not None
     assert schema.tables[0].columns[0].type == "int64"
     assert capabilities.flight and capabilities.row_limit == 10000
     assert client.calls[0][0].endswith(f"/sources/{UID}/datasource/test")
@@ -624,14 +678,26 @@ def test_contents_client_runs_polls_streams_saves_and_tickets_a_query() -> None:
         StreamResponse([b"ARROW", b"BYTES"]),
         Response(
             {
-                "uid": "01REV", "source_uid": "01DATASET", "actor_uid": OWNER_UID,
-                "origin_kind": "datasource-query", "file_count": 1, "total_size": 512,
-                "manifest_checksum": "m", "status": "ready",
-                "created_at": "2026-08-26T12:00:00Z", "files": [],
+                "uid": "01REV",
+                "source_uid": "01DATASET",
+                "actor_uid": OWNER_UID,
+                "origin_kind": "datasource-query",
+                "file_count": 1,
+                "total_size": 512,
+                "manifest_checksum": "m",
+                "status": "ready",
+                "created_at": "2026-08-26T12:00:00Z",
+                "files": [],
             }
         ),
-        Response({"ticket": "opaque", "expires_at": "2026-08-26T12:05:00Z",
-                  "flight_endpoint": "grpc+tls://flight.example", "https_fallback_url": "https://x/y"}),
+        Response(
+            {
+                "ticket": "opaque",
+                "expires_at": "2026-08-26T12:05:00Z",
+                "flight_endpoint": "grpc+tls://flight.example",
+                "https_fallback_url": "https://x/y",
+            }
+        ),
         Response({"items": [query_payload("succeeded")], "next_cursor": None}),
     ]
 
@@ -640,9 +706,15 @@ def test_contents_client_runs_polls_streams_saves_and_tickets_a_query() -> None:
     )
     polled = client.get_datasource_query(QUERY_UID)
     cancelled = client.cancel_datasource_query(QUERY_UID)
-    chunks = list(client.iter_datasource_query_results(QUERY_UID, byte_range="bytes=0-9"))
-    revision = client.save_datasource_query(QUERY_UID, dataset_uid="01DATASET", path="/results/a.arrow")
-    ticket = client.create_datasource_query_ticket(QUERY_UID, sandbox_uid="01SBX", expires_in=300)
+    chunks = list(
+        client.iter_datasource_query_results(QUERY_UID, byte_range="bytes=0-9")
+    )
+    revision = client.save_datasource_query(
+        QUERY_UID, dataset_uid="01DATASET", path="/results/a.arrow"
+    )
+    ticket = client.create_datasource_query_ticket(
+        QUERY_UID, sandbox_uid="01SBX", expires_in=300
+    )
     history = client.list_datasource_queries(UID, limit=5)
 
     assert submitted.status == "pending" and not is_query_terminal(submitted)
@@ -651,21 +723,33 @@ def test_contents_client_runs_polls_streams_saves_and_tickets_a_query() -> None:
     assert chunks == [b"ARROW", b"BYTES"]
     assert revision.uid == "01REV"
     assert ticket.flight_endpoint == "grpc+tls://flight.example"
-    assert history.items[0].status == "succeeded" and history.items[0].result is not None
+    assert (
+        history.items[0].status == "succeeded" and history.items[0].result is not None
+    )
 
     create_url, create_kwargs = client.calls[0]
     assert create_url.endswith(f"/sources/{UID}/queries")
-    assert create_kwargs["json"] == {"sql": "SELECT 1", "row_limit": 1000, "max_seconds": 60}
+    assert create_kwargs["json"] == {
+        "sql": "SELECT 1",
+        "row_limit": 1000,
+        "max_seconds": 60,
+    }
     assert create_kwargs["headers"] == {"Idempotency-Key": "k1"}
     assert client.calls[1][0].endswith(f"/queries/{QUERY_UID}")
     assert client.calls[2][0].endswith(f"/queries/{QUERY_UID}/cancel")
     results_url, results_kwargs = client.calls[3]
     assert results_url.endswith(f"/queries/{QUERY_UID}/results")
-    assert results_kwargs["headers"] == {"Range": "bytes=0-9"} and results_kwargs["stream"] is True
+    assert (
+        results_kwargs["headers"] == {"Range": "bytes=0-9"}
+        and results_kwargs["stream"] is True
+    )
     save_url, save_kwargs = client.calls[4]
     assert save_url.endswith(f"/queries/{QUERY_UID}/save")
     # The path inside the Dataset is relative; a leading slash is not a path.
-    assert save_kwargs["json"] == {"dataset_uid": "01DATASET", "path": "results/a.arrow"}
+    assert save_kwargs["json"] == {
+        "dataset_uid": "01DATASET",
+        "path": "results/a.arrow",
+    }
     assert client.calls[5][1]["json"] == {"sandbox_uid": "01SBX", "expires_in": 300}
     assert client.calls[6][0].endswith(f"/sources/{UID}/queries?limit=5")
 
@@ -675,7 +759,9 @@ def test_contents_client_reads_and_moves_a_dataserver() -> None:
         "state": "ready",
         "last_heartbeat_at": "2026-08-26T12:00:00Z",
         "lease_seconds": 90,
-        "connectors": [{"connector_type": "sql", "operations": ["select"], "policy_version": "3"}],
+        "connectors": [
+            {"connector_type": "sql", "operations": ["select"], "policy_version": "3"}
+        ],
         "queue_depth": 2,
         "identity_serial": "1a2b",
         "identity_expires_at": "2026-12-01T00:00:00Z",
@@ -686,10 +772,22 @@ def test_contents_client_reads_and_moves_a_dataserver() -> None:
         Response({**status, "state": "draining"}),
         Response({**status, "state": "ready"}),
         Response({**status, "state": "revoked"}),
-        Response({"certificate": "-----BEGIN CERTIFICATE-----", "serial": "1a2c",
-                  "expires_at": "2027-01-01T00:00:00Z", "ca_certificate": "ca"}),
-        Response({"certificate": "cert2", "serial": "1a2d",
-                  "expires_at": "2027-06-01T00:00:00Z", "ca_certificate": "ca"}),
+        Response(
+            {
+                "certificate": "-----BEGIN CERTIFICATE-----",
+                "serial": "1a2c",
+                "expires_at": "2027-01-01T00:00:00Z",
+                "ca_certificate": "ca",
+            }
+        ),
+        Response(
+            {
+                "certificate": "cert2",
+                "serial": "1a2d",
+                "expires_at": "2027-06-01T00:00:00Z",
+                "ca_certificate": "ca",
+            }
+        ),
     ]
 
     read = client.get_dataserver_status(UID)
@@ -700,7 +798,11 @@ def test_contents_client_reads_and_moves_a_dataserver() -> None:
     rotated = client.rotate_dataserver_identity(UID, "CSR-PEM-2")
 
     assert read.connectors[0].operations == ["select"] and read.queue_depth == 2
-    assert (drained.state, resumed.state, revoked.state) == ("draining", "ready", "revoked")
+    assert (drained.state, resumed.state, revoked.state) == (
+        "draining",
+        "ready",
+        "revoked",
+    )
     assert issued.serial == "1a2c" and rotated.serial == "1a2d"
     # Only a certificate comes back, never a key: the request carried a CSR.
     assert "key" not in issued.model_dump()
@@ -715,12 +817,23 @@ def test_contents_client_reads_and_moves_a_dataserver() -> None:
     assert all(client.calls[index][1]["method"] == "POST" for index in range(1, 6))
 
 
-def _operation(status: str = "failed", error_code: str | None = "RETRY_EXHAUSTED") -> dict[str, Any]:
+def _operation(
+    status: str = "failed", error_code: str | None = "RETRY_EXHAUSTED"
+) -> dict[str, Any]:
     return {
-        "uid": "01OPERATION00000000000000", "operation_kind": "volume-provision", "status": status,
-        "attempt": 5, "max_attempts": 5, "cancellation_requested": False, "source_uid": UID,
-        "error_code": error_code, "error_message": "operator away", "result": None,
-        "created_at": "2026-08-26T00:00:00Z", "updated_at": "2026-08-26T00:00:00Z", "completed_at": None,
+        "uid": "01OPERATION00000000000000",
+        "operation_kind": "volume-provision",
+        "status": status,
+        "attempt": 5,
+        "max_attempts": 5,
+        "cancellation_requested": False,
+        "source_uid": UID,
+        "error_code": error_code,
+        "error_message": "operator away",
+        "result": None,
+        "created_at": "2026-08-26T00:00:00Z",
+        "updated_at": "2026-08-26T00:00:00Z",
+        "completed_at": None,
     }
 
 
@@ -733,7 +846,9 @@ def test_contents_client_reads_the_dead_letter_and_quarantines_and_requeues() ->
     ]
 
     dead = client.list_dead_letter_operations(rows=50)
-    quarantined = client.quarantine_content_operation("01OPERATION00000000000000", reason="looking")
+    quarantined = client.quarantine_content_operation(
+        "01OPERATION00000000000000", reason="looking"
+    )
     requeued = client.requeue_content_operation("01OPERATION00000000000000")
 
     assert dead.items[0].error_code == "RETRY_EXHAUSTED"
@@ -767,9 +882,12 @@ def test_a_name_shared_with_someone_elses_source_resolves_to_the_callers_own() -
         Response({}),  # not a uid: the record does not parse, and the name is looked up
         Response({"items": [theirs, mine], "next_cursor": None}),
     ]
-    contents = Contents(client)
+    contents = Contents(cast(DatalayerClient, client))
 
-    assert contents._resolve("sales", "datasource", "Datasource") == "01M1NF00000000000000000001"
+    assert (
+        contents._resolve("sales", "datasource", "Datasource")
+        == "01M1NF00000000000000000001"
+    )
 
 
 def test_two_of_the_callers_own_sources_with_one_name_stay_ambiguous() -> None:
@@ -785,7 +903,9 @@ def test_two_of_the_callers_own_sources_with_one_name_stay_ambiguous() -> None:
     ]
 
     with pytest.raises(LookupError, match="Several"):
-        Contents(client)._resolve("sales", "datasource", "Datasource")
+        Contents(cast(DatalayerClient, client))._resolve(
+            "sales", "datasource", "Datasource"
+        )
 
 
 def test_calling_a_tool_carries_an_idempotency_key() -> None:

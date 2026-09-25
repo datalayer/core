@@ -6,8 +6,9 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Generate deterministic TypeScript wire types from the Jupyter MCP Server's
-OpenAPI document, on the `generate-contents-types.py` pattern.
+Generate TypeScript wire types from the Jupyter MCP Server's OpenAPI document.
+
+The output is deterministic, on the `generate-contents-types.py` pattern.
 
 The gateway keeps no contract file: its FastAPI application *is* the
 contract, and the document is read from it — imported from the sibling
@@ -106,7 +107,8 @@ def camel(name: str) -> str:
 
 
 def _read_from_checkout(checkout: Path) -> dict[str, Any] | None:
-    """The document of the application in a sibling checkout, in a subprocess.
+    """
+    The document of the application in a sibling checkout, in a subprocess.
 
     A subprocess so the gateway's imports — its dependencies, its logging
     configuration — never leak into this one, and so an environment that
@@ -137,7 +139,11 @@ def _read_from_checkout(checkout: Path) -> dict[str, Any] | None:
 
 
 def _read_from_url(url: str) -> dict[str, Any]:
-    with urlopen(Request(url, headers={"Accept": "application/json"}), timeout=15) as response:
+    if not url.startswith(("http://", "https://")):
+        raise ValueError(f"Not an HTTP(S) URL: {url}")
+    with urlopen(  # nosec B310 - the scheme is checked above
+        Request(url, headers={"Accept": "application/json"}), timeout=15
+    ) as response:
         return json.load(response)
 
 

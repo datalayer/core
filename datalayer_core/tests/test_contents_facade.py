@@ -76,7 +76,9 @@ def test_high_level_home_folder_browses_uploads_and_streams_downloads(
     assert chunks == [b"earth"]
 
 
-def mcp_call(uid: str, session_uid: str, tool: str, status: str, **overrides: Any) -> Any:
+def mcp_call(
+    uid: str, session_uid: str, tool: str, status: str, **overrides: Any
+) -> Any:
     """A call as the contract shapes it, with the fields a test cares about on top."""
     from datalayer_core.models.contents.mcp import McpCall
 
@@ -135,7 +137,7 @@ class McpClient:
         self.polls = 0
         self.calls: list[tuple[str, dict[str, Any], str | None]] = []
 
-    def get_content_source(self, reference: str) -> object:
+    def get_content_source(self, reference: str) -> Any:
         from datalayer_core.mixins.contents import ConditionalCatalogSource
         from datalayer_core.models.contents.generated import CatalogSource
 
@@ -176,7 +178,10 @@ class McpClient:
     def list_content_sources(self, **kwargs: Any) -> object:
         from datalayer_core.models.contents.generated import SourceList
 
-        return SourceList(items=[self.get_content_source("01MCPSRC000000000000000000").value], next_cursor=None)  # type: ignore[attr-defined]
+        return SourceList(
+            items=[self.get_content_source("01MCPSRC000000000000000000").value],
+            next_cursor=None,
+        )
 
     def create_mcp_session(self, source_uid: str, **kwargs: Any) -> object:
         from datalayer_core.models.contents.mcp import McpSession
@@ -199,10 +204,17 @@ class McpClient:
         )
 
     def call_mcp_tool(
-        self, session_uid: str, tool: str, arguments: Any, *, destination_uri: Any = None
+        self,
+        session_uid: str,
+        tool: str,
+        arguments: Any,
+        *,
+        destination_uri: Any = None,
     ) -> object:
         self.calls.append((tool, dict(arguments), destination_uri))
-        return mcp_call("01CALL", session_uid, tool, "pending-approval", approval_uid="01APPROVAL")
+        return mcp_call(
+            "01CALL", session_uid, tool, "pending-approval", approval_uid="01APPROVAL"
+        )
 
     def get_mcp_call(self, session_uid: str, call_uid: str) -> object:
         self.polls += 1
@@ -233,7 +245,11 @@ def test_mcp_facade_resolves_by_name_reuses_one_session_and_waits_for_a_call(
     assert client.sessions == 1
     assert client.calls == [
         ("search_earth_datasets", {"search_keywords": "sst", "count": 5}, None),
-        ("download_earth_data_granules", {"short_name": "MUR"}, "home-folder:///earthdata"),
+        (
+            "download_earth_data_granules",
+            {"short_name": "MUR"},
+            "home-folder:///earthdata",
+        ),
     ]
     assert pending.status == "pending-approval"
     assert "approval 01APPROVAL" in output.getvalue()
@@ -283,8 +299,11 @@ def catalog(kind: str, uid: str, name: str) -> Any:
                     "updated_at": "2026-08-24T12:00:00Z",
                 },
                 "permissions": {
-                    "view": True, "update": True, "execute": True,
-                    "effective_access_level": "execute", "is_owner": True,
+                    "view": True,
+                    "update": True,
+                    "execute": True,
+                    "effective_access_level": "execute",
+                    "is_owner": True,
                 },
             }
         ),
@@ -330,7 +349,9 @@ class DataClient:
     def cancel_datasource_query(self, query_uid: str) -> Any:
         return query_record(uid=query_uid, status="cancelled")
 
-    def iter_datasource_query_results(self, query_uid: str, **kwargs: Any) -> Iterator[bytes]:
+    def iter_datasource_query_results(
+        self, query_uid: str, **kwargs: Any
+    ) -> Iterator[bytes]:
         import pyarrow
 
         batch = pyarrow.record_batch({"id": [1, 2], "name": ["a", "b"]})
@@ -342,14 +363,22 @@ class DataClient:
         for start in range(0, len(payload), 7):
             yield payload[start : start + 7]
 
-    def save_datasource_query(self, query_uid: str, *, dataset_uid: str, path: str) -> Any:
+    def save_datasource_query(
+        self, query_uid: str, *, dataset_uid: str, path: str
+    ) -> Any:
         self.saved = (query_uid, dataset_uid, path)
         return SimpleNamespace(uid="01REV", source_uid=dataset_uid)
 
     def get_dataserver_status(self, source_uid: str) -> Any:
         return dataserver_status(
             "ready",
-            connectors=[{"connector_type": "sql", "operations": ["select"], "policy_version": "3"}],
+            connectors=[
+                {
+                    "connector_type": "sql",
+                    "operations": ["select"],
+                    "policy_version": "3",
+                }
+            ],
         )
 
     def drain_dataserver(self, source_uid: str) -> Any:

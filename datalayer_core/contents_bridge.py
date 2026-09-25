@@ -151,7 +151,9 @@ class LocalBridge:
 
     def attach(self) -> Any:
         """The attachment for this sandbox and path, found or made."""
-        active = self.client.list_content_attachments(sandbox_uid=self.sandbox_uid, active=True)
+        active = self.client.list_content_attachments(
+            sandbox_uid=self.sandbox_uid, active=True
+        )
         for item in active.items:
             if (
                 _plain(item.delivery) == "local-bridge"
@@ -218,7 +220,9 @@ class LocalBridge:
             while not self._stop.is_set():
                 try:
                     token = self._token or token
-                    await self._serve_once(server, bridge_uid, token, session_key, outcome)
+                    await self._serve_once(
+                        server, bridge_uid, token, session_key, outcome
+                    )
                     backoff = self.initial_backoff_seconds
                 except BridgeStopped as stopped:
                     outcome.state, outcome.reason = stopped.state, stopped.reason
@@ -231,7 +235,9 @@ class LocalBridge:
                         outcome.state = "ended"
                         outcome.reason = getattr(received, "reason", "") or str(error)
                         return outcome
-                    self.progress(f"Relay connection lost ({error}); reconnecting in {backoff:.0f}s")
+                    self.progress(
+                        f"Relay connection lost ({error}); reconnecting in {backoff:.0f}s"
+                    )
                     try:
                         await asyncio.wait_for(self._stop.wait(), timeout=backoff)
                     except asyncio.TimeoutError:
@@ -258,7 +264,9 @@ class LocalBridge:
             await websocket.send(json.dumps({"role": "client", "token": token}))
             accepted = json.loads(await websocket.recv())
             if accepted.get("event") != "accepted":
-                raise BridgeStopped("refused", f"the relay did not accept the client: {accepted}")
+                raise BridgeStopped(
+                    "refused", f"the relay did not accept the client: {accepted}"
+                )
             outcome.connections += 1
             outcome.state = "waiting"
             self.progress("Connected to the relay; waiting for the sandbox")
@@ -269,14 +277,20 @@ class LocalBridge:
                 if isinstance(message, str):
                     event = json.loads(message).get("event")
                     if event == "paired":
-                        channel = SecureChannel(role="client", bridge_uid=bridge_uid, session_key=session_key)
+                        channel = SecureChannel(
+                            role="client",
+                            bridge_uid=bridge_uid,
+                            session_key=session_key,
+                        )
                         await websocket.send(channel.hello())
                         outcome.state = "connected"
                         self.progress("Sandbox connected")
                     elif event == "peer-left":
                         channel = None
                         outcome.state = "waiting"
-                        self.progress("Sandbox disconnected; waiting for it to come back")
+                        self.progress(
+                            "Sandbox disconnected; waiting for it to come back"
+                        )
                     continue
                 if channel is None:
                     continue  # bytes before a pairing are nobody's
@@ -291,12 +305,16 @@ class LocalBridge:
                         # which reconnected straight back into the same
                         # state. The channel is not established either way —
                         # keep waiting for a hello that is one.
-                        self.progress(f"Ignored a frame that is not the peer's hello: {error}")
+                        self.progress(
+                            f"Ignored a frame that is not the peer's hello: {error}"
+                        )
                     continue
                 try:
                     response = server.handle(channel.open(bytes(message)))
                 except BridgeProtocolError as error:
-                    self.progress(f"Dropped a frame the channel could not open: {error}")
+                    self.progress(
+                        f"Dropped a frame the channel could not open: {error}"
+                    )
                     continue
                 outcome.requests += 1
                 await websocket.send(channel.seal(response))
@@ -316,12 +334,16 @@ class LocalBridge:
         """Keep the session alive and the token fresh; stop when it is over."""
         while not self._stop.is_set():
             try:
-                await asyncio.wait_for(self._stop.wait(), timeout=self.heartbeat_seconds)
+                await asyncio.wait_for(
+                    self._stop.wait(), timeout=self.heartbeat_seconds
+                )
                 return
             except asyncio.TimeoutError:
                 pass
             try:
-                beat = await asyncio.to_thread(self.client.heartbeat_content_bridge, bridge_uid)
+                beat = await asyncio.to_thread(
+                    self.client.heartbeat_content_bridge, bridge_uid
+                )
             except Exception as error:  # noqa: BLE001
                 if http_status_of(error) in ENDED_STATUSES:
                     self._end("ended", f"the bridge session is over: {error}")

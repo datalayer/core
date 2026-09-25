@@ -416,7 +416,8 @@ def binding_for(
     endpoint = endpoints[0]
     return AgentBinding(
         agent_id=descriptor.agent_id,
-        capability=capability or (descriptor.capabilities[0] if descriptor.capabilities else ""),
+        capability=capability
+        or (descriptor.capabilities[0] if descriptor.capabilities else ""),
         protocol=endpoint.protocol,
         endpoint=endpoint.url,
     )

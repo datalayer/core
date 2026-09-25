@@ -25,13 +25,19 @@ ANSWERS: dict[str, Any] = {}
 
 
 def a_run(**fields: Any) -> WorkflowRun:
-    base = {"uid": "wf_1", "workflow": "NotebookRunWorkflow", "status": "running"}
+    base: dict[str, Any] = {
+        "uid": "wf_1",
+        "workflow": "NotebookRunWorkflow",
+        "status": "running",
+    }
     base.update(fields)
     return WorkflowRun(**base)
 
 
 class Client:
-    def list_open_durable_workflows(self, *, task_uid: str = "", limit: int = 50) -> list[WorkflowRun]:
+    def list_open_durable_workflows(
+        self, *, task_uid: str = "", limit: int = 50
+    ) -> list[WorkflowRun]:
         RECORDED["listed"] = (task_uid, limit)
         return ANSWERS.get("runs", [a_run()])
 
@@ -39,17 +45,26 @@ class Client:
         RECORDED["described"] = uid
         return ANSWERS.get("run", a_run(uid=uid))
 
-    def describe_durable_execution(self, execution_id: str, *, account_uid: str) -> WorkflowRun | None:
+    def describe_durable_execution(
+        self, execution_id: str, *, account_uid: str
+    ) -> WorkflowRun | None:
         RECORDED["described_execution"] = (execution_id, account_uid)
         return ANSWERS.get("run", a_run(uid=execution_id))
 
     def start_durable_workflow(
-        self, workflow: str, *, task_uid: str, queue: str = "", arguments: dict[str, Any] | None = None
+        self,
+        workflow: str,
+        *,
+        task_uid: str,
+        queue: str = "",
+        arguments: dict[str, Any] | None = None,
     ) -> WorkflowRun:
         RECORDED["started"] = (workflow, task_uid, queue, arguments)
         return a_run(uid=task_uid, workflow=workflow)
 
-    def signal_durable_workflow(self, uid: str, name: str, payload: dict[str, Any]) -> bool:
+    def signal_durable_workflow(
+        self, uid: str, name: str, payload: dict[str, Any]
+    ) -> bool:
         RECORDED["signalled"] = (uid, name, payload)
         return ANSWERS.get("delivered", True)
 
@@ -115,7 +130,13 @@ class TestDescribeExecution:
 class TestStart:
     def test_starts_with_the_given_task_uid_and_arguments(self) -> None:
         result = invoke(
-            "durable", "start", "NotebookRunWorkflow", "--task-uid", "tsk_1", "--arguments", '{"a": 1}'
+            "durable",
+            "start",
+            "NotebookRunWorkflow",
+            "--task-uid",
+            "tsk_1",
+            "--arguments",
+            '{"a": 1}',
         )
         assert result.exit_code == 0
         assert RECORDED["started"] == ("NotebookRunWorkflow", "tsk_1", "", {"a": 1})
@@ -123,7 +144,9 @@ class TestStart:
 
 class TestSignalAndCancel:
     def test_signal_says_delivered(self) -> None:
-        result = invoke("durable", "signal", "wf_1", "approved", "--payload", '{"ok": true}')
+        result = invoke(
+            "durable", "signal", "wf_1", "approved", "--payload", '{"ok": true}'
+        )
         assert result.exit_code == 0
         assert RECORDED["signalled"] == ("wf_1", "approved", {"ok": True})
         assert "Delivered." in result.stdout

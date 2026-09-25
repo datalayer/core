@@ -3,6 +3,31 @@
 
 """Generated public Python types for Datalayer Contents."""
 
+from .datasources import (
+    DATASOURCE_OPERATIONS,
+    QUERY_TERMINAL_STATUSES,
+    CapabilityTicket,
+    CapabilityTicketRequest,
+    CertificateSigningRequest,
+    DataServerConnectivity,
+    DataServerConnector,
+    DataServerStatus,
+    DatasourceCapabilities,
+    DatasourceColumn,
+    DatasourceQuery,
+    DatasourceQueryCreate,
+    DatasourceQueryList,
+    DatasourceSchema,
+    DatasourceTable,
+    DatasourceTest,
+    FlightConnectivity,
+    HttpsConnectivity,
+    IssuedIdentity,
+    QueryError,
+    QueryResultReference,
+    QuerySave,
+    is_query_terminal,
+)
 from .generated import (
     AttachmentCreate,
     AttachmentList,
@@ -52,31 +77,6 @@ from .generated import (
     TransferPart,
     TransferView,
     VersionList,
-)
-from .datasources import (
-    DATASOURCE_OPERATIONS,
-    QUERY_TERMINAL_STATUSES,
-    CapabilityTicket,
-    CapabilityTicketRequest,
-    CertificateSigningRequest,
-    DataServerConnectivity,
-    DataServerConnector,
-    DataServerStatus,
-    DatasourceCapabilities,
-    DatasourceColumn,
-    DatasourceQuery,
-    DatasourceQueryCreate,
-    DatasourceQueryList,
-    DatasourceSchema,
-    DatasourceTable,
-    DatasourceTest,
-    FlightConnectivity,
-    HttpsConnectivity,
-    IssuedIdentity,
-    QueryError,
-    QueryResultReference,
-    QuerySave,
-    is_query_terminal,
 )
 from .mcp import (
     TERMINAL_CALL_STATUSES,

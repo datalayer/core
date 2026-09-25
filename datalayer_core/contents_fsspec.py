@@ -1,7 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""An `fsspec` filesystem over a Cloud Storage source.
+"""
+An `fsspec` filesystem over a Cloud Storage source.
 
 Kept out of `contents.py` because `fsspec` is not a dependency of this
 package: a notebook that never asks for a filesystem should not need it
@@ -31,7 +32,8 @@ except ImportError as error:  # pragma: no cover - exercised by its own test
 
 
 class ContentsFileSystem(AbstractFileSystem):
-    """A read-only `fsspec` filesystem backed by one Cloud Storage source.
+    """
+    A read-only `fsspec` filesystem backed by one Cloud Storage source.
 
     Read-only because the source is: Contents has no route that writes an
     object, so `_open` refuses a write mode instead of accepting bytes it

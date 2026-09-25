@@ -5,8 +5,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The Jupyter MCP Server from Python: the agents connected, the audit log,
-the observability of a run, and the configuration of the MCP clients.
+The Jupyter MCP Server from Python.
+
+The agents connected, the audit log, the observability of a run, and the
+configuration of the MCP clients.
 
 Three things live here beside the facade:
 
@@ -38,10 +40,10 @@ from datalayer_core.client import DatalayerClient
 from datalayer_core.models.mcp import (
     ConnectedAgent,
     McpActivity,
-    McpAuditEventList,
-    McpBindingList,
     McpAlert,
     McpAlertList,
+    McpAuditEventList,
+    McpBindingList,
     McpEffectivePolicy,
     McpForwarding,
     McpJobSchedule,
@@ -201,15 +203,23 @@ def summarize_service_levels(dashboard: Mapping[str, Any]) -> dict[str, Any]:
     failed_calls = calls.get("error", 0.0) + calls.get("unavailable", 0.0)
     tasks = _by_label(dashboard, SERVICE_LEVEL_PANELS["tasks_by_status"])
     terminal = sum(tasks.get(status, 0.0) for status in _TERMINAL)
-    p95_seconds = _by_label(dashboard, SERVICE_LEVEL_PANELS["call_duration_p95"]).get("")
+    p95_seconds = _by_label(dashboard, SERVICE_LEVEL_PANELS["call_duration_p95"]).get(
+        ""
+    )
     launches = _by_label(dashboard, SERVICE_LEVEL_PANELS["sandbox_launches"])
     return {
-        "availability": (total_calls - failed_calls) / total_calls if total_calls else None,
+        "availability": (total_calls - failed_calls) / total_calls
+        if total_calls
+        else None,
         "p95_call_duration_ms": None if p95_seconds is None else p95_seconds * 1000,
-        "task_success_rate": tasks.get("completed", 0.0) / terminal if terminal else None,
+        "task_success_rate": tasks.get("completed", 0.0) / terminal
+        if terminal
+        else None,
         "p95_sandbox_launch_seconds": {
             provider or "unknown": seconds
-            for provider, seconds in _by_label(dashboard, SERVICE_LEVEL_PANELS["sandbox_launch_p95"]).items()
+            for provider, seconds in _by_label(
+                dashboard, SERVICE_LEVEL_PANELS["sandbox_launch_p95"]
+            ).items()
         },
         "samples": {
             "calls": int(total_calls),
@@ -220,8 +230,12 @@ def summarize_service_levels(dashboard: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _unavailable(span: Mapping[str, Any]) -> bool:
-    status = _attribute(span, "http.response.status_code") or _attribute(span, "http.status_code")
-    rpc = _attribute(span, "rpc.jsonrpc.error_code") or _attribute(span, "mcp.error.code")
+    status = _attribute(span, "http.response.status_code") or _attribute(
+        span, "http.status_code"
+    )
+    rpc = _attribute(span, "rpc.jsonrpc.error_code") or _attribute(
+        span, "mcp.error.code"
+    )
     return status.startswith("5") or rpc == "-32001"
 
 
@@ -233,8 +247,10 @@ def summarize_request_spans(
     since: str | None = None,
 ) -> dict[str, Any]:
     """
-    The SLIs over ``mcp.request`` spans — the per-agent or per-organization
-    reading, since metrics carry neither label by design.
+    Compute the SLIs over ``mcp.request`` spans.
+
+    The per-agent or per-organization reading, since metrics carry neither
+    label by design.
     """
     selected = [
         span
@@ -249,13 +265,21 @@ def summarize_request_spans(
     for span in selected:
         task_id = _attribute(span, "mcp.task.id")
         if task_id:
-            tasks[task_id] = _attribute(span, "mcp.task.status") or str(span.get("status_code") or "")
+            tasks[task_id] = _attribute(span, "mcp.task.status") or str(
+                span.get("status_code") or ""
+            )
     terminal = [status for status in tasks.values() if status in _TERMINAL]
     completed = sum(1 for status in terminal if status == "completed")
     return {
-        "availability": (len(selected) - unavailable) / len(selected) if selected else None,
+        "availability": (len(selected) - unavailable) / len(selected)
+        if selected
+        else None,
         "p95_call_duration_ms": percentile(
-            (float(span.get("duration_ms", 0)) for span in selected if not _attribute(span, "mcp.task.id")),
+            (
+                float(span.get("duration_ms", 0))
+                for span in selected
+                if not _attribute(span, "mcp.task.id")
+            ),
             0.95,
         ),
         "task_success_rate": completed / len(terminal) if terminal else None,
@@ -337,15 +361,15 @@ def _json_merge(existing: str, top_key: str, name: str, entry: dict[str, Any]) -
 
 
 def _json_renderer(top_key: str, entry_of: Callable[[str], dict[str, Any]]) -> Renderer:
-    return lambda existing, url, name: _json_merge(existing, top_key, name, entry_of(url))
+    return lambda existing, url, name: _json_merge(
+        existing, top_key, name, entry_of(url)
+    )
 
 
 def _toml_merge(existing: str, table: str, body: str) -> str:
     """Replace a ``[table]`` block, or append one; no TOML writer is depended on."""
     header = f"[{table}]"
-    pattern = re.compile(
-        rf"^\[{re.escape(table)}\]\n(?:(?!\[).*\n?)*", re.MULTILINE
-    )
+    pattern = re.compile(rf"^\[{re.escape(table)}\]\n(?:(?!\[).*\n?)*", re.MULTILINE)
     block = f"{header}\n{body}\n"
     if pattern.search(existing):
         return pattern.sub(lambda _: block, existing, count=1)
@@ -366,7 +390,13 @@ def _home(home: Path, *parts: str) -> Path:
 
 def _claude_desktop_path(home: Path, cwd: Path, platform: str) -> Path:
     if platform == "darwin":
-        return _home(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")
+        return _home(
+            home,
+            "Library",
+            "Application Support",
+            "Claude",
+            "claude_desktop_config.json",
+        )
     if platform.startswith("win"):
         appdata = os.environ.get("APPDATA")
         base = Path(appdata) if appdata else _home(home, "AppData", "Roaming")
@@ -375,7 +405,13 @@ def _claude_desktop_path(home: Path, cwd: Path, platform: str) -> Path:
 
 
 def _cline_path(home: Path, cwd: Path, platform: str) -> Path:
-    tail = ("User", "globalStorage", "saoudrizwan.claude-dev", "settings", "cline_mcp_settings.json")
+    tail = (
+        "User",
+        "globalStorage",
+        "saoudrizwan.claude-dev",
+        "settings",
+        "cline_mcp_settings.json",
+    )
     if platform == "darwin":
         return _home(home, "Library", "Application Support", "Code", *tail)
     if platform.startswith("win"):
@@ -444,7 +480,10 @@ MCP_CLIENTS: dict[str, McpClientSetup] = {
         format="json",
         registration="dcr",
         takes_client_metadata_url=False,
-        path_of=lambda home, cwd, platform: home / ".codeium" / "windsurf" / "mcp_config.json",
+        path_of=lambda home, cwd, platform: home
+        / ".codeium"
+        / "windsurf"
+        / "mcp_config.json",
         render=_json_renderer("mcpServers", lambda url: {"serverUrl": url}),
         note="Windsurf names the endpoint `serverUrl`.",
     ),
@@ -455,7 +494,9 @@ MCP_CLIENTS: dict[str, McpClientSetup] = {
         registration="dcr",
         takes_client_metadata_url=False,
         path_of=_cline_path,
-        render=_json_renderer("mcpServers", lambda url: {"type": "streamableHttp", "url": url}),
+        render=_json_renderer(
+            "mcpServers", lambda url: {"type": "streamableHttp", "url": url}
+        ),
         note="The file lives in VS Code's global storage for the Cline extension.",
     ),
 }
@@ -506,7 +547,11 @@ def write_client_configuration(
     target = path or default_config_path(client, home=home, cwd=cwd)
     existing = target.read_text() if target.exists() else ""
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(render_client_configuration(client, url, existing=existing, server_name=server_name))
+    target.write_text(
+        render_client_configuration(
+            client, url, existing=existing, server_name=server_name
+        )
+    )
     return target
 
 
@@ -516,7 +561,8 @@ def write_client_configuration(
 
 
 def derived_idempotency_key(task_uid: str, answer: Mapping[str, Any]) -> str:
-    """One key per (task, answer), so a retry is the same answer.
+    """
+    One key per (task, answer), so a retry is the same answer.
 
     Shared by the CLI and the facade rather than written twice: two
     derivations that drift would make `datalayer mcp tasks input` and
@@ -527,7 +573,9 @@ def derived_idempotency_key(task_uid: str, answer: Mapping[str, Any]) -> str:
     order is still recognised as the same answer. The task is in the digest
     too — without it, one task's approval would satisfy another's.
     """
-    canonical = json.dumps(dict(answer), sort_keys=True, separators=(",", ":"), default=str)
+    canonical = json.dumps(
+        dict(answer), sort_keys=True, separators=(",", ":"), default=str
+    )
     digest = hashlib.sha256(f"{task_uid}\x00{canonical}".encode()).hexdigest()
     return f"cli-{digest[:32]}"
 
@@ -571,9 +619,14 @@ class Mcp:
         return self.client.cancel_mcp_task(task_uid)
 
     def answer(
-        self, task_uid: str, input: Mapping[str, Any], *, idempotency_key: str | None = None
+        self,
+        task_uid: str,
+        input: Mapping[str, Any],
+        *,
+        idempotency_key: str | None = None,
     ) -> McpTask:
-        """Answer a task waiting on a person; the input is the tool's own.
+        """
+        Answer a task waiting on a person; the input is the tool's own.
 
         The key is derived from the task and the input when none is given, so
         a retry after a timeout is the same answer rather than a second one —
@@ -611,7 +664,8 @@ class Mcp:
 
     # Operations
     def jobs(self) -> McpJobSchedule:
-        """The periodic work of whichever gateway replica answers.
+        """
+        The periodic work of whichever gateway replica answers.
 
         Platform administrators only, and the counts are one replica's — see
         `McpJobSchedule`.
@@ -626,7 +680,11 @@ class Mcp:
         return self.client.get_mcp_run_logs(task_uid, limit=limit)
 
     def metrics(
-        self, *, agent: str | None = None, org: str | None = None, since: str | None = None
+        self,
+        *,
+        agent: str | None = None,
+        org: str | None = None,
+        since: str | None = None,
     ) -> dict[str, Any]:
         return self.client.get_mcp_metrics(agent=agent, org=org, since=since)
 
@@ -640,8 +698,12 @@ class Mcp:
         path: Path | None = None,
         server_name: str = "datalayer",
     ) -> Path:
-        endpoint = mcp_endpoint_url(url or self.client.urls.datalayer_mcp_server_url, scopes)
-        return write_client_configuration(client, endpoint, path=path, server_name=server_name)
+        endpoint = mcp_endpoint_url(
+            url or self.client.urls.datalayer_mcp_server_url, scopes
+        )
+        return write_client_configuration(
+            client, endpoint, path=path, server_name=server_name
+        )
 
 
 #: The facade on the default client, for scripts: ``from datalayer_core.mcp import mcp``.

@@ -4,7 +4,8 @@
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Datalayer License
 
-"""Where a published table lives, and what it is called.
+"""
+Where a published table lives, and what it is called.
 
 A user publishes a dataframe out of a sandbox; Contents writes it to the
 shared filesystem; a Data Server's `table` connector reads it back. Three
@@ -63,7 +64,8 @@ _PART_DIGITS = 5
 
 
 def clean_relation(value: object) -> str:
-    """The relation name, or raise.
+    """
+    The relation name, or raise.
 
     Refused where it is written rather than where it is read: a name that only
     fails on the Data Server is a table that looked published and never was.
@@ -79,7 +81,8 @@ def clean_relation(value: object) -> str:
 
 
 def relation_directory(root: str, owner_uid: str, relation: str) -> str:
-    """The directory a published table's parts live in.
+    """
+    The directory a published table's parts live in.
 
     Owner-scoped, so two people may publish `sales` and neither can reach the
     other's by naming it. The owner is part of the path rather than part of
@@ -97,7 +100,8 @@ def part_name(index: int) -> str:
 
 
 def is_part_name(name: str) -> bool:
-    """Whether a file in a published table's directory is one of its parts.
+    """
+    Whether a file in a published table's directory is one of its parts.
 
     A directory may hold other things — a `_SUCCESS` marker, a note somebody
     left — and reading them as data is how a query returns rows nobody wrote.

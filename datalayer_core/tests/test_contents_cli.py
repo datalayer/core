@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Iterator
 
-import json
 import pytest
 from typer.testing import CliRunner
 
@@ -19,13 +19,13 @@ from datalayer_core.models.contents.generated import (
     CatalogSource,
     ContentAttachment,
     ContentObject,
+    DeadLetterList,
     ObjectList,
+    OperationView,
     Sharing,
     SourceList,
     TransferView,
     VersionList,
-    DeadLetterList,
-    OperationView,
 )
 
 UID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
@@ -116,7 +116,11 @@ class Client:
         return transfer_view("succeeded")
 
     def upload_dataset_file(
-        self, local_path: str | Path, dataset_uid: str, destination_path: str, **kwargs: Any
+        self,
+        local_path: str | Path,
+        dataset_uid: str,
+        destination_path: str,
+        **kwargs: Any,
     ) -> SimpleNamespace:
         self.captured = (local_path, dataset_uid, destination_path, kwargs)
         return transfer_view("succeeded")
@@ -416,7 +420,9 @@ def test_contents_upload_download_and_transfer_commands(
     assert '"status": "cancelled"' in cancelled.stdout
 
 
-def test_contents_home_folder_restore_passes_the_version(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_contents_home_folder_restore_passes_the_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Found on r1 (audit 81). The command's option was `--version`, which the
     CLI reserves globally: an eager `--version` callback prints the core
     version and exits before any subcommand runs. `home-folder restore PATH
@@ -427,11 +433,19 @@ def test_contents_home_folder_restore_passes_the_version(monkeypatch: pytest.Mon
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["contents", "home-folder", "restore", "reports/earth.csv", "--version-uid", "01VERSIONUID0000000000000V"],
+        [
+            "contents",
+            "home-folder",
+            "restore",
+            "reports/earth.csv",
+            "--version-uid",
+            "01VERSIONUID0000000000000V",
+        ],
     )
     assert result.exit_code == 0, result.output
     # The version reached the client — the command ran, not the global banner.
     assert "datalayer_core:" not in result.output
+    assert McpClient.last is not None
     assert McpClient.last.restored[1] == "01VERSIONUID0000000000000V"
 
 
@@ -597,11 +611,22 @@ def test_contents_download_refuses_overwrite_with_nonzero_exit(
 def test_contents_datasets_capture_uploads_into_the_dataset(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    captured: dict = {}
+    captured: dict[str, Any] = {}
 
     class Recording(Client):
-        def upload_dataset_file(self, local_path, dataset_uid, destination_path, **kwargs):
-            captured.update(local_path=local_path, dataset_uid=dataset_uid, destination_path=destination_path, **kwargs)
+        def upload_dataset_file(
+            self,
+            local_path: Any,
+            dataset_uid: str,
+            destination_path: str,
+            **kwargs: Any,
+        ) -> Any:
+            captured.update(
+                local_path=local_path,
+                dataset_uid=dataset_uid,
+                destination_path=destination_path,
+                **kwargs,
+            )
             return transfer_view("succeeded")
 
     monkeypatch.setattr(contents_commands, "DatalayerClient", Recording)
@@ -609,7 +634,18 @@ def test_contents_datasets_capture_uploads_into_the_dataset(
     local.write_text("year,co2")
 
     result = CliRunner().invoke(
-        app, ["contents", "--output", "json", "datasets", "capture", str(local), UID, "/results/co2.csv", "--overwrite"],
+        app,
+        [
+            "contents",
+            "--output",
+            "json",
+            "datasets",
+            "capture",
+            str(local),
+            UID,
+            "/results/co2.csv",
+            "--overwrite",
+        ],
     )
 
     assert result.exit_code == 0, result.output
@@ -679,7 +715,16 @@ def test_contents_environment_verify_reports_each_content_and_fails_when_unsuppo
     assert '"supported": true' in as_json.stdout
     failing_json = runner.invoke(
         app,
-        ["contents", "--output", "json", "environment", "verify", "ai-env", "--provider", "modal"],
+        [
+            "contents",
+            "--output",
+            "json",
+            "environment",
+            "verify",
+            "ai-env",
+            "--provider",
+            "modal",
+        ],
     )
     assert failing_json.exit_code == 1
     assert '"status": "unsupported"' in failing_json.stdout
@@ -706,7 +751,10 @@ def mcp_catalog_source() -> CatalogSource:
                 "endpoint": "https://mcp.example.com/mcp",
                 "approval_policy": "explicit",
                 "destination_policy": "allowlist",
-                "allowed_tools": ["search_earth_datasets", "download_earth_data_granules"],
+                "allowed_tools": [
+                    "search_earth_datasets",
+                    "download_earth_data_granules",
+                ],
                 "allowed_domains": ["earthdata.nasa.gov"],
             },
         }
@@ -768,7 +816,9 @@ class McpClient(Client):
         return super().get_content_source(reference)
 
     def list_content_sources(self, **kwargs: Any) -> SourceList:
-        return SourceList(items=[catalog_source(), mcp_catalog_source()], next_cursor=None)
+        return SourceList(
+            items=[catalog_source(), mcp_catalog_source()], next_cursor=None
+        )
 
     def discover_mcp_tools(self, source_uid: str) -> Any:
         from datalayer_core.models.contents.mcp import McpToolManifest
@@ -798,7 +848,9 @@ class McpClient(Client):
     def test_mcp_source(self, source_uid: str) -> Any:
         from datalayer_core.models.contents.mcp import McpHealth
 
-        return McpHealth(ok=True, transport="streamable-http", detail="tools/list answered")
+        return McpHealth(
+            ok=True, transport="streamable-http", detail="tools/list answered"
+        )
 
     def create_mcp_session(self, source_uid: str, **kwargs: Any) -> Any:
         from datalayer_core.models.contents.mcp import McpSession
@@ -809,7 +861,10 @@ class McpClient(Client):
                 "uid": MCP_SESSION_UID,
                 "source_uid": source_uid,
                 "actor_uid": OWNER_UID,
-                "allowed_tools": ["search_earth_datasets", "download_earth_data_granules"],
+                "allowed_tools": [
+                    "search_earth_datasets",
+                    "download_earth_data_granules",
+                ],
                 "allowed_resources": [],
                 "allowed_domains": [],
                 "allowed_destinations": [],
@@ -823,7 +878,12 @@ class McpClient(Client):
         )
 
     def call_mcp_tool(
-        self, session_uid: str, tool: str, arguments: Any, *, destination_uri: Any = None
+        self,
+        session_uid: str,
+        tool: str,
+        arguments: Any,
+        *,
+        destination_uri: Any = None,
     ) -> Any:
         from datalayer_core.models.contents.mcp import McpCall
 
@@ -836,7 +896,9 @@ class McpClient(Client):
             }
         )
         return McpCall.model_validate(
-            mcp_call_record("pending-approval", tool=tool, approval_uid=MCP_APPROVAL_UID)
+            mcp_call_record(
+                "pending-approval", tool=tool, approval_uid=MCP_APPROVAL_UID
+            )
         )
 
     def get_mcp_call(self, session_uid: str, call_uid: str) -> Any:
@@ -850,8 +912,16 @@ class McpClient(Client):
             result = {
                 "content": [{"type": "text", "text": "2 granules"}],
                 "artifacts": [
-                    {"name": "a.nc", "size": 10, "transfer_uid": "01TRANSFERA00000000000000"},
-                    {"name": "b.nc", "size": 10, "transfer_uid": "01TRANSFERB00000000000000"},
+                    {
+                        "name": "a.nc",
+                        "size": 10,
+                        "transfer_uid": "01TRANSFERA00000000000000",
+                    },
+                    {
+                        "name": "b.nc",
+                        "size": 10,
+                        "transfer_uid": "01TRANSFERB00000000000000",
+                    },
                 ],
             }
         return McpCall.model_validate(mcp_call_record(status, result=result))
@@ -864,7 +934,9 @@ class McpClient(Client):
             {"items": [mcp_approval_record(kwargs.get("status") or "pending")]}
         )
 
-    def approve_mcp_approval(self, approval_uid: str, *, note: str | None = None) -> Any:
+    def approve_mcp_approval(
+        self, approval_uid: str, *, note: str | None = None
+    ) -> Any:
         from datalayer_core.models.contents.mcp import McpApproval
 
         self.decisions.append(("approve", approval_uid, note))
@@ -956,8 +1028,9 @@ def test_contents_mcp_call_reports_the_pending_approval_and_exits_without_waitin
     assert client.polls == 0
     # Both uids, so the call can be read back once the approval has landed.
     # Rich wraps the line; compare with the whitespace collapsed.
-    assert f"mcp call-status {MCP_SESSION_UID} {MCP_CALL_UID}" in " ".join(result.output.split())
-
+    assert f"mcp call-status {MCP_SESSION_UID} {MCP_CALL_UID}" in " ".join(
+        result.output.split()
+    )
 
 
 def test_contents_mcp_call_waits_and_prints_the_transfers_of_a_bulk_acquisition(
@@ -1020,7 +1093,14 @@ def test_contents_mcp_call_fails_when_the_call_is_denied(
     )
     denied = CliRunner().invoke(
         app,
-        ["contents", "mcp", "call", "earthdata", "download_earth_data_granules", "--wait"],
+        [
+            "contents",
+            "mcp",
+            "call",
+            "earthdata",
+            "download_earth_data_granules",
+            "--wait",
+        ],
     )
 
     assert bad_pair.exit_code == 1
@@ -1035,7 +1115,9 @@ def test_contents_mcp_approvals_list_approve_and_reject(
     monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
     runner = CliRunner()
 
-    listed = runner.invoke(app, ["contents", "mcp", "approvals", "list", "--source", "earthdata"])
+    listed = runner.invoke(
+        app, ["contents", "mcp", "approvals", "list", "--source", "earthdata"]
+    )
     # Each command builds its own client; read the one that listed before
     # the next command replaces it.
     lister = McpClient.last
@@ -1044,7 +1126,15 @@ def test_contents_mcp_approvals_list_approve_and_reject(
     )
     rejected = runner.invoke(
         app,
-        ["contents", "mcp", "approvals", "reject", MCP_APPROVAL_UID, "--note", "too large"],
+        [
+            "contents",
+            "mcp",
+            "approvals",
+            "reject",
+            MCP_APPROVAL_UID,
+            "--note",
+            "too large",
+        ],
     )
 
     assert listed.exit_code == 0, listed.output
@@ -1062,7 +1152,6 @@ def test_contents_mcp_approvals_list_approve_and_reject(
     assert rejecter.decisions[-1] == ("reject", MCP_APPROVAL_UID, "too large")
 
 
-
 def test_approving_shows_the_call_it_releases_and_can_follow_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1074,7 +1163,9 @@ def test_approving_shows_the_call_it_releases_and_can_follow_it(
     monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
     runner = CliRunner()
 
-    shown = runner.invoke(app, ["contents", "mcp", "approvals", "approve", MCP_APPROVAL_UID])
+    shown = runner.invoke(
+        app, ["contents", "mcp", "approvals", "approve", MCP_APPROVAL_UID]
+    )
     assert shown.exit_code == 0, shown.output
     assert f"Approval {MCP_APPROVAL_UID}" in shown.output
     assert f"Call {MCP_CALL_UID}" in shown.output  # the call, after the approval
@@ -1086,7 +1177,9 @@ def test_approving_shows_the_call_it_releases_and_can_follow_it(
     McpClient.call_statuses_default = ["succeeded"]
     assert followed.exit_code == 0, followed.output
     assert "succeeded" in followed.output
-    assert McpClient.last.polls >= 2
+    client = McpClient.last
+    assert isinstance(client, McpClient)
+    assert client.polls >= 2
 
 
 def test_a_call_can_be_read_back_by_its_session_and_uid(
@@ -1099,7 +1192,10 @@ def test_a_call_can_be_read_back_by_its_session_and_uid(
     )
     assert read.exit_code == 0, read.output
     assert f"Call {MCP_CALL_UID}" in read.output and "succeeded" in read.output
-    assert McpClient.last.polled == [(MCP_SESSION_UID, MCP_CALL_UID)]
+    client = McpClient.last
+    assert isinstance(client, McpClient)
+    assert client.polled == [(MCP_SESSION_UID, MCP_CALL_UID)]
+
 
 # -- Datasources and Dataservers ----------------------------------------------
 
@@ -1134,8 +1230,11 @@ def kind_source(kind: str, uid: str, name: str) -> CatalogSource:
                 "updated_at": "2026-08-24T12:00:00Z",
             },
             "permissions": {
-                "view": True, "update": True, "execute": True,
-                "effective_access_level": "execute", "is_owner": True,
+                "view": True,
+                "update": True,
+                "execute": True,
+                "effective_access_level": "execute",
+                "is_owner": True,
             },
         }
     )
@@ -1216,7 +1315,12 @@ class DataClient(Client):
 
         return DatasourceSchema.model_validate(
             {
-                "tables": [{"name": "observations", "columns": [{"name": "id", "type": "int64"}]}],
+                "tables": [
+                    {
+                        "name": "observations",
+                        "columns": [{"name": "id", "type": "int64"}],
+                    }
+                ],
                 "discovered_at": "2026-08-26T12:00:00Z",
             }
         )
@@ -1232,14 +1336,24 @@ class DataClient(Client):
     def cancel_datasource_query(self, query_uid: str) -> Any:
         return query_record(uid=query_uid, status="cancelled")
 
-    def iter_datasource_query_results(self, query_uid: str, **kwargs: Any) -> Iterator[bytes]:
+    def iter_datasource_query_results(
+        self, query_uid: str, **kwargs: Any
+    ) -> Iterator[bytes]:
         payload = arrow_stream_bytes()
         for start in range(0, len(payload), 11):
             yield payload[start : start + 11]
 
-    def save_datasource_query(self, query_uid: str, *, dataset_uid: str, path: str) -> Any:
+    def save_datasource_query(
+        self, query_uid: str, *, dataset_uid: str, path: str
+    ) -> Any:
         self.saved = (query_uid, dataset_uid, path)
-        return SimpleNamespace(model_dump=lambda mode="json": {"uid": "01REV", "source_uid": dataset_uid, "path": path})
+        return SimpleNamespace(
+            model_dump=lambda mode="json": {
+                "uid": "01REV",
+                "source_uid": dataset_uid,
+                "path": path,
+            }
+        )
 
     def get_dataserver_status(self, source_uid: str) -> Any:
         from datalayer_core.models.contents.datasources import DataServerStatus
@@ -1250,7 +1364,11 @@ class DataClient(Client):
                 "last_heartbeat_at": "2026-08-26T12:00:00Z",
                 "lease_seconds": 90,
                 "connectors": [
-                    {"connector_type": "sql", "operations": ["select", "describe"], "policy_version": "3"}
+                    {
+                        "connector_type": "sql",
+                        "operations": ["select", "describe"],
+                        "policy_version": "3",
+                    }
                 ],
                 "queue_depth": 0,
                 "identity_serial": "1a2b",
@@ -1283,23 +1401,55 @@ def test_datasources_create_needs_a_credential_or_a_dataserver(
     routed = runner.invoke(
         app,
         [
-            "contents", "--output", "json", "datasources", "create", "eo",
-            "--connector-type", "sql", "--endpoint", "db.internal:5432",
-            "--database", "research", "--dataserver", "private-data",
-            "--allow", "select,describe", "--row-limit", "500",
+            "contents",
+            "--output",
+            "json",
+            "datasources",
+            "create",
+            "eo",
+            "--connector-type",
+            "sql",
+            "--endpoint",
+            "db.internal:5432",
+            "--database",
+            "research",
+            "--dataserver",
+            "private-data",
+            "--allow",
+            "select,describe",
+            "--row-limit",
+            "500",
         ],
     )
     direct = runner.invoke(
         app,
         [
-            "contents", "datasources", "create", "eo", "--connector-type", "bigquery",
-            "--project", "eo-prod", "--credential", "01CREDENTIAL0000000000000A",
+            "contents",
+            "datasources",
+            "create",
+            "eo",
+            "--connector-type",
+            "bigquery",
+            "--project",
+            "eo-prod",
+            "--credential",
+            "01CREDENTIAL0000000000000A",
         ],
     )
     unknown = runner.invoke(
         app,
-        ["contents", "datasources", "create", "eo", "--connector-type", "sql",
-         "--credential", "c", "--allow", "select,drop"],
+        [
+            "contents",
+            "datasources",
+            "create",
+            "eo",
+            "--connector-type",
+            "sql",
+            "--credential",
+            "c",
+            "--allow",
+            "select,drop",
+        ],
     )
 
     assert refused.exit_code == 1
@@ -1313,7 +1463,10 @@ def test_datasources_create_needs_a_credential_or_a_dataserver(
     assert routed_request["credential_uid"] is None
     assert routed_request["configuration"]["network_route"] == "dataserver"
     assert routed_request["configuration"]["data_server_uid"] == DATASERVER_UID
-    assert routed_request["configuration"]["allowed_operations"] == ["select", "describe"]
+    assert routed_request["configuration"]["allowed_operations"] == [
+        "select",
+        "describe",
+    ]
     assert routed_request["configuration"]["default_row_limit"] == 500
     assert direct_request["configuration"]["network_route"] == "direct"
     assert direct_request["configuration"]["database_or_project"] == "eo-prod"
@@ -1324,8 +1477,12 @@ def test_datasources_test_and_schema(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", DataClient)
     runner = CliRunner()
 
-    tested = runner.invoke(app, ["contents", "datasources", "test", "earth-observation"])
-    schema = runner.invoke(app, ["contents", "datasources", "schema", "earth-observation"])
+    tested = runner.invoke(
+        app, ["contents", "datasources", "test", "earth-observation"]
+    )
+    schema = runner.invoke(
+        app, ["contents", "datasources", "schema", "earth-observation"]
+    )
     wrong_kind = runner.invoke(app, ["contents", "datasources", "test", "private-data"])
 
     assert tested.exit_code == 0, tested.output
@@ -1346,8 +1503,17 @@ def test_datasources_query_submits_waits_prints_writes_and_cancels(
 
     submitted = runner.invoke(
         app,
-        ["contents", "--output", "json", "datasources", "query", "earth-observation",
-         "SELECT * FROM observations", "--row-limit", "10"],
+        [
+            "contents",
+            "--output",
+            "json",
+            "datasources",
+            "query",
+            "earth-observation",
+            "SELECT * FROM observations",
+            "--row-limit",
+            "10",
+        ],
     )
     assert submitted.exit_code == 0, submitted.output
     assert f'"uid": "{QUERY_UID}"' in submitted.output
@@ -1360,8 +1526,17 @@ def test_datasources_query_submits_waits_prints_writes_and_cancels(
     statement.write_text("SELECT id, city FROM observations")
     shown = runner.invoke(
         app,
-        ["contents", "datasources", "query", "earth-observation",
-         "--sql-file", str(statement), "--wait", "--rows", "2"],
+        [
+            "contents",
+            "datasources",
+            "query",
+            "earth-observation",
+            "--sql-file",
+            str(statement),
+            "--wait",
+            "--rows",
+            "2",
+        ],
     )
     assert shown.exit_code == 0, shown.output
     assert "Paris" in shown.output and "Oslo" in shown.output
@@ -1370,8 +1545,19 @@ def test_datasources_query_submits_waits_prints_writes_and_cancels(
     arrow_file = tmp_path / "out" / "observations.arrow"
     written = runner.invoke(
         app,
-        ["contents", "--output", "json", "datasources", "query", "earth-observation",
-         "SELECT 1", "--format", "arrow", "--output", str(arrow_file)],
+        [
+            "contents",
+            "--output",
+            "json",
+            "datasources",
+            "query",
+            "earth-observation",
+            "SELECT 1",
+            "--format",
+            "arrow",
+            "--output",
+            str(arrow_file),
+        ],
     )
     assert written.exit_code == 0, written.output
     with pyarrow.ipc.open_stream(str(arrow_file)) as reader:
@@ -1382,18 +1568,38 @@ def test_datasources_query_submits_waits_prints_writes_and_cancels(
     parquet_file = tmp_path / "observations.parquet"
     written = runner.invoke(
         app,
-        ["contents", "datasources", "query", "earth-observation", "SELECT 1",
-         "--format", "parquet", "--output", str(parquet_file)],
+        [
+            "contents",
+            "datasources",
+            "query",
+            "earth-observation",
+            "SELECT 1",
+            "--format",
+            "parquet",
+            "--output",
+            str(parquet_file),
+        ],
     )
     assert written.exit_code == 0, written.output
     assert pyarrow.parquet.read_table(str(parquet_file)).num_rows == 3
 
     missing = runner.invoke(
-        app, ["contents", "datasources", "query", "earth-observation", "SELECT 1", "--format", "arrow"]
+        app,
+        [
+            "contents",
+            "datasources",
+            "query",
+            "earth-observation",
+            "SELECT 1",
+            "--format",
+            "arrow",
+        ],
     )
     assert missing.exit_code == 1 and "--output" in missing.output
 
-    cancelled = runner.invoke(app, ["contents", "--output", "json", "datasources", "cancel", QUERY_UID])
+    cancelled = runner.invoke(
+        app, ["contents", "--output", "json", "datasources", "cancel", QUERY_UID]
+    )
     assert cancelled.exit_code == 0, cancelled.output
     assert '"status": "cancelled"' in cancelled.output
 
@@ -1404,12 +1610,26 @@ def test_datasources_save_resolves_the_dataset(monkeypatch: pytest.MonkeyPatch) 
 
     saved = runner.invoke(
         app,
-        ["contents", "--output", "json", "datasources", "save", QUERY_UID, "Earth data",
-         "/results/observations.arrow"],
+        [
+            "contents",
+            "--output",
+            "json",
+            "datasources",
+            "save",
+            QUERY_UID,
+            "Earth data",
+            "/results/observations.arrow",
+        ],
     )
 
     assert saved.exit_code == 0, saved.output
-    assert DataClient.last.saved == (QUERY_UID, DATASET_UID, "/results/observations.arrow")  # type: ignore[union-attr]
+    client = DataClient.last
+    assert isinstance(client, DataClient)
+    assert client.saved == (
+        QUERY_UID,
+        DATASET_UID,
+        "/results/observations.arrow",
+    )
     assert '"uid": "01REV"' in saved.output
 
 
@@ -1421,13 +1641,23 @@ def test_dataservers_status_connectors_and_transitions(
     runner = CliRunner()
 
     status = runner.invoke(app, ["contents", "dataservers", "status", "private-data"])
-    connectors = runner.invoke(app, ["contents", "dataservers", "connectors", "private-data"])
-    as_json = runner.invoke(app, ["contents", "--output", "json", "dataservers", "status", "private-data"])
+    connectors = runner.invoke(
+        app, ["contents", "dataservers", "connectors", "private-data"]
+    )
+    as_json = runner.invoke(
+        app, ["contents", "--output", "json", "dataservers", "status", "private-data"]
+    )
     drained = runner.invoke(app, ["contents", "dataservers", "drain", "private-data"])
     resumed = runner.invoke(app, ["contents", "dataservers", "resume", "private-data"])
-    declined = runner.invoke(app, ["contents", "dataservers", "revoke", "private-data"], input="n\n")
-    revoked = runner.invoke(app, ["contents", "dataservers", "revoke", "private-data", "--yes"])
-    wrong_kind = runner.invoke(app, ["contents", "dataservers", "status", "earth-observation"])
+    declined = runner.invoke(
+        app, ["contents", "dataservers", "revoke", "private-data"], input="n\n"
+    )
+    revoked = runner.invoke(
+        app, ["contents", "dataservers", "revoke", "private-data", "--yes"]
+    )
+    wrong_kind = runner.invoke(
+        app, ["contents", "dataservers", "status", "earth-observation"]
+    )
 
     assert status.exit_code == 0, status.output
     assert "ready" in status.output and "1a2b" in status.output
@@ -1442,43 +1672,88 @@ def test_dataservers_status_connectors_and_transitions(
     assert wrong_kind.exit_code == 1 and "not a Dataserver" in wrong_kind.output
 
 
-def test_contents_operations_commands_reach_the_dead_letter(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple] = []
+def test_contents_operations_commands_reach_the_dead_letter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[Any, ...]] = []
 
     class Operations(Client):
-        def list_dead_letter_operations(self, *, rows=100):
+        def list_dead_letter_operations(self, *, rows: int = 100) -> DeadLetterList:
             calls.append(("dead-letter", rows))
             return DeadLetterList(items=[])
 
-        def quarantine_content_operation(self, uid, *, reason):
+        def quarantine_content_operation(
+            self, uid: str, *, reason: str
+        ) -> OperationView:
             calls.append(("quarantine", uid, reason))
             return OperationView.model_validate(_operation_view())
 
-        def requeue_content_operation(self, uid):
+        def requeue_content_operation(self, uid: str) -> OperationView:
             calls.append(("requeue", uid))
-            return OperationView.model_validate(_operation_view(status="pending", error_code=None))
+            return OperationView.model_validate(
+                _operation_view(status="pending", error_code=None)
+            )
 
     monkeypatch.setattr(contents_commands, "DatalayerClient", Operations)
     runner = CliRunner()
-    listed = runner.invoke(app, ["contents", "--output", "json", "operations", "dead-letter", "--rows", "20"])
-    held = runner.invoke(app, ["contents", "--output", "json", "operations", "quarantine", "01OPERATION00000000000000", "--reason", "looking"])
-    again = runner.invoke(app, ["contents", "--output", "json", "operations", "requeue", "01OPERATION00000000000000"])
+    listed = runner.invoke(
+        app,
+        ["contents", "--output", "json", "operations", "dead-letter", "--rows", "20"],
+    )
+    held = runner.invoke(
+        app,
+        [
+            "contents",
+            "--output",
+            "json",
+            "operations",
+            "quarantine",
+            "01OPERATION00000000000000",
+            "--reason",
+            "looking",
+        ],
+    )
+    again = runner.invoke(
+        app,
+        [
+            "contents",
+            "--output",
+            "json",
+            "operations",
+            "requeue",
+            "01OPERATION00000000000000",
+        ],
+    )
 
     assert listed.exit_code == 0, listed.output
     assert held.exit_code == 0, held.output
     assert again.exit_code == 0, again.output
-    assert calls == [("dead-letter", 20), ("quarantine", "01OPERATION00000000000000", "looking"), ("requeue", "01OPERATION00000000000000")]
+    assert calls == [
+        ("dead-letter", 20),
+        ("quarantine", "01OPERATION00000000000000", "looking"),
+        ("requeue", "01OPERATION00000000000000"),
+    ]
     assert json.loads(again.output)["status"] == "pending"
 
 
-def _operation_view(status: str = "failed", error_code: str | None = "RETRY_EXHAUSTED") -> dict:
+def _operation_view(
+    status: str = "failed", error_code: str | None = "RETRY_EXHAUSTED"
+) -> dict[str, Any]:
     return {
-        "uid": "01OPERATION00000000000000", "operation_kind": "volume-provision", "status": status,
-        "attempt": 5, "max_attempts": 5, "cancellation_requested": False, "source_uid": UID,
-        "error_code": error_code, "error_message": "operator away", "result": None,
-        "created_at": "2026-08-26T00:00:00Z", "updated_at": "2026-08-26T00:00:00Z", "completed_at": None,
+        "uid": "01OPERATION00000000000000",
+        "operation_kind": "volume-provision",
+        "status": status,
+        "attempt": 5,
+        "max_attempts": 5,
+        "cancellation_requested": False,
+        "source_uid": UID,
+        "error_code": error_code,
+        "error_message": "operator away",
+        "result": None,
+        "created_at": "2026-08-26T00:00:00Z",
+        "updated_at": "2026-08-26T00:00:00Z",
+        "completed_at": None,
     }
-
 
 
 def test_connecting_an_mcp_server_can_name_its_credential(
@@ -1505,21 +1780,36 @@ def test_connecting_an_mcp_server_can_name_its_credential(
                 )
             ]
 
-        def create_content_source(self, body: dict, **kwargs: Any) -> Any:
-            sent.update(body)
-            return super().create_content_source(body, **kwargs)
+        def create_content_source(
+            self, request: dict[str, Any], *, idempotency_key: str
+        ) -> Any:
+            sent.update(request)
+            return super().create_content_source(
+                request, idempotency_key=idempotency_key
+            )
 
     monkeypatch.setattr(contents_commands, "DatalayerClient", Recording)
     result = CliRunner().invoke(
         app,
-        ["contents", "mcp", "connect", "earthdata", "--endpoint", "https://s/mcp", "--credential", "mcp-token"],
+        [
+            "contents",
+            "mcp",
+            "connect",
+            "earthdata",
+            "--endpoint",
+            "https://s/mcp",
+            "--credential",
+            "mcp-token",
+        ],
     )
 
     assert result.exit_code == 0, result.output
     assert sent["configuration"]["credential_uid"] == "01SECRET0000000000000000AB"
 
 
-def test_a_credential_that_names_nothing_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_credential_that_names_nothing_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class Recording(Client):
         def list_secrets(self) -> Any:
             return []
@@ -1527,7 +1817,16 @@ def test_a_credential_that_names_nothing_is_refused(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(contents_commands, "DatalayerClient", Recording)
     result = CliRunner().invoke(
         app,
-        ["contents", "mcp", "connect", "earthdata", "--endpoint", "https://s/mcp", "--credential", "nope"],
+        [
+            "contents",
+            "mcp",
+            "connect",
+            "earthdata",
+            "--endpoint",
+            "https://s/mcp",
+            "--credential",
+            "nope",
+        ],
     )
 
     assert result.exit_code != 0

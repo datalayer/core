@@ -68,7 +68,9 @@ def an_execution(status: ExecutionState = ExecutionState.RUNNING) -> Execution:
     )
 
 
-def an_acknowledgement(command: CommandName = CommandName.EXECUTIONS_DELEGATE) -> Acknowledgement:
+def an_acknowledgement(
+    command: CommandName = CommandName.EXECUTIONS_DELEGATE,
+) -> Acknowledgement:
     return Acknowledgement(
         kind=AcknowledgementKind.RECEIVED,
         execution_id="exec_1",
@@ -116,7 +118,12 @@ class Stream:
 
 
 def framed(event: ExecutionEvent, cursor: str) -> list[str]:
-    return [f"id: {cursor}", f"event: {event.type.value}", f"data: {json.dumps(event.to_wire())}", ""]
+    return [
+        f"id: {cursor}",
+        f"event: {event.type.value}",
+        f"data: {json.dumps(event.to_wire())}",
+        "",
+    ]
 
 
 class Client(OrchestrationMixin):
@@ -134,10 +141,15 @@ class Client(OrchestrationMixin):
 
 
 class TestTheRoutes:
-    def test_every_command_of_the_control_plane_has_its_generated_operation(self) -> None:
+    def test_every_command_of_the_control_plane_has_its_generated_operation(
+        self,
+    ) -> None:
         named = {operation.operation for operation in ORCHESTRATION_API}
         assert {name.value for name in CommandName} <= named
-        assert all(operation.path.startswith("/api/ai-agents/v1/orchestration/") for operation in ORCHESTRATION_API)
+        assert all(
+            operation.path.startswith("/api/ai-agents/v1/orchestration/")
+            for operation in ORCHESTRATION_API
+        )
 
     def test_a_path_is_filled_and_encoded_and_a_missing_parameter_refused(self) -> None:
         assert operation_path("executions.get", {"execution_id": "exec 1/2"}) == (
@@ -152,12 +164,29 @@ class TestTheRoutes:
 
 class TestTheCalls:
     def test_a_command_goes_as_its_canonical_record_for_the_account_named(self) -> None:
-        client = Client(Answer({"agents": [AgentDescriptor(agent_id="validator", name="Validator").to_wire()]}))
-        agents = client.discover_agents(AgentsDiscover(capabilities=["notebook.validate"]), account_uid="org-1")
+        client = Client(
+            Answer(
+                {
+                    "agents": [
+                        AgentDescriptor(
+                            agent_id="validator", name="Validator"
+                        ).to_wire()
+                    ]
+                }
+            )
+        )
+        agents = client.discover_agents(
+            AgentsDiscover(capabilities=["notebook.validate"]), account_uid="org-1"
+        )
         assert [agent.agent_id for agent in agents] == ["validator"]
         url, kwargs = client.calls[0]
-        assert url == "https://agents.test/api/ai-agents/v1/orchestration/agents/discover?account_uid=org-1"
-        assert kwargs["method"] == "POST" and kwargs["json"]["capabilities"] == ["notebook.validate"]
+        assert (
+            url
+            == "https://agents.test/api/ai-agents/v1/orchestration/agents/discover?account_uid=org-1"
+        )
+        assert kwargs["method"] == "POST" and kwargs["json"]["capabilities"] == [
+            "notebook.validate"
+        ]
 
     def test_a_delegation_says_whether_the_durable_service_took_it(self) -> None:
         client = Client(
@@ -171,10 +200,15 @@ class TestTheCalls:
             )
         )
         command = ExecutionsDelegate(
-            idempotency_key="key-1", agent=an_execution().agent, objective=Objective(goal="Validate the notebook")
+            idempotency_key="key-1",
+            agent=an_execution().agent,
+            objective=Objective(goal="Validate the notebook"),
         )
         receipt = client.delegate_execution(command)
-        assert (receipt.delivered, receipt.detail) == (False, "No durable service is configured.")
+        assert (receipt.delivered, receipt.detail) == (
+            False,
+            "No durable service is configured.",
+        )
         assert receipt.execution.execution_id == "exec_1"
         assert client.calls[0][1]["json"]["idempotencyKey"] == "key-1"
 
@@ -183,20 +217,35 @@ class TestTheCalls:
             Answer(
                 {
                     "execution": an_execution().to_wire(),
-                    "acknowledgement": an_acknowledgement(CommandName.EXECUTIONS_STEER).to_wire(),
+                    "acknowledgement": an_acknowledgement(
+                        CommandName.EXECUTIONS_STEER
+                    ).to_wire(),
                     "delivered": True,
                 }
             )
         )
         receipt = client.steer_execution(
-            ExecutionsSteer(idempotency_key="key-2", execution_id="exec_1", instructions="Check the assumptions")
+            ExecutionsSteer(
+                idempotency_key="key-2",
+                execution_id="exec_1",
+                instructions="Check the assumptions",
+            )
         )
         assert receipt.delivered is True
-        assert client.calls[0][0] == "https://agents.test/api/ai-agents/v1/orchestration/executions/steer"
+        assert (
+            client.calls[0][0]
+            == "https://agents.test/api/ai-agents/v1/orchestration/executions/steer"
+        )
 
     def test_pause_resume_and_terminate_reach_their_own_routes(self) -> None:
         answers = [
-            Answer({"execution": an_execution().to_wire(), "acknowledgement": an_acknowledgement(name).to_wire(), "delivered": delivered})
+            Answer(
+                {
+                    "execution": an_execution().to_wire(),
+                    "acknowledgement": an_acknowledgement(name).to_wire(),
+                    "delivered": delivered,
+                }
+            )
             for name, delivered in (
                 (CommandName.EXECUTIONS_PAUSE, True),
                 (CommandName.EXECUTIONS_RESUME, True),
@@ -204,14 +253,39 @@ class TestTheCalls:
             )
         ]
         client = Client(*answers)
-        assert client.pause_execution(ExecutionsPause(idempotency_key="k-p", execution_id="exec_1", reason="later")).delivered is True
-        assert client.resume_execution(ExecutionsResume(idempotency_key="k-r", execution_id="exec_1", checkpoint_id="ckpt_1")).delivered is True
-        assert client.terminate_execution(ExecutionsTerminate(idempotency_key="k-t", execution_id="exec_1")).delivered is False
-        assert [url.rsplit("/", 1)[1] for url, _ in client.calls] == ["pause", "resume", "terminate"]
+        assert (
+            client.pause_execution(
+                ExecutionsPause(
+                    idempotency_key="k-p", execution_id="exec_1", reason="later"
+                )
+            ).delivered
+            is True
+        )
+        assert (
+            client.resume_execution(
+                ExecutionsResume(
+                    idempotency_key="k-r", execution_id="exec_1", checkpoint_id="ckpt_1"
+                )
+            ).delivered
+            is True
+        )
+        assert (
+            client.terminate_execution(
+                ExecutionsTerminate(idempotency_key="k-t", execution_id="exec_1")
+            ).delivered
+            is False
+        )
+        assert [url.rsplit("/", 1)[1] for url, _ in client.calls] == [
+            "pause",
+            "resume",
+            "terminate",
+        ]
         assert client.calls[1][1]["json"]["checkpointId"] == "ckpt_1"
         assert client.calls[2][1]["json"]["releaseWorker"] is True
 
-    def test_a_list_asks_by_state_and_a_read_answers_attempts_and_milestones(self) -> None:
+    def test_a_list_asks_by_state_and_a_read_answers_attempts_and_milestones(
+        self,
+    ) -> None:
         client = Client(
             Answer({"executions": [an_execution().to_wire()]}),
             Answer(
@@ -222,15 +296,28 @@ class TestTheCalls:
                 }
             ),
         )
-        assert [one.execution_id for one in client.list_executions(status=ExecutionState.RUNNING)] == ["exec_1"]
+        assert [
+            one.execution_id
+            for one in client.list_executions(status=ExecutionState.RUNNING)
+        ] == ["exec_1"]
         record = client.get_execution("exec_1")
-        assert client.calls[0][0] == "https://agents.test/api/ai-agents/v1/orchestration/executions?status=running"
-        assert client.calls[1][0] == "https://agents.test/api/ai-agents/v1/orchestration/executions/exec_1"
-        assert [one.kind for one in record.acknowledgements] == [AcknowledgementKind.RECEIVED]
+        assert (
+            client.calls[0][0]
+            == "https://agents.test/api/ai-agents/v1/orchestration/executions?status=running"
+        )
+        assert (
+            client.calls[1][0]
+            == "https://agents.test/api/ai-agents/v1/orchestration/executions/exec_1"
+        )
+        assert [one.kind for one in record.acknowledgements] == [
+            AcknowledgementKind.RECEIVED
+        ]
 
 
 class TestTheStream:
-    def test_a_drop_is_resumed_from_the_last_event_and_each_event_arrives_once(self) -> None:
+    def test_a_drop_is_resumed_from_the_last_event_and_each_event_arrives_once(
+        self,
+    ) -> None:
         first, second, third = an_event(1), an_event(2), an_event(3)
         client = Client(
             Stream(
@@ -249,26 +336,47 @@ class TestTheStream:
         assert first_url == (
             "https://agents.test/api/ai-agents/v1/orchestration/executions/exec_1/events?includeChildren=true"
         )
-        assert first_call["stream"] is True and "Last-Event-ID" not in first_call["headers"]
+        assert (
+            first_call["stream"] is True
+            and "Last-Event-ID" not in first_call["headers"]
+        )
         assert second_call["headers"]["Last-Event-ID"] == "exec_1:2"
 
     def test_a_roll_up_moves_the_cursor_and_is_never_an_event(self) -> None:
         """O2-03: the tree's roll-up after a batch reaches `on_tree`, never the
         events, and a reconnect resumes after it."""
         first, second = an_event(1), an_event(2)
-        rollup = {"rootExecutionId": "exec_1", "executions": [], "counts": {"running": 1}, "terminal": False}
+        rollup = {
+            "rootExecutionId": "exec_1",
+            "executions": [],
+            "counts": {"running": 1},
+            "terminal": False,
+        }
         client = Client(
             Stream(
-                [*framed(first, "exec_1:1"), "id: exec_1:1", "event: orchestration.tree", f"data: {json.dumps(rollup)}", ""],
+                [
+                    *framed(first, "exec_1:1"),
+                    "id: exec_1:1",
+                    "event: orchestration.tree",
+                    f"data: {json.dumps(rollup)}",
+                    "",
+                ],
                 then=requests.exceptions.ChunkedEncodingError("dropped"),
             ),
             Stream([*framed(second, "exec_1:2"), "event: end", "data: {}", ""]),
         )
-        trees: list[tuple[dict, str]] = []
+        trees: list[tuple[dict[str, Any], str]] = []
         received = list(
-            client.subscribe_execution("exec_1", reconnect_delay=0, on_tree=lambda tree, cursor: trees.append((tree, cursor)))
+            client.subscribe_execution(
+                "exec_1",
+                reconnect_delay=0,
+                on_tree=lambda tree, cursor: trees.append((tree, cursor)),
+            )
         )
-        assert [(event.event_id, cursor) for event, cursor in received] == [("evt_1", "exec_1:1"), ("evt_2", "exec_1:2")]
+        assert [(event.event_id, cursor) for event, cursor in received] == [
+            ("evt_1", "exec_1:1"),
+            ("evt_2", "exec_1:2"),
+        ]
         assert trees == [(rollup, "exec_1:1")]
         assert client.calls[1][1]["headers"]["Last-Event-ID"] == "exec_1:1"
 
@@ -279,15 +387,30 @@ class TestTheStream:
         assert len(client.calls) == 1
 
     def test_a_stream_that_keeps_dropping_with_nothing_between_gives_up(self) -> None:
-        client = Client(*[requests.exceptions.ConnectionError("gone") for _ in range(3)])
+        client = Client(
+            *[requests.exceptions.ConnectionError("gone") for _ in range(3)]
+        )
         with pytest.raises(SubscriptionDropped, match="dropped 3 times"):
-            list(client.subscribe_execution("exec_1", max_reconnects=2, reconnect_delay=0))
+            list(
+                client.subscribe_execution(
+                    "exec_1", max_reconnects=2, reconnect_delay=0
+                )
+            )
         assert len(client.calls) == 3
 
 
 class TestServerSentEvents:
     def test_the_framing_of_the_event_stream_format(self) -> None:
-        lines = [": a comment", "id: 7", "event: execution.progress", "data: first", "data: second\r", "", "", "data: unfinished"]
+        lines = [
+            ": a comment",
+            "id: 7",
+            "event: execution.progress",
+            "data: first",
+            "data: second\r",
+            "",
+            "",
+            "data: unfinished",
+        ]
         assert list(read_server_sent_events(lines)) == [
             ServerSentEvent(event="execution.progress", data="first\nsecond", id="7")
         ]
@@ -295,22 +418,37 @@ class TestServerSentEvents:
 
 class TestTheHelpers:
     def test_a_derived_key_is_what_the_command_asks_and_nothing_else(self) -> None:
-        steer = ExecutionsSteer(idempotency_key="one", execution_id="exec_1", instructions="Check the assumptions")
-        again = ExecutionsSteer(
-            idempotency_key="two", execution_id="exec_1", instructions="Check the assumptions", issued_at=NOW
+        steer = ExecutionsSteer(
+            idempotency_key="one",
+            execution_id="exec_1",
+            instructions="Check the assumptions",
         )
-        other = ExecutionsSteer(idempotency_key="one", execution_id="exec_1", instructions="Check the plots")
+        again = ExecutionsSteer(
+            idempotency_key="two",
+            execution_id="exec_1",
+            instructions="Check the assumptions",
+            issued_at=NOW,
+        )
+        other = ExecutionsSteer(
+            idempotency_key="one", execution_id="exec_1", instructions="Check the plots"
+        )
         assert command_idempotency_key(steer) == command_idempotency_key(again)
         assert command_idempotency_key(steer) != command_idempotency_key(other)
 
-    def test_a_binding_is_the_worker_s_endpoint_over_the_protocol_asked_for(self) -> None:
+    def test_a_binding_is_the_worker_s_endpoint_over_the_protocol_asked_for(
+        self,
+    ) -> None:
         descriptor = AgentDescriptor(
             agent_id="validator",
             name="Validator",
             capabilities=["notebook.validate"],
             endpoints=[
-                ProtocolEndpoint(protocol=AgentProtocol.A2A, url="https://agents.example/a2a"),
-                ProtocolEndpoint(protocol=AgentProtocol.ACP, url="wss://agents.example/acp"),
+                ProtocolEndpoint(
+                    protocol=AgentProtocol.A2A, url="https://agents.example/a2a"
+                ),
+                ProtocolEndpoint(
+                    protocol=AgentProtocol.ACP, url="wss://agents.example/acp"
+                ),
             ],
         )
         assert binding_for(descriptor).endpoint == "https://agents.example/a2a"
@@ -327,7 +465,11 @@ class TestTheHelpers:
                 AgentDescriptor(
                     agent_id="researcher",
                     name="Researcher",
-                    endpoints=[ProtocolEndpoint(protocol=AgentProtocol.A2A, url="https://agents.example/r")],
+                    endpoints=[
+                        ProtocolEndpoint(
+                            protocol=AgentProtocol.A2A, url="https://agents.example/r"
+                        )
+                    ],
                 ),
                 protocol=AgentProtocol.ACP,
             )

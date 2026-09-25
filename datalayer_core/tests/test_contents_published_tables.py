@@ -25,7 +25,7 @@ from datalayer_core.contents_published_tables import (
 )
 
 
-def test_a_table_is_owner_scoped():
+def test_a_table_is_owner_scoped() -> None:
     # Two people may publish `sales` and neither reaches the other's by naming
     # it. The owner is in the path, not in the relation, because a relation is
     # what a query names and a query should not spell somebody's uid.
@@ -35,19 +35,21 @@ def test_a_table_is_owner_scoped():
     assert mine.endswith("/01ME/sales")
 
 
-def test_the_root_is_taken_as_given_without_a_trailing_slash():
+def test_the_root_is_taken_as_given_without_a_trailing_slash() -> None:
     assert relation_directory("/published/", "01ME", "sales") == "/published/01ME/sales"
 
 
 @pytest.mark.parametrize("bad", ["../secrets", "a/b", "", ".", "..", "-rf", "/etc"])
-def test_a_name_that_is_not_one_segment_is_refused_where_it_is_written(bad: str):
+def test_a_name_that_is_not_one_segment_is_refused_where_it_is_written(
+    bad: str,
+) -> None:
     # Refused here rather than on the Data Server: a name that only fails
     # there is a table that looked published and never was.
     with pytest.raises(ValueError):
         clean_relation(bad)
 
 
-def test_parts_sort_in_numeric_order():
+def test_parts_sort_in_numeric_order() -> None:
     # They are read in sorted order, so `part-10` must not sort before
     # `part-2` — otherwise a query without an ORDER BY returns rows in an
     # order nobody chose.
@@ -55,7 +57,7 @@ def test_parts_sort_in_numeric_order():
     assert sorted(names) == names
 
 
-def test_only_parts_are_data():
+def test_only_parts_are_data() -> None:
     assert is_part_name(part_name(0))
     # A directory may hold a marker or a note somebody left; reading those as
     # data is how a query returns rows nobody wrote.
@@ -64,6 +66,6 @@ def test_only_parts_are_data():
     assert not is_part_name(".hidden" + PART_SUFFIX)
 
 
-def test_a_negative_part_is_a_mistake():
+def test_a_negative_part_is_a_mistake() -> None:
     with pytest.raises(ValueError):
         part_name(-1)

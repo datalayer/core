@@ -140,7 +140,9 @@ class ContentsMixin:
             self._runtimes_url("/environments"), method="GET"
         )
         payload = response.json()
-        environments = payload.get("environments", []) if isinstance(payload, dict) else []
+        environments = (
+            payload.get("environments", []) if isinstance(payload, dict) else []
+        )
         return [
             {**environment, "contents": environment.get("contents") or []}
             for environment in environments
@@ -222,7 +224,7 @@ class ContentsMixin:
             One entry per source: ``uid``, ``name``, ``kind`` and ``tools``.
         """
         found = []
-        for item in self.list_content_sources().items:  # type: ignore[attr-defined]
+        for item in self.list_content_sources().items:
             source = getattr(item, "source", item)
             uid = str(getattr(source, "uid", "") or "")
             if not uid:
@@ -231,16 +233,20 @@ class ContentsMixin:
                 manifest = self._fetch(  # type: ignore[attr-defined]
                     self._contents_url(f"/sources/{uid}/mcp/tools"), method="GET"
                 ).json()
-            except Exception:  # noqa: BLE001 - a source that serves no manifest lends nothing
+            except Exception:  # noqa: BLE001  # nosec B112 - a source that serves no manifest lends nothing
                 continue
-            tools = [str(tool.get("name") or "") for tool in (manifest.get("tools") or [])]
+            tools = [
+                str(tool.get("name") or "") for tool in (manifest.get("tools") or [])
+            ]
             if tools:
-                found.append({
-                    "uid": uid,
-                    "name": str(getattr(source, "name", "") or uid),
-                    "kind": str(getattr(source, "kind", "") or ""),
-                    "tools": sorted(name for name in tools if name),
-                })
+                found.append(
+                    {
+                        "uid": uid,
+                        "name": str(getattr(source, "name", "") or uid),
+                        "kind": str(getattr(source, "kind", "") or ""),
+                        "tools": sorted(name for name in tools if name),
+                    }
+                )
         return found
 
     def list_toolset_sessions(self) -> list[dict[str, Any]]:
@@ -250,10 +256,14 @@ class ContentsMixin:
                 self._contents_url("/mcp-sessions"), method="GET"
             ).json()
         except RuntimeError as error:
-            raise RuntimeError(f"the toolset sessions could not be read: {error}") from error
+            raise RuntimeError(
+                f"the toolset sessions could not be read: {error}"
+            ) from error
         return list(answer.get("items") or [])
 
-    def enable_toolset(self, source_uid: str, *, tools: list[str] | None = None) -> dict[str, Any]:
+    def enable_toolset(
+        self, source_uid: str, *, tools: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         Open a session on a source, so its tools can be called.
 
@@ -584,7 +594,8 @@ class ContentsMixin:
         live_server_uid: str | None = None,
         live_setup: Callable[[str], str | None] | None = None,
     ) -> dict[str, Any]:
-        """Publish a table so other people can query it.
+        """
+        Publish a table so other people can query it.
 
         Three calls, made as one: reserve a publication, write its parts, and
         complete it. The caller never names a path — the directory is derived
@@ -680,7 +691,8 @@ class ContentsMixin:
         chunk_size: int = 8 * 1024 * 1024,
         progress: Callable[[int, int, str], None] | None = None,
     ) -> TransferView:
-        """Capture a file into a Dataset: a result, or a file on a mounted Volume.
+        """
+        Capture a file into a Dataset: a result, or a file on a mounted Volume.
 
         Run where the file is — inside the sandbox — the bytes go up through
         the same verified, resumable transfer as a Home Folder upload and
@@ -805,7 +817,9 @@ class ContentsMixin:
         if cursor:
             parameters["cursor"] = cursor
         return self._fetch(  # type: ignore[attr-defined]
-            self._contents_url(f"/sources/{source_uid}/cloud/objects?{urlencode(parameters)}"),
+            self._contents_url(
+                f"/sources/{source_uid}/cloud/objects?{urlencode(parameters)}"
+            ),
             method="GET",
         ).json()
 
@@ -843,10 +857,17 @@ class ContentsMixin:
         ).json()
 
     def presign_cloud_storage_object(
-        self, source_uid: str, path: str, *, operation: str = "get", expires_in: int = 900
+        self,
+        source_uid: str,
+        path: str,
+        *,
+        operation: str = "get",
+        expires_in: int = 900,
     ) -> dict[str, Any]:
         """A URL for one object, one operation, a short while."""
-        query = urlencode({"path": path, "operation": operation, "expires_in": expires_in})
+        query = urlencode(
+            {"path": path, "operation": operation, "expires_in": expires_in}
+        )
         return self._fetch(  # type: ignore[attr-defined]
             self._contents_url(f"/sources/{source_uid}/cloud/objects/presign?{query}"),
             method="POST",
@@ -1479,11 +1500,14 @@ class ContentsMixin:
         """The operations that gave up: retries exhausted, or quarantined."""
 
         response = self._fetch(  # type: ignore[attr-defined]
-            self._contents_url(f"/operations/dead-letter?rows={int(rows)}"), method="GET"
+            self._contents_url(f"/operations/dead-letter?rows={int(rows)}"),
+            method="GET",
         )
         return DeadLetterList.model_validate(response.json())
 
-    def quarantine_content_operation(self, operation_uid: str, *, reason: str) -> OperationView:
+    def quarantine_content_operation(
+        self, operation_uid: str, *, reason: str
+    ) -> OperationView:
         """Keep a failed operation out of the queue while it is looked at."""
 
         response = self._fetch(  # type: ignore[attr-defined]
@@ -1507,8 +1531,10 @@ class ContentsMixin:
         )
         return OperationView.model_validate(response.json())
 
+
 def _as_arrow_table(table: Any) -> Any:
-    """Whatever the caller has, as an Arrow table.
+    """
+    Whatever the caller has, as an Arrow table.
 
     Accepting one type would mean a user converting first, and the conversion
     they would write is this one — done less carefully, because it is in their

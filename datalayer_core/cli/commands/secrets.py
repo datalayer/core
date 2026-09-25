@@ -10,7 +10,7 @@ from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.secrets import display_secrets
-from datalayer_core.models.secret import SecretVariant
+from datalayer_core.models.secret import SecretModel, SecretVariant
 
 # Create a Typer app for secret commands
 app = typer.Typer(
@@ -20,7 +20,7 @@ app = typer.Typer(
 console = Console()
 
 
-def _resolve_secret(client: DatalayerClient, reference: str):
+def _resolve_secret(client: DatalayerClient, reference: str) -> SecretModel:
     """Resolve one secret by UID or unambiguous name."""
     existing = client.list_secrets()
     by_uid = [secret for secret in existing if secret.uid == reference]

@@ -18,18 +18,26 @@ class RuntimeSharingMixin:
         """The grants on a runtime, per level and kind of principal. The owner's to see."""
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes/{}/sharing".format(self.urls.runtimes_url, runtime_name),  # type: ignore
+                "{}/api/runtimes/v1/runtimes/{}/sharing".format(
+                    self.urls.runtimes_url,  # type: ignore[attr-defined]
+                    runtime_name,
+                ),
                 method="GET",
             )
             return response.json()
         except RuntimeError as e:
             return {"success": False, "message": str(e)}
 
-    def _share_runtime(self, runtime_name: str, access: dict[str, Any]) -> dict[str, Any]:
+    def _share_runtime(
+        self, runtime_name: str, access: dict[str, Any]
+    ) -> dict[str, Any]:
         """Replace the grants at the levels named; levels not named are kept."""
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes/{}/sharing".format(self.urls.runtimes_url, runtime_name),  # type: ignore
+                "{}/api/runtimes/v1/runtimes/{}/sharing".format(
+                    self.urls.runtimes_url,  # type: ignore[attr-defined]
+                    runtime_name,
+                ),
                 method="PUT",
                 json={"access": access},
             )
@@ -41,7 +49,10 @@ class RuntimeSharingMixin:
         """What the caller may do with a runtime: `view`, `update`, `execute`."""
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes/{}/permissions".format(self.urls.runtimes_url, runtime_name),  # type: ignore
+                "{}/api/runtimes/v1/runtimes/{}/permissions".format(
+                    self.urls.runtimes_url,  # type: ignore[attr-defined]
+                    runtime_name,
+                ),
                 method="GET",
             )
             return response.json()

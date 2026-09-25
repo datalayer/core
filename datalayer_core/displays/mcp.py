@@ -5,8 +5,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Rich displays for the Jupyter MCP Server: connected agents, tasks, bindings,
-audit rows, the effective policy, a run's spans and logs, the SLIs.
+Rich displays for the Jupyter MCP Server.
+
+Connected agents, tasks, bindings, audit rows, the effective policy, a run's
+spans and logs, the SLIs.
 
 Every display accepts the Pydantic models and the plain dictionaries they
 dump to, as the Contents displays do: the CLI holds dictionaries because it
@@ -79,7 +81,8 @@ def connected_agents_table(items: Iterable[Any], *, title: str | None = None) ->
 
 
 def service_agents_table(items: Iterable[Any], *, title: str | None = None) -> Table:
-    """One row per service agent an organization holds.
+    """
+    One row per service agent an organization holds.
 
     Revoked agents are shown, and marked. Hiding them would make one
     invisible to whoever is deciding whether it is still needed, while its
@@ -167,7 +170,11 @@ def audit_events_table(items: Iterable[Any], *, title: str | None = None) -> Tab
         reason = _field(item, "refusal_reason")
         table.add_row(
             _text(item, "at"),
-            _short(_text(item, "client_id") if _field(item, "client_id") else _text(item, "user_uid")),
+            _short(
+                _text(item, "client_id")
+                if _field(item, "client_id")
+                else _text(item, "user_uid")
+            ),
             _text(item, "method"),
             _text(item, "tool"),
             _text(item, "item_uid"),
@@ -180,7 +187,9 @@ def audit_events_table(items: Iterable[Any], *, title: str | None = None) -> Tab
 
 def policy_table(policy: Any, *, title: str | None = None) -> Table:
     """The effective policy, each rule naming the layer that decided it."""
-    table = Table(title=title or f"Effective policy ({_text(policy, 'scope', 'personal')})")
+    table = Table(
+        title=title or f"Effective policy ({_text(policy, 'scope', 'personal')})"
+    )
     table.add_column("Rule", style="cyan")
     table.add_column("Value", style="cyan")
     table.add_column("Decided by", style="cyan")
@@ -196,7 +205,11 @@ def policy_table(policy: Any, *, title: str | None = None) -> Table:
         table.add_row(
             f"tool {_text(rule, 'tool')}",
             f"{'allowed' if allowed else 'denied'} · {_text(rule, 'scope')}"
-            + (f" · approval {_text(rule, 'approval')}" if _field(rule, "approval") else ""),
+            + (
+                f" · approval {_text(rule, 'approval')}"
+                if _field(rule, "approval")
+                else ""
+            ),
             _text(rule, "decided_by"),
         )
     return table
@@ -254,7 +267,8 @@ def forwarding_table(answer: Any, *, title: str | None = None) -> Table:
 
 
 def jobs_table(schedule: Any, *, title: str | None = None) -> Table:
-    """The periodic work of one replica, and what it has done.
+    """
+    The periodic work of one replica, and what it has done.
 
     The replica is in the title rather than a column, because every row is
     that replica's: only one replica holds a job's lease at a time, so a
@@ -264,7 +278,8 @@ def jobs_table(schedule: Any, *, title: str | None = None) -> Table:
     holder = _text(schedule, "holder", "?")
     running = _field(schedule, "running", False)
     table = Table(
-        title=title or f"Periodic jobs on {holder}" + ("" if running else " (not running)")
+        title=title
+        or f"Periodic jobs on {holder}" + ("" if running else " (not running)")
     )
     table.add_column("Job", style="cyan")
     table.add_column("Ran", style="cyan", justify="right")
@@ -303,7 +318,7 @@ def _iso(moment: Any) -> str:
 
 
 def activity_summary_table(activity: Any, *, title: str | None = None) -> Table:
-    """Today's counts, and how much is going on right now."""
+    """Show today's counts, and how much is going on right now."""
     today = _field(activity, "today", {}) or {}
     table = Table(title=title or "MCP activity")
     table.add_column("Measure", style="cyan")
@@ -318,7 +333,9 @@ def activity_summary_table(activity: Any, *, title: str | None = None) -> Table:
     return table
 
 
-def _walk(nodes: list[dict[str, Any]], depth: int = 0) -> Iterable[tuple[int, dict[str, Any]]]:
+def _walk(
+    nodes: list[dict[str, Any]], depth: int = 0
+) -> Iterable[tuple[int, dict[str, Any]]]:
     for node in nodes:
         yield depth, node["span"]
         yield from _walk(node["children"], depth + 1)
@@ -371,10 +388,22 @@ def slis_table(slis: Any, *, title: str | None = None) -> Table:
     table.add_column("Indicator", style="cyan")
     table.add_column("Value", style="cyan", justify="right")
     table.add_column("Samples", style="cyan", justify="right")
-    table.add_row("Availability of POST /mcp", _ratio(_field(slis, "availability")), _text(samples, "calls", "0"))
+    table.add_row(
+        "Availability of POST /mcp",
+        _ratio(_field(slis, "availability")),
+        _text(samples, "calls", "0"),
+    )
     p95 = _field(slis, "p95_call_duration_ms")
-    table.add_row("p95 call duration", "-" if p95 is None else f"{float(p95):.0f} ms", _text(samples, "calls", "0"))
-    table.add_row("Task success rate", _ratio(_field(slis, "task_success_rate")), _text(samples, "tasks", "0"))
+    table.add_row(
+        "p95 call duration",
+        "-" if p95 is None else f"{float(p95):.0f} ms",
+        _text(samples, "calls", "0"),
+    )
+    table.add_row(
+        "Task success rate",
+        _ratio(_field(slis, "task_success_rate")),
+        _text(samples, "tasks", "0"),
+    )
     launches = _field(slis, "p95_sandbox_launch_seconds", {}) or {}
     if launches:
         for provider, seconds in launches.items():
@@ -388,7 +417,9 @@ def slis_table(slis: Any, *, title: str | None = None) -> Table:
     return table
 
 
-def display_connected_agents(items: Iterable[Any], console: Console | None = None) -> None:
+def display_connected_agents(
+    items: Iterable[Any], console: Console | None = None
+) -> None:
     (console or Console()).print(connected_agents_table(items))
 
 
