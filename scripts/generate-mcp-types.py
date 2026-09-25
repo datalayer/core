@@ -40,7 +40,7 @@ from typing import Any
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).parents[1]
-DEFAULT_GATEWAY_CHECKOUT = ROOT.parents[2] / "k8s/services/jupyter-mcp-server"
+DEFAULT_GATEWAY_CHECKOUT = ROOT.parents[2] / "k8s/services/mcp-server"
 DEFAULT_GATEWAY_OPENAPI_URL = "https://r1.datalayer.run/api/mcp/v1/openapi.json"
 GATEWAY_APP = "datalayer_mcp_server.main:app"
 OUTPUT = ROOT / "src/api/mcp/generated.ts"

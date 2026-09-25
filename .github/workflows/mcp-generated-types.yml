@@ -1,9 +1,10 @@
 name: MCP Generated Types
 
 # The checked-in `src/api/mcp/generated.ts` must be what the Jupyter MCP
-# Server's OpenAPI document gives. The gateway publishes its document without
-# authentication, so the check reads the deployed one: a route the gateway
-# added or dropped fails here until `npm run generate:mcp` is committed.
+# Server's OpenAPI document gives: a route the gateway added or dropped fails
+# here until `npm run generate:mcp` is committed. The document is read from
+# the `DATALAYER_MCP_OPENAPI` repository variable; without it the job is
+# skipped (see the `if:` below).
 
 on:
   push:
@@ -22,6 +23,13 @@ on:
 
 jobs:
   check-generated:
+    # The MCP gateway no longer serves its OpenAPI document publicly (the
+    # r1/prod1 `/api/mcp/...` routes are 404) and the private services
+    # checkout the script can also read is not available here, so there is
+    # nothing to compare against by default. Set the repository variable
+    # `DATALAYER_MCP_OPENAPI` (a URL to a reachable openapi.json) to turn the
+    # check back on.
+    if: vars.DATALAYER_MCP_OPENAPI != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -32,5 +40,5 @@ jobs:
 
       - name: Check src/api/mcp/generated.ts is current
         env:
-          DATALAYER_MCP_OPENAPI: ${{ vars.DATALAYER_MCP_OPENAPI || 'https://r1.datalayer.run/api/mcp/v1/openapi.json' }}
+          DATALAYER_MCP_OPENAPI: ${{ vars.DATALAYER_MCP_OPENAPI }}
         run: python scripts/generate-mcp-types.py --check
