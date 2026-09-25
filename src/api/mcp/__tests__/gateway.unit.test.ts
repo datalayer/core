@@ -28,7 +28,7 @@ describe('MCP gateway addressing', () => {
     expect(mcpGatewayOrigin('http://localhost:4404')).toBe(
       'http://localhost:4404',
     );
-    expect(mcpGatewayOrigin()).toBe('https://r1.datalayer.run');
+    expect(mcpGatewayOrigin()).toBe('https://mcp.datalayer.run');
   });
 
   it('builds versioned routes with only the query parameters that have a value', () => {

@@ -265,6 +265,7 @@ export class BrowserOAuthStrategy extends BaseAuthStrategy {
     } catch (error) {
       throw new Error(
         `OAuth authentication failed: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
       );
     }
   }

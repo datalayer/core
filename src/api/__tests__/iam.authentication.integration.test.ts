@@ -305,9 +305,11 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
         console.log('Logout failed:', error.message);
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
-        // Should get an auth error for invalid token
+        // Should get an auth error for invalid token: IAM answers 401 with a
+        // message of its own ("Authentication failed").
         expect(
-          error.message.includes('Unauthorized') ||
+          error.response?.status === 401 ||
+            error.message.includes('Unauthorized') ||
             error.message.includes('Server Error') ||
             error.message.includes('401') ||
             error.message.includes('Invalid authentication token') ||

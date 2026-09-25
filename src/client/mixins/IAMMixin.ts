@@ -100,6 +100,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
         await (this as any).setToken('');
         throw new Error(
           `Invalid token: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          { cause: error },
         );
       }
     }
@@ -122,10 +123,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       const token = (this as any).getToken();
       const iamUrl = (this as any).getIamUrl();
 
-      const response: CreditsResponse = await usage.getCredits(
-        token,
-        iamUrl,
-      );
+      const response: CreditsResponse = await usage.getCredits(token, iamUrl);
 
       if (!response || !response.credits) {
         throw new Error('Invalid response from credits API');
@@ -188,7 +186,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
     async checkIAMHealth(): Promise<HealthCheck> {
       const startTime = Date.now();
       const errors: string[] = [];
-      let status = 'unknown';
+      let status: string;
       let healthy = false;
 
       try {

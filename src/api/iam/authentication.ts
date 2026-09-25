@@ -78,12 +78,15 @@ export const login = async (
 
       // Expected error: 401 for invalid credentials
       if (status === 401) {
-        throw new Error(`Login failed: Invalid credentials (${status})`);
+        throw new Error(`Login failed: Invalid credentials (${status})`, {
+          cause: error,
+        });
       }
 
       // Unexpected status codes
       throw new Error(
         `Login failed: Unexpected status code ${status} - ${error.message}`,
+        { cause: error },
       );
     }
 
@@ -151,12 +154,14 @@ export const checkAuth = async (
       if (status === 401) {
         throw new Error(
           `Authentication check failed: Unauthorized (${status})`,
+          { cause: error },
         );
       }
 
       // Unexpected status codes
       throw new Error(
         `Authentication check failed: Unexpected status code ${status} - ${error.message}`,
+        { cause: error },
       );
     }
 

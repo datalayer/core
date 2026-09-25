@@ -70,7 +70,7 @@ export function useWindowSize() {
 }
 
 const breakpointSwitch = (value: number) => {
-  let current = BreakpointSize.XXLARGE;
+  let current: BreakpointSize;
   switch (true) {
     case value >= 320 && value < 544:
       current = BreakpointSize.XSMALL;

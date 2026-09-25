@@ -11,4 +11,8 @@ import * as ReactRouterDom from 'react-router-dom';
 // Export hooks for use in our navigation hooks
 export const useParamsRR = ReactRouterDom.useParams;
 export const useLocationRR = ReactRouterDom.useLocation;
-export const useNavigateRR = ReactRouterDom.useNavigate;
+// Typed here rather than inferred: the inferred type carries React Router's
+// own doc comment, whose links (`redirect`, `To`, `<ScrollRestoration>`) point
+// at symbols these docs do not include, and typedoc fails the build on them.
+export const useNavigateRR: () => ReactRouterDom.NavigateFunction =
+  ReactRouterDom.useNavigate;

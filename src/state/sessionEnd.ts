@@ -164,7 +164,7 @@ export const claimSessionState = (userUid: string | null | undefined): void => {
     return;
   }
   const localStorage = storageOf('localStorage');
-  let owner: string | null = null;
+  let owner: string | null;
   try {
     owner = localStorage?.getItem(SESSION_OWNER_KEY) ?? null;
   } catch {
