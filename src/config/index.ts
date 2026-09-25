@@ -4,4 +4,5 @@
  */
 
 export * from './Configuration';
+export * from './planes';
 export * from './integrations';

@@ -13,12 +13,18 @@ type DatalayerBoxProps = {
   title: string;
   linkLabel?: string;
   linkRoute?: string;
+  /**
+   * What sits next to the title, e.g. the mark that explains the box.
+   *
+   * The link on the trailing edge leads somewhere; this stays here.
+   */
+  titleAction?: React.ReactNode;
 };
 
 export const DatalayerBox = (
   props: React.PropsWithChildren<DatalayerBoxProps>,
 ) => {
-  const { title, linkLabel, linkRoute, children } = props;
+  const { title, linkLabel, linkRoute, titleAction, children } = props;
   const navigate = useNavigate();
   return (
     <>
@@ -30,9 +36,15 @@ export const DatalayerBox = (
           paddingRight: 4,
         }}
       >
-        <Text as="h2" sx={{ borderLeft: '6px solid #28b899', paddingLeft: 2 }}>
-          {title}
-        </Text>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Text
+            as="h2"
+            sx={{ borderLeft: '6px solid #28b899', paddingLeft: 2 }}
+          >
+            {title}
+          </Text>
+          {titleAction}
+        </Box>
         {linkRoute && linkLabel && (
           <Link
             href="javascript: return false;"

@@ -17,15 +17,23 @@ repos:
       - id: ruff-check
         args: ['--select', 'I', '--fix']
         types_or: [python, pyi]
+        # Generated files: `generate-contents-types.py --check` and
+        # `generate-orchestration-types.py --check` compare them byte for byte,
+        # so they stay as their generators write them.
+        exclude: ^datalayer_core/(models/contents/generated|orchestration/api)\.py$
       # Run the formatter
       - id: ruff-format
         types_or: [python, pyi]
+        exclude: ^datalayer_core/(models/contents/generated|orchestration/api)\.py$
 
   # Python docstring validation (NumPy style)
   - repo: https://github.com/numpy/numpydoc
     rev: v1.9.0
     hooks:
       - id: numpydoc-validation
+        # `[tool.numpydoc_validation] exclude_files` means to leave the tests
+        # out, but this numpydoc's hook has no such option and read nothing.
+        exclude: ^datalayer_core/tests/
 
   # Security checks
   - repo: https://github.com/PyCQA/bandit
@@ -54,4 +62,9 @@ repos:
     rev: 1.7.0
     hooks:
       - id: interrogate
-        args: [--config=pyproject.toml]
+        args: [--config=pyproject.toml, --exclude=datalayer_core/tests,
+               --exclude=scripts, --exclude=.venv, --exclude=node_modules]
+        # Without this pre-commit hands interrogate every Python file by name,
+        # and an explicit file list is never filtered by --exclude: the tests
+        # and the scripts were being counted whatever the config said.
+        pass_filenames: false

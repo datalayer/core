@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type ReactNode,
 } from 'react';
 import {
   CardElement,
@@ -1907,11 +1908,7 @@ export function StripeCheckout({
     </Box>
   ) : null;
 
-  let view = (
-    <Box sx={{ minHeight: '40px' }}>
-      <Spinner />
-    </Box>
-  );
+  let view: ReactNode;
   // While the Stripe payment form is shown, disable interaction with the
   // status / plan picker cards behind it so the only available action is the
   // "Cancel" button next to the form.

@@ -6,18 +6,23 @@
 import { IUser } from './User';
 
 export type IIAMProviderName =
-  | 'bluesky'
-  | 'discord'
-  | 'github'
-  | 'google'
-  | 'linkedin'
-  | 'okta'
-  | 'x';
+  'bluesky' | 'discord' | 'github' | 'google' | 'linkedin' | 'okta' | 'x';
+
+/** Providers whose access token is intentionally available to browser code. */
+export type IBrowserTokenProviderName = Exclude<
+  IIAMProviderName,
+  'bluesky' | 'linkedin'
+>;
 
 export type IIAMProviderSpec = {
   name: IIAMProviderName;
   oauth2CallbackServerRoute: string;
   oauth2CallbackUIRoute: string;
+};
+
+/** Provider metadata used only when its access token may be read by the UI. */
+export type IBrowserTokenProviderSpec = IIAMProviderSpec & {
+  name: IBrowserTokenProviderName;
   accessTokenCookieName: (user: IUser) => string;
   refreshTokenCookieName: string;
   userInfoURL: string;
@@ -29,19 +34,15 @@ export type IIAMProviderSpec = {
 export class IAMProvidersSpecs {
   private constructor() {}
 
-  static getProvider(providerIAMProvidersType): IIAMProviderSpec {
+  static getProvider(
+    providerIAMProvidersType: IBrowserTokenProviderName,
+  ): IBrowserTokenProviderSpec {
     switch (providerIAMProvidersType) {
-      case 'bluesky': {
-        return this.Bluesky;
-      }
       case 'github': {
         return this.GitHub;
       }
       case 'google': {
         return this.Google;
-      }
-      case 'linkedin': {
-        return this.LinkedIn;
       }
       case 'okta': {
         return this.Okta;
@@ -53,19 +54,7 @@ export class IAMProvidersSpecs {
     }
   }
 
-  static readonly Bluesky: IIAMProviderSpec = {
-    name: 'bluesky',
-    oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
-    oauth2CallbackUIRoute: '/iam/oauth2/bluesky/callback',
-    accessTokenCookieName: (user: IUser) =>
-      `__datalayer__bluesky_access_token_${user.id}`,
-    refreshTokenCookieName: '__datalayer__bluesky_refresh_token',
-    userInfoURL: '',
-    tokenRefreshURL: '',
-    postShareURL: '',
-    registerUploadURL: '',
-  };
-  static readonly GitHub: IIAMProviderSpec = {
+  static readonly GitHub: IBrowserTokenProviderSpec = {
     name: 'github',
     oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
     oauth2CallbackUIRoute: '/iam/oauth2/github/callback',
@@ -77,7 +66,7 @@ export class IAMProvidersSpecs {
     postShareURL: '',
     registerUploadURL: '',
   };
-  static readonly Google: IIAMProviderSpec = {
+  static readonly Google: IBrowserTokenProviderSpec = {
     name: 'google',
     oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
     oauth2CallbackUIRoute: '/iam/oauth2/google/callback',
@@ -93,16 +82,8 @@ export class IAMProvidersSpecs {
     name: 'linkedin',
     oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
     oauth2CallbackUIRoute: '/iam/oauth2/linkedin/callback',
-    accessTokenCookieName: (user: IUser) =>
-      `__datalayer__linkedin_access_token_${user.id}`,
-    refreshTokenCookieName: '__datalayer__linkedin_refresh_token',
-    userInfoURL: 'https://api.linkedin.com/v2/userinfo',
-    tokenRefreshURL: '',
-    postShareURL: 'https://api.linkedin.com/v2/ugcPosts',
-    registerUploadURL:
-      'https://api.linkedin.com/v2/assets?action=registerUpload',
   };
-  static readonly Okta: IIAMProviderSpec = {
+  static readonly Okta: IBrowserTokenProviderSpec = {
     name: 'okta',
     oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
     oauth2CallbackUIRoute: '/iam/oauth2/linkedin/callback',

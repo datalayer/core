@@ -3,8 +3,8 @@
 
 """Usage/credits commands for Datalayer CLI."""
 
-from datetime import datetime, timezone
 import os
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 import typer
@@ -178,7 +178,9 @@ def usage_records(
             table.add_column("Billing", style="dim", no_wrap=True)
             table.add_column("Start", style="white", no_wrap=True)
             table.add_column("End", style="white", no_wrap=True)
-            table.add_column("Duration(s)", style="white", justify="right", no_wrap=True)
+            table.add_column(
+                "Duration(s)", style="white", justify="right", no_wrap=True
+            )
             table.add_column("Credits", style="yellow", justify="right", no_wrap=True)
             table.add_column("Burn/s", style="white", justify="right", no_wrap=True)
 
@@ -193,10 +195,7 @@ def usage_records(
             start = usage.get("start_date")
             end = usage.get("end_date")
             creator = usage.get("account_uid")
-            billing = (
-                usage.get("billing_entity_uid")
-                or usage.get("account_uid")
-            )
+            billing = usage.get("billing_entity_uid") or usage.get("account_uid")
             return (
                 _normalize_value(resource),
                 _normalize_value(usage.get("resource_type")),
@@ -342,8 +341,7 @@ def usage_reservations(
                 ),
                 _normalize_value(reservation.get("resource_type")),
                 _normalize_value(
-                    reservation.get("credits")
-                    or reservation.get("credits_limit"),
+                    reservation.get("credits") or reservation.get("credits_limit"),
                     fallback="0",
                 ),
                 _normalize_value(reservation.get("burning_rate"), fallback="0"),

@@ -3,5 +3,14 @@
   "entryPoints": ["./src/index.ts"],
   "name": "Datalayer Core",
   "plugin": ["typedoc-plugin-markdown"],
-  "treatWarningsAsErrors": true
+  "treatWarningsAsErrors": true,
+  "validation": {
+    "notExported": false
+  },
+  "externalSymbolLinkMappings": {
+    "@datalayer/core": {
+      "DEFAULT_PLACEHOLDER_MAX_LENGTH": "#",
+      "PrincipalDetailsCard": "#"
+    }
+  }
 }

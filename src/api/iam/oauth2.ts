@@ -100,17 +100,21 @@ export const getOAuth2AuthzUrl = async (
 
       // Expected errors
       if (status === 400) {
-        throw new Error(`Invalid OAuth2 parameters: ${error.message}`);
+        throw new Error(`Invalid OAuth2 parameters: ${error.message}`, {
+          cause: error,
+        });
       }
       if (status === 404) {
         throw new Error(
           `OAuth2 provider '${provider}' not found or not configured`,
+          { cause: error },
         );
       }
 
       // Unexpected status codes
       throw new Error(
         `Failed to get OAuth2 authorization URL: ${status} - ${error.message}`,
+        { cause: error },
       );
     }
 
@@ -170,17 +174,21 @@ export const getOAuth2AuthzUrlForLink = async (
 
       // Expected errors
       if (status === 400) {
-        throw new Error(`Invalid OAuth2 link parameters: ${error.message}`);
+        throw new Error(`Invalid OAuth2 link parameters: ${error.message}`, {
+          cause: error,
+        });
       }
       if (status === 404) {
         throw new Error(
           `OAuth2 provider '${provider}' not found or not configured for linking`,
+          { cause: error },
         );
       }
 
       // Unexpected status codes
       throw new Error(
         `Failed to get OAuth2 link authorization URL: ${status} - ${error.message}`,
+        { cause: error },
       );
     }
 
@@ -250,12 +258,14 @@ export const handleGitHubOAuth2Callback = async (
       if (status === 403) {
         throw new Error(
           `GitHub OAuth2 callback unauthorized: ${error.message}`,
+          { cause: error },
         );
       }
 
       // Unexpected status codes
       throw new Error(
         `GitHub OAuth2 callback failed: ${status} - ${error.message}`,
+        { cause: error },
       );
     }
 
@@ -325,12 +335,14 @@ export const handleLinkedInOAuth2Callback = async (
       if (status === 403) {
         throw new Error(
           `LinkedIn OAuth2 callback unauthorized: ${error.message}`,
+          { cause: error },
         );
       }
 
       // Unexpected status codes
       throw new Error(
         `LinkedIn OAuth2 callback failed: ${status} - ${error.message}`,
+        { cause: error },
       );
     }
 
@@ -398,12 +410,15 @@ export const handleOktaOAuth2Callback = async (
 
       // Expected errors
       if (status === 403) {
-        throw new Error(`Okta OAuth2 callback unauthorized: ${error.message}`);
+        throw new Error(`Okta OAuth2 callback unauthorized: ${error.message}`, {
+          cause: error,
+        });
       }
 
       // Unexpected status codes
       throw new Error(
         `Okta OAuth2 callback failed: ${status} - ${error.message}`,
+        { cause: error },
       );
     }
 

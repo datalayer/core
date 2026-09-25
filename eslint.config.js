@@ -26,6 +26,8 @@ export default tseslint.config(
       '**/*.min.js',
       '**/storybook-static/**',
       '**/.next/**',
+      // Vite bundles for the Python package (build output, gitignored).
+      'datalayer_core/static/**',
       'tsconfig.tsbuildinfo',
     ],
   },

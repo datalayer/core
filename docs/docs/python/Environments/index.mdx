@@ -21,16 +21,22 @@ Environments in Datalayer provide pre-configured compute contexts that define wh
 - **Pre-configured Software Stacks**: Curated combinations of packages and libraries for specific domains
 - **Resource Allocation**: Different CPU/GPU configurations and memory allocations
 - **Language Support**: Environments optimized for different programming languages
-- **Cost Management**: Transparent pricing based on resource usage and burning rates
+- **Cost Management**: Transparent pricing — a burning rate is credits per second, and a runtime is billed for the seconds it ran
 - **Version Control**: Consistent, reproducible environments with locked package versions
 - **Scalability**: Environments that can scale from development to production workloads
 
 ### Environment Types
 
-Datalayer provides several types of pre-built environments:
-
-- **Python CPU Environment**: Basic Python environments for general computation
-- **AI Environment**: High-performance Python GPU environments for AI
+- **Platform Environments** are maintained by Datalayer and need no build:
+  `python-cpu-env` for general computation and `ai-agents-env` for agents.
+- **User Environments** are the ones you define yourself — a Python version on
+  an approved base, the packages, a few files, a size class — versioned,
+  resolved once into a lock and built into an immutable artifact per variant.
+  They are written as an
+  [Environment specification](https://datalayer.ai/docs/environments-spec) and
+  managed with `datalayer envs`; the
+  [User Environments guide](https://datalayer.ai/docs/environments-user) walks
+  the flow.
 
 ## Environment Class
 
@@ -38,7 +44,7 @@ The `Environment` class represents a computing environment with the following at
 
 - **name**: Unique identifier for the environment (e.g., "ai-agents-env")
 - **title**: Human-readable display name
-- **burning_rate**: Cost per hour for using the environment
+- **burning_rate**: Credits burned per second while a runtime of this environment runs
 - **language**: Primary programming language (e.g., "python", "r", "julia")
 - **owner**: Environment owner/maintainer
 - **visibility**: Access level (public/private)
@@ -60,7 +66,7 @@ print(f"Found {len(environments)} available environments:")
 for env in environments:
     print(f"  - {env.name}: {env.title}")
     print(f"    Language: {env.language}")
-    print(f"    Cost: ${env.burning_rate}/hour")
+    print(f"    Credits per second: {env.burning_rate}")
     print(f"    Owner: {env.owner}")
     print("---")
 ```
@@ -79,7 +85,7 @@ for env in environments:
     print(f"Environment: {env.title}")
     print(f"  Name: {env.name}")
     print(f"  Language: {env.language}")
-    print(f"  Burning Rate: ${env.burning_rate:.4f}/hour")
+    print(f"  Burning Rate: {env.burning_rate:.4f} credits/second")
     print(f"  Owner: {env.owner}")
     print(f"  Visibility: {env.visibility}")
     
@@ -96,6 +102,12 @@ for env in environments:
 - **Environment Availability**: Available environments may vary based on your account tier and region
 - **Cost Billing**: Environment costs are billed based on actual runtime usage, not reservation time
 - **Package Updates**: Environment package versions are periodically updated; check compatibility for production workloads
-- **Custom Environments**: Contact support for custom environment requirements not met by standard offerings
+- **Custom Environments**: Write a User Environment instead of asking for one.
+  `datalayer envs create --file environment.yaml` makes it,
+  `datalayer envs build <version> --follow` builds it,
+  `datalayer envs try <version>` runs it once before anybody else sees it, and
+  `datalayer envs promote <version>` makes it the version new sandboxes start
+  from. A launch can pin a version:
+  `client.create_runtime(environment="acme/geo", environment_version=2)`
 - **Resource Limits**: Each environment has specific CPU, memory, and GPU limitations
 - **Persistence**: Environments are stateless; use snapshots or external storage for persistent data

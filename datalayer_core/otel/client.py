@@ -181,13 +181,17 @@ class OtelClient:
         trace_id : str
             The trace ID.
         """
-        return self._get(f"/api/otel/v1/traces/{trace_id}/")
+        # No trailing slash. The service declares the route without one and
+        # does not redirect, so `/traces/{id}/` answered 404 for a trace the
+        # listing route had just returned — and `datalayer mcp trace` found
+        # nothing for every run.
+        return self._get(f"/api/otel/v1/traces/{trace_id}")
 
     def list_services(self) -> list[str]:
         """
         List all observed service names.
         """
-        data = self._get("/api/otel/v1/traces/services/list/")
+        data = self._get("/api/otel/v1/traces/services/list")
         return data.get("services", data)
 
     # ── metrics ──────────────────────────────────────────────────────
@@ -241,6 +245,47 @@ class OtelClient:
         if service_name:
             params["service_name"] = service_name
         return self._get("/api/otel/v1/metrics/query/", params=params)
+
+    def metric_names(self) -> dict[str, Any]:
+        """
+        The metrics the service holds points of, under the caller's account.
+        """
+        return self._get("/api/otel/v1/metrics/names")
+
+    def dashboard_data(
+        self,
+        dashboard_id: str,
+        *,
+        start: int | None = None,
+        end: int | None = None,
+        account_uid: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Every panel of one dashboard, summarised by the service.
+
+        The service reads each series as it was exported — a running total's
+        increase, a percentile from a histogram's buckets — so a caller never
+        adds metric points up itself.
+
+        Parameters
+        ----------
+        dashboard_id : str
+            A built-in dashboard's id, or one the account saved.
+        start : int, optional
+            Unix nanoseconds; the window opens there.
+        end : int, optional
+            Unix nanoseconds; the window closes there.
+        account_uid : str, optional
+            Read as this organization or team rather than the caller.
+        """
+        params: dict[str, Any] = {}
+        if start is not None:
+            params["start"] = start
+        if end is not None:
+            params["end"] = end
+        if account_uid:
+            params["account_uid"] = account_uid
+        return self._get(f"/api/otel/v1/dashboards/{dashboard_id}/data", params=params)
 
     # ── logs ─────────────────────────────────────────────────────────
 

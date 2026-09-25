@@ -72,6 +72,8 @@ export type PrincipalDescriptor = {
   email?: string;
   origin?: string;
   avatarUrl?: string;
+  avatarIcon?: string;
+  banner?: string;
 };
 
 export type PrincipalProps = {
@@ -207,6 +209,8 @@ export const Principal: React.FC<PrincipalProps> = ({
       lastName: profile.last_name,
       handle: profile.handle,
       avatarUrl: profile.avatar_url,
+      avatarIcon: profile.avatar_icon_s || profile.avatar_icon,
+      banner: profile.banner_s || profile.banner,
       origin: profile.origin,
       email: profile.email,
     };
@@ -223,6 +227,8 @@ export const Principal: React.FC<PrincipalProps> = ({
       description: profile.description || profile.description_t,
       handle: profile.handle,
       avatarUrl: profile.avatar_url,
+      avatarIcon: profile.avatar_icon_s || profile.avatar_icon,
+      banner: profile.banner_s || profile.banner,
     };
   }, [hydratedPublicOrgQuery.data]);
 
@@ -347,6 +353,11 @@ export const Principal: React.FC<PrincipalProps> = ({
       (hydratedEntity as any)?.avatarUrl ||
       cachedPrincipal?.avatarUrl ||
       undefined,
+    avatarIcon:
+      principal.avatarIcon ||
+      (hydratedEntity as any)?.avatarIcon ||
+      undefined,
+    banner: principal.banner || (hydratedEntity as any)?.banner || undefined,
     firstName:
       principal.firstName ||
       (hydratedEntity as any)?.firstName ||
@@ -394,6 +405,8 @@ export const Principal: React.FC<PrincipalProps> = ({
       email: resolvedPrincipal.email,
       origin: resolvedPrincipal.origin,
       avatarUrl: resolvedPrincipal.avatarUrl,
+      avatarIcon: resolvedPrincipal.avatarIcon,
+      banner: resolvedPrincipal.banner,
       organizationHandle: teamOrganizationHandleResolved,
       organizationName: teamOrganizationNameResolved,
       memberCount: teamMemberCount,
@@ -425,6 +438,7 @@ export const Principal: React.FC<PrincipalProps> = ({
       <PrincipalAvatar
         kind={resolvedPrincipal.kind}
         avatarUrl={resolvedPrincipal.avatarUrl}
+        avatarIcon={resolvedPrincipal.avatarIcon}
         alt={resolvedPrincipal.displayName}
         size={avatarSize}
         square={square}
@@ -442,6 +456,7 @@ export const Principal: React.FC<PrincipalProps> = ({
         email={resolvedPrincipal.email}
         origin={resolvedPrincipal.origin}
         avatarUrl={resolvedPrincipal.avatarUrl}
+        avatarIcon={resolvedPrincipal.avatarIcon}
         organizationName={teamOrganizationNameResolved}
         memberCount={teamMemberCount}
         isPublic={resolvedIsPublic}

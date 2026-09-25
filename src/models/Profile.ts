@@ -39,6 +39,8 @@ export interface Profile {
   roles_ss?: string[];
   /** Avatar URL */
   avatar_url_s?: string;
+  avatar_icon_s?: string;
+  banner_s?: string;
   /** Onboarding state as JSON string */
   onboarding_s?: string;
   /** New password request timestamp */

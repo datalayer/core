@@ -198,7 +198,14 @@ const APIKeysTable = () => {
   );
 };
 
-export const APIKeysStandalone = () => {
+export type APIKeysStandaloneProps = {
+  /** Where the "New API Key" button goes. */
+  newKeyRoute?: string;
+};
+
+export const APIKeysStandalone = ({
+  newKeyRoute = '/settings/api-keys/new',
+}: APIKeysStandaloneProps = {}) => {
   const navigate = useNavigate();
   return (
     <PageLayout
@@ -215,7 +222,7 @@ export const APIKeysStandalone = () => {
             <Button
               size="small"
               variant="primary"
-              onClick={e => navigate('/api-keys/new', e)}
+              onClick={e => navigate(newKeyRoute, e)}
             >
               New API key
             </Button>

@@ -4,7 +4,6 @@
 from typing import Any
 
 from datalayer_core.models.secret import SecretVariant
-from datalayer_core.utils import btoa
 
 
 class SecretsCreateMixin:
@@ -36,11 +35,16 @@ class SecretsCreateMixin:
         dict
             A dictionary containing the created secret and its details.
         """
+        # A secret's value travels and is stored as it is. It used to be
+        # base64 and nothing on the other side undid it, so a build secret
+        # arrived at its build still encoded and opened nothing (PLAN_ENVS.md
+        # E3-05, found 2026-09-17). There is one representation now — no
+        # marker, no encoding to agree on, nothing for a reader to guess.
         body = {
             "name": name,
             "description": description,
             "variant": secret_type,
-            "value": btoa(value),
+            "value": value,
         }
         try:
             response = self._fetch(  # type: ignore
@@ -102,5 +106,22 @@ class SecretsListMixin:
             return {"sucess": False, "error": str(e)}
 
 
-class SecretsMixin(SecretsCreateMixin, SecretsDeleteMixin, SecretsListMixin):
+class SecretsValuesMixin:
+    """Mixin for reading the current user's secret values."""
+
+    def _get_secret_values(self) -> dict[str, Any]:
+        """Return secret values by name exactly as IAM stores them."""
+        try:
+            response = self._fetch(  # type: ignore
+                "{}/api/iam/v1/secrets/values".format(self.urls.iam_url),  # type: ignore
+                method="GET",
+            )
+            return response.json()
+        except RuntimeError as e:
+            return {"success": False, "error": str(e)}
+
+
+class SecretsMixin(
+    SecretsCreateMixin, SecretsDeleteMixin, SecretsListMixin, SecretsValuesMixin
+):
     """A mixin that combines create, delete, and list functionalities for secrets."""

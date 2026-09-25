@@ -34,4 +34,39 @@ describe('IAM Profile', () => {
 
     await expect(profile.me(MOCK_JWT_TOKEN)).rejects.toThrow('Network error');
   });
+
+  it('searches the people a caller may name', async () => {
+    vi.mocked(requestDatalayerAPI).mockResolvedValue({
+      success: true,
+      data: { users: [] },
+    });
+
+    await profile.searchPrincipals(
+      MOCK_JWT_TOKEN,
+      'gra',
+      ['user'],
+      'https://iam.example',
+    );
+
+    expect(vi.mocked(requestDatalayerAPI)).toHaveBeenCalledWith({
+      url: 'https://iam.example/api/iam/v1/principals/search',
+      method: 'POST',
+      body: { query: 'gra', principalTypes: ['user'] },
+      token: MOCK_JWT_TOKEN,
+    });
+  });
+
+  it('names a person found by their name, or else by nothing', () => {
+    expect(
+      profile.personOfPrincipalUser({
+        uid: 'u-1',
+        handle_s: 'grace',
+        first_name_t: 'Grace',
+        last_name_t: 'Hopper',
+      }),
+    ).toEqual({ uid: 'u-1', handle: 'grace', name: 'Grace Hopper' });
+    expect(
+      profile.personOfPrincipalUser({ uid: 'u-2', handle_s: 'alan' }),
+    ).toEqual({ uid: 'u-2', handle: 'alan', name: null });
+  });
 });

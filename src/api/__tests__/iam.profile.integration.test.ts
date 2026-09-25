@@ -134,8 +134,11 @@ describe.skipIf(skipTests)('IAM Profile Integration Tests', () => {
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
         // The error message should indicate server error or authentication failure
+        // IAM answers 401 with a message of its own ("Authentication
+        // failed"), so the status is what says the token was refused.
         expect(
-          error.message.includes('401') ||
+          error.response?.status === 401 ||
+            error.message.includes('401') ||
             error.message.includes('Unauthorized') ||
             error.message.includes('Invalid') ||
             error.message.includes('credentials') ||
@@ -276,8 +279,11 @@ describe.skipIf(skipTests)('IAM Profile Integration Tests', () => {
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
         // The error message should indicate server error or authentication failure
+        // IAM answers 401 with a message of its own ("Authentication
+        // failed"), so the status is what says the token was refused.
         expect(
-          error.message.includes('401') ||
+          error.response?.status === 401 ||
+            error.message.includes('401') ||
             error.message.includes('Unauthorized') ||
             error.message.includes('Invalid') ||
             error.message.includes('credentials') ||

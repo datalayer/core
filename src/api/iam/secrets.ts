@@ -22,21 +22,6 @@ import type {
 } from '../../models/Secret';
 
 /**
- * Helper function to Base64 encode a value (cross-platform).
- * @param value - Plain text value to encode
- * @returns Base64 encoded string
- */
-function encodeValue(value: string): string {
-  if (typeof Buffer !== 'undefined') {
-    // Node.js environment
-    return Buffer.from(value).toString('base64');
-  } else {
-    // Browser environment
-    return btoa(value);
-  }
-}
-
-/**
  * Create a new secret.
  * Creates a new encrypted secret for the authenticated user.
  *
@@ -64,12 +49,14 @@ export const createSecret = async (
   validateRequiredString(data.name, 'Secret name');
   validateRequiredString(data.value, 'Secret value');
 
-  // Base64 encode the value before sending to API
   const requestBody = {
     variant: data.variant || 'generic',
     name: data.name,
     description: data.description || '',
-    value: encodeValue(data.value),
+    // As it is. A secret has one representation end to end (PLAN_ENVS.md
+    // E3-05): this used to base64-encode, and nothing on the read side undid
+    // it, so a build secret arrived at its build encoded and opened nothing.
+    value: data.value,
   };
 
   try {
@@ -83,6 +70,7 @@ export const createSecret = async (
     if (error.response?.status === 409) {
       throw new Error(
         `Secret with name '${data.name}' already exists. Please use a different name.`,
+        { cause: error },
       );
     }
     throw error;
@@ -147,7 +135,7 @@ export const getSecret = async (
     });
   } catch (error: any) {
     if (error.response?.status === 404) {
-      throw new Error(`Secret '${secretId}' not found.`);
+      throw new Error(`Secret '${secretId}' not found.`, { cause: error });
     }
     throw error;
   }
@@ -180,10 +168,10 @@ export const updateSecret = async (
   validateToken(token);
   validateRequiredString(secretId, 'Secret ID');
 
-  // Base64 encode value if provided
+  // Secret values are opaque. Send exactly what the owner supplied.
   const requestBody: any = { ...data };
   if (data.value) {
-    requestBody.value = encodeValue(data.value);
+    requestBody.value = data.value;
   }
 
   try {
@@ -195,7 +183,7 @@ export const updateSecret = async (
     });
   } catch (error: any) {
     if (error.response?.status === 404) {
-      throw new Error(`Secret '${secretId}' not found.`);
+      throw new Error(`Secret '${secretId}' not found.`, { cause: error });
     }
     throw error;
   }
@@ -230,7 +218,7 @@ export const deleteSecret = async (
     });
   } catch (error: any) {
     if (error.response?.status === 404) {
-      throw new Error(`Secret '${secretId}' not found.`);
+      throw new Error(`Secret '${secretId}' not found.`, { cause: error });
     }
     throw error;
   }

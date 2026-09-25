@@ -10,7 +10,7 @@ from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.secrets import display_secrets
-from datalayer_core.models.secret import SecretVariant
+from datalayer_core.models.secret import SecretModel, SecretVariant
 
 # Create a Typer app for secret commands
 app = typer.Typer(
@@ -18,6 +18,26 @@ app = typer.Typer(
 )
 
 console = Console()
+
+
+def _resolve_secret(client: DatalayerClient, reference: str) -> SecretModel:
+    """Resolve one secret by UID or unambiguous name."""
+    existing = client.list_secrets()
+    by_uid = [secret for secret in existing if secret.uid == reference]
+    if by_uid:
+        return by_uid[0]
+    matches = [secret for secret in existing if secret.name == reference]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        console.print(
+            f"[red]Several secrets are named '{reference}' — use the UID instead:[/red]"
+        )
+        for match in matches:
+            console.print(f"  {match.uid}")
+        raise typer.Exit(1)
+    console.print(f"[red]No secret has the UID or name '{reference}'.[/red]")
+    raise typer.Exit(1)
 
 
 @app.callback()
@@ -56,6 +76,47 @@ def list_secrets(
 
     except Exception as e:
         console.print(f"[red]Error listing secrets: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command(name="get")
+def get_secret(
+    secret: str = typer.Argument(..., help="UID or name of the secret to get"),
+    show_value: bool = typer.Option(
+        False,
+        "--show-value",
+        help="Write only the raw secret value to stdout. Treat the output as sensitive.",
+    ),
+    api_key: Optional[str] = typer.Option(
+        None,
+        "--api-key",
+        help="Datalayer API key.",
+    ),
+) -> None:
+    """Get one secret. Its value is hidden unless --show-value is explicit."""
+    try:
+        client = DatalayerClient(api_key=api_key)
+        selected = _resolve_secret(client, secret)
+        if show_value:
+            typer.echo(client.get_secret_value(selected.name))
+            return
+        display_secrets(
+            [
+                {
+                    "uid": selected.uid,
+                    "name_s": selected.name,
+                    "description_t": selected.description,
+                    "variant_s": selected.secret_type,
+                }
+            ]
+        )
+        console.print(
+            "[yellow]Value hidden. Pass --show-value to write the raw value to stdout.[/yellow]"
+        )
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]Error getting secret: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -104,24 +165,29 @@ def create_secret(
 
 @app.command(name="delete")
 def delete_secret(
-    uid: str = typer.Argument(..., help="UID of the secret to delete"),
+    secret: str = typer.Argument(..., help="UID or name of the secret to delete"),
     api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
         help="Datalayer API key.",
     ),
 ) -> None:
-    """Delete a secret."""
+    """Delete a secret, named by its UID or by its name."""
     try:
         client = DatalayerClient(api_key=api_key)
+
+        # A name is what `secrets ls` shows in full — the UID column is
+        # truncated — so a name must work here. It resolves through the
+        # list; the UID passes straight through.
+        uid = _resolve_secret(client, secret).uid
 
         result = client.delete_secret(uid)
 
         if result.get("success", False):
-            console.print(f"[green]Secret '{uid}' deleted successfully![/green]")
+            console.print(f"[green]Secret '{secret}' deleted successfully![/green]")
         else:
             console.print(
-                f"[red]Failed to delete secret '{uid}': {result.get('message', 'Unknown error')}[/red]"
+                f"[red]Failed to delete secret '{secret}': {result.get('message', 'Unknown error')}[/red]"
             )
             raise typer.Exit(1)
 

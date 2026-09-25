@@ -31,7 +31,20 @@ interface ValidationData {
   description?: boolean;
 }
 
-export const SecretNew = () => {
+export type SecretNewProps = {
+  /**
+   * The list to return to once the secret is created.
+   *
+   * It was hardcoded to a settings address this view no longer lives at, so a
+   * caller that mounted it elsewhere — and passed this prop, which did not
+   * exist — landed on a dead URL after every successful save.
+   */
+  secretsListRoute?: string;
+};
+
+export const SecretNew = ({
+  secretsListRoute = '/settings/secrets',
+}: SecretNewProps = {}) => {
   const runStore = useRunStore();
   const navigate = useNavigate();
   const { useCreateSecret } = useCache();
@@ -111,13 +124,17 @@ export const SecretNew = () => {
         variant: formValues.variant,
         name: formValues.name!,
         description: formValues.description!,
-        value: btoa(formValues.value!),
+        // As it is: a secret has one representation end to end
+        // (PLAN_ENVS.md E3-05). This used to `btoa` and nothing on the read
+        // side undid it, so a build secret arrived at its build encoded and
+        // opened nothing.
+        value: formValues.value!,
       },
       {
         onSuccess: (resp: any) => {
           if (resp.success) {
             enqueueToast(resp.message, { variant: 'success' });
-            navigate(`/settings/iam/secrets`);
+            navigate(secretsListRoute);
           }
         },
         onSettled: () => {

@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { useUsageRefreshStore } from './useUsageRefreshStore';
+import { registerSessionState } from '../state/sessionEnd';
 
 /**
  * The kind of billing entity currently in scope.
@@ -85,3 +86,6 @@ export const useBillingEntityStore = create<BillingEntityState>()(
 );
 
 export default useBillingEntityStore;
+
+// The billing entity is the signed-in person's: forgotten when the session ends.
+registerSessionState({ forget: () => useBillingEntityStore.getState().resetBillingEntity() });
