@@ -18,7 +18,7 @@
 
 ## Overview
 
-Datalayer Core is the foundational package that powers the [Datalayer AI Platform](https://datalayer.app/). It provides a TypesScript and Python packages as a Command Line Interface (CLI) for AI engineers, data scientists, and researchers to seamlessly integrate scalable compute runtimes into their workflows.
+Datalayer Core is the foundational package that powers the [Datalayer AI Platform](https://datalayer.ai/). It provides a TypesScript and Python packages as a Command Line Interface (CLI) for AI engineers, data scientists, and researchers to seamlessly integrate scalable compute runtimes into their workflows.
 
 This package serves as the base foundation used by many other Datalayer packages, containing core application classes, configuration, and unified APIs for authentication, runtime management, and code execution in cloud-based environments.
 
@@ -219,7 +219,7 @@ This project is licensed under the [BSD 3-Clause License](https://github.com/dat
 
 - **Documentation**: [Datalayer Platform Documentation](https://datalayer.ai/docs/)
 - **Issues**: [GitHub Issues](https://github.com/datalayer/core/issues)
-- **Community**: [Datalayer Platform](https://datalayer.app/)
+- **Community**: [Datalayer Platform](https://datalayer.ai/)
 
 ---
 
@@ -229,5 +229,5 @@ This project is licensed under the [BSD 3-Clause License](https://github.com/dat
 
 <p align="center">
   <strong>🚀 AI Agents for Data Analysis</strong><br></br>
-  <a href="https://datalayer.app/">Get started with Datalayer today!</a>
+  <a href="https://datalayer.ai/">Get started with Datalayer today!</a>
 </p>
