@@ -72,8 +72,9 @@ jobs:
         run: |
           set -euo pipefail
           wheel="$(ls dist-py/datalayer_core-*.whl)"
-          python -m zipfile -l "$wheel" | grep -q 'datalayer_core/static/cli.datalayer-core.js'
-          python -m zipfile -l "$wheel" | grep -q 'datalayer_core/static/core.css'
+          python -m zipfile -l "$wheel" > "$RUNNER_TEMP/wheel-files.txt"
+          grep -q 'datalayer_core/static/cli.datalayer-core.js' "$RUNNER_TEMP/wheel-files.txt"
+          grep -q 'datalayer_core/static/core.css' "$RUNNER_TEMP/wheel-files.txt"
 
       - uses: actions/upload-artifact@v4
         with:
