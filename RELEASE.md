@@ -29,7 +29,8 @@ both registries trust that workflow file (OIDC trusted publishing).
 - **pypi**: publishes the sdist and wheel with `pypa/gh-action-pypi-publish`, in the `pypi`
   environment, with `id-token: write`.
 - **npm**: updates npm to the latest version (trusted publishing needs npm 11.5.1 or later) and
-  runs `npm publish <tarball> --access public --provenance`, with `id-token: write`.
+  runs `npm publish <tarball> --access public --provenance`, in the `npm` environment, with
+  `id-token: write`.
 
 A failed publish can be re-run from the Actions tab. Neither registry accepts the same version
 twice, so if something has to change after a publish, bump the version and push a new tag.
@@ -41,8 +42,8 @@ twice, so if something has to change after a publish, bump the version and push 
   `pypi`. The `pypi` environment already exists in the repository settings; restricting it to
   `v*` tags is recommended.
 - **npm**: on the `@datalayer/core` package settings on npmjs.com, add a trusted publisher:
-  GitHub Actions, organization `datalayer`, repository `core`, workflow `release.yml`, no
-  environment.
+  GitHub Actions, organization `datalayer`, repository `core`, workflow `release.yml`,
+  environment `npm`. The `npm` environment already exists in the repository settings.
 
 ## Manual release
 
