@@ -13,7 +13,7 @@
   <a href="https://pypi.org/project/datalayer-core/"><img src="https://img.shields.io/pypi/pyversions/datalayer-core.svg" alt="Python versions"></img></a>
   <a href="https://github.com/datalayer/core/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg" alt="License"></img></a>
   <a href="https://datalayer.ai/docs/"><img src="https://img.shields.io/badge/docs-datalayer.app-blue" alt="Documentation"></img></a>
-  <a href="https://github.com/datalayer/core/actions/workflows/py-tests.yml"><img src="https://github.com/datalayer/core/actions/workflows/py-tests.yml/badge.svg" alt="Units Tests"></img></a><a href="https://github.com/datalayer/core/actions/workflows/ts-tests.yml"><img src="https://github.com/datalayer/core/actions/workflows/ts-tests.yml/badge.svg" alt="Units Tests"></img></a>
+  <a href="https://github.com/datalayer/core/actions/workflows/py-tests.yaml"><img src="https://github.com/datalayer/core/actions/workflows/py-tests.yaml/badge.svg" alt="Units Tests"></img></a><a href="https://github.com/datalayer/core/actions/workflows/ts-tests.yaml"><img src="https://github.com/datalayer/core/actions/workflows/ts-tests.yaml/badge.svg" alt="Units Tests"></img></a>
 </p>
 
 ## Overview

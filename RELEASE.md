@@ -3,7 +3,7 @@
 ## Automated release (tags)
 
 Pushing a tag `vX.Y.Z` publishes `datalayer_core` to PyPI and `@datalayer/core` to npm from
-[`.github/workflows/release.yml`](.github/workflows/release.yml). No token is stored anywhere:
+[`.github/workflows/release.yaml`](.github/workflows/release.yaml). No token is stored anywhere:
 both registries trust that workflow file (OIDC trusted publishing).
 
 ### Cutting a release
@@ -38,11 +38,11 @@ twice, so if something has to change after a publish, bump the version and push 
 ### One-time setup
 
 - **PyPI**: on <https://pypi.org/manage/project/datalayer-core/settings/publishing/>, add a
-  trusted publisher: owner `datalayer`, repository `core`, workflow `release.yml`, environment
+  trusted publisher: owner `datalayer`, repository `core`, workflow `release.yaml`, environment
   `pypi`. The `pypi` environment already exists in the repository settings; restricting it to
   `v*` tags is recommended.
 - **npm**: on the `@datalayer/core` package settings on npmjs.com, add a trusted publisher:
-  GitHub Actions, organization `datalayer`, repository `core`, workflow `release.yml`,
+  GitHub Actions, organization `datalayer`, repository `core`, workflow `release.yaml`,
   environment `npm`. The `npm` environment already exists in the repository settings.
 
 ## Manual release

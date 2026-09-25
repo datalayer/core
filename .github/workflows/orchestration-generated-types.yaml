@@ -14,14 +14,14 @@ on:
       - 'datalayer_core/orchestration/**'
       - 'src/api/orchestration/**'
       - 'scripts/generate-orchestration-types.py'
-      - '.github/workflows/orchestration-generated-types.yml'
+      - '.github/workflows/orchestration-generated-types.yaml'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'datalayer_core/orchestration/**'
       - 'src/api/orchestration/**'
       - 'scripts/generate-orchestration-types.py'
-      - '.github/workflows/orchestration-generated-types.yml'
+      - '.github/workflows/orchestration-generated-types.yaml'
   workflow_dispatch:
 
 permissions:

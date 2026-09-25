@@ -12,7 +12,7 @@ on:
       - 'setup.py'
       - 'mypy.ini'
       - '.mypy.ini'
-      - '.github/workflows/py-typing.yml'
+      - '.github/workflows/py-typing.yaml'
   pull_request:
     branches:
       - main
@@ -24,7 +24,7 @@ on:
       - 'setup.py'
       - 'mypy.ini'
       - '.mypy.ini'
-      - '.github/workflows/py-typing.yml'
+      - '.github/workflows/py-typing.yaml'
   workflow_dispatch:
 
 concurrency:
