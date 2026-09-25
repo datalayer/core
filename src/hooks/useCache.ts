@@ -8525,6 +8525,72 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
+  /**
+   * Post a public artifact to X through the Library's saga: the author's
+   * text, then the artifact's attributed share-card link (X draws the card),
+   * and optionally one picked result as an image.
+   */
+  const usePublishXShare = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        text,
+        idempotencyKey,
+        imageDataUrl,
+      }: {
+        itemId: string;
+        text: string;
+        idempotencyKey: string;
+        imageDataUrl?: string;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/shares/x`,
+          method: 'POST',
+          headers: { 'Idempotency-Key': idempotencyKey },
+          body: { text, imageDataUrl },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to post to X');
+        }
+        return resp.share;
+      },
+    });
+  };
+
+  const useUnpublishXShare = () => {
+    return useMutation({
+      mutationFn: async (idempotencyKey: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/shares/x/${encodeURIComponent(idempotencyKey)}`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to remove the X post');
+        }
+        return resp.share;
+      },
+    });
+  };
+
+  const useXShares = (itemId: string, enabled = true) => {
+    return useQuery({
+      queryKey: ['library', 'social-shares', 'x', itemId],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/shares/x`,
+          method: 'GET',
+          notifyOnError: false,
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to load X posts');
+        }
+        return Array.isArray(resp.shares) ? resp.shares : [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: Boolean(configuration.libraryUrl) && Boolean(itemId) && enabled,
+    });
+  };
+
   /** Publish one selected public result through the durable Bluesky saga. */
   const usePublishBlueskyShare = () => {
     return useMutation({
@@ -8972,6 +9038,59 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamUrl}/api/iam/v1/social/bluesky/connection`,
           method: 'DELETE',
         }),
+    });
+
+  /**
+   * The X connection, as IAM reports it: whether X is configured on this
+   * deployment, whether the caller connected it, and the account (no token).
+   */
+  const useXConnection = (enabled = true) =>
+    useQuery({
+      queryKey: ['iam', 'social', 'x', 'status'],
+      queryFn: async () =>
+        requestDatalayer<{
+          configured: boolean;
+          connected: boolean;
+          account?: {
+            id: string;
+            username: string;
+            name: string;
+            profile_image_url: string;
+            url: string;
+          } | null;
+        }>({
+          url: `${configuration.iamUrl}/api/iam/v1/social/x/status`,
+          method: 'GET',
+          notifyOnError: false,
+        }),
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: Boolean(configuration.iamUrl) && enabled,
+    });
+
+  /**
+   * Begin connecting X. Answers the start link to open at top level;
+   * `returnOrigin` is where to come back to (an origin only: IAM builds the
+   * path, so this cannot ask to be sent anywhere).
+   */
+  const useConnectX = () =>
+    useMutation({
+      mutationFn: async (returnOrigin?: string) =>
+        requestDatalayer<{ authorization_url: string }>({
+          url: `${configuration.iamUrl}/api/iam/v1/social/x/connect`,
+          method: 'POST',
+          body: returnOrigin ? { return_origin: returnOrigin } : {},
+        }),
+    });
+
+  const useDisconnectX = () =>
+    useMutation({
+      mutationFn: async () =>
+        requestDatalayer({
+          url: `${configuration.iamUrl}/api/iam/v1/social/x/connection`,
+          method: 'DELETE',
+        }),
+      onSuccess: () =>
+        queryClient.invalidateQueries({ queryKey: ['iam', 'social', 'x'] }),
     });
 
   // ============================================================================
@@ -10297,6 +10416,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useGetBlueskyConnection,
     useConnectBluesky,
     useDisconnectBluesky,
+    useXConnection,
+    useConnectX,
+    useDisconnectX,
+    usePublishXShare,
+    useUnpublishXShare,
+    useXShares,
     usePublishLinkedInShare,
     useUnpublishLinkedInShare,
     useLinkedInShares,
