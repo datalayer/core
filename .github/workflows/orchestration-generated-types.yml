@@ -24,6 +24,9 @@ on:
       - '.github/workflows/orchestration-generated-types.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check-generated:
     # The script also reads the control plane's OpenAPI document, which the

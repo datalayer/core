@@ -42,7 +42,13 @@ export const sandboxSharingUrl = (
   if (!base || !name) {
     return undefined;
   }
-  return `${base.replace(/\/+$/, '')}/api/runtimes/v1/runtimes/${encodeURIComponent(name)}/sharing`;
+  // Trailing slashes trimmed by hand: a `/\/+$/` replace backtracks
+  // quadratically on a string of many slashes.
+  let end = base.length;
+  while (end > 0 && base[end - 1] === '/') {
+    end -= 1;
+  }
+  return `${base.slice(0, end)}/api/runtimes/v1/runtimes/${encodeURIComponent(name)}/sharing`;
 };
 
 export default sandboxSharingUrl;

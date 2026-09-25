@@ -114,16 +114,17 @@ def _proxy(func, *args, **kwargs) -> Any:
         return func(*args, **kwargs)
     except httpx.HTTPStatusError as exc:
         status = exc.response.status_code
-        detail = exc.response.text or str(exc)
+        detail = exc.response.text or f"Upstream OTEL service answered {status}"
         logger.warning(
             "Upstream %s %s → %s", exc.request.method, exc.request.url, status
         )
         return JSONResponse(status_code=status, content={"detail": detail})
     except httpx.ConnectError as exc:
         logger.error("Cannot reach upstream: %s", exc)
+        # The reason stays in the log: the caller learns only that it failed.
         return JSONResponse(
             status_code=502,
-            content={"detail": f"Cannot reach upstream OTEL service: {exc}"},
+            content={"detail": "Cannot reach upstream OTEL service"},
         )
 
 

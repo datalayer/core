@@ -21,6 +21,9 @@ on:
       - '.github/workflows/mcp-generated-types.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check-generated:
     # The MCP gateway no longer serves its OpenAPI document publicly (the

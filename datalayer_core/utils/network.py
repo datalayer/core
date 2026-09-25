@@ -77,5 +77,5 @@ def find_http_port() -> int:
     """
     # Xref https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number
     sock = socket.socket()
-    sock.bind(("", 0))
+    sock.bind(("127.0.0.1", 0))
     return sock.getsockname()[1]

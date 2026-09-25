@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import pytest
 import yaml
@@ -176,7 +177,9 @@ def test_the_card_agent_runtimes_serves_today_has_no_skills() -> None:
     mapping = from_agent_card(cards()["served"], agent_id="agent_researcher")
     assert mapping.descriptor.skills == []
     url = mapping.descriptor.endpoints[0].url
-    assert url is not None and url.startswith("https://oss.datalayer.run")
+    assert url is not None
+    parsed = urlparse(url)
+    assert (parsed.scheme, parsed.hostname) == ("https", "oss.datalayer.run")
     assert mapping.descriptor.endpoints[0].transport == "JSONRPC"
     assert mapping.descriptor.endpoints[0].protocol_version == "1.0"
 

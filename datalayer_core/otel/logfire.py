@@ -128,7 +128,8 @@ def setup_env(token: str | None = None) -> str:
         os.environ["OTEL_RESOURCE_ATTRIBUTES"] = (
             f"{existing},{extra}" if existing else extra
         )
-        _log.info("OTEL resource attribute: datalayer.user_uid=%s", user_uid)
+        # The uid is read out of the token; say that it was set, not what it is.
+        _log.info("OTEL resource attribute datalayer.user_uid is set")
     else:
         _log.warning(
             "No user_uid resolved – spans will not be associated with your account"
