@@ -109,10 +109,10 @@
         "rebuild:fresh": "npm run create:patches && npm install && npm run build && npm run clean:cache"
     },
     "dependencies": {
-        "@datalayer/design": "^1.0.0",
-        "@datalayer/icons-react": "^1.0.7",
-        "@datalayer/jupyter-lexical": "^1.0.25",
-        "@datalayer/jupyter-react": "^2.0.16",
+        "@datalayer/design": "^1.0.3",
+        "@datalayer/icons-react": "^1.0.14",
+        "@datalayer/jupyter-lexical": "^2.0.18",
+        "@datalayer/jupyter-react": "^2.0.18",
         "@datalayer/primer-addons": "^1.0.23",
         "@datalayer/primer-rjsf": "^1.0.3",
         "@fluentui/react": "^8.125.3",
