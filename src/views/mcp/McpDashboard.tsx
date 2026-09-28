@@ -29,7 +29,7 @@
  * @module views/mcp/McpDashboard
  */
 
-import type { JSX } from 'react';
+import type { JSX, MouseEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import {
   ActionList,
@@ -57,7 +57,6 @@ import {
   PlayIcon,
   PlugIcon,
   StackIcon,
-  TelescopeIcon,
 } from '@primer/octicons-react';
 import { ShareAccessDialog, sandboxSharingUrl } from '../../components/sharing';
 import { ClientBadge, McpErrorBlankslate } from '../../components/mcp';
@@ -166,11 +165,16 @@ const Count = ({
   value,
   tone = 'neutral',
   note,
+  to,
+  onOpen,
 }: {
   label: string;
   value: string | number;
   tone?: 'neutral' | 'danger';
   note?: string;
+  /** The tab that holds the detail behind the number: the title opens it. */
+  to?: string;
+  onOpen?: (to: string) => void;
 }): JSX.Element => (
   <Box
     sx={{
@@ -192,9 +196,22 @@ const Count = ({
     >
       {value}
     </Text>
-    <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>
-      {label}
-    </Text>
+    {to ? (
+      <Link
+        href={to}
+        onClick={(event: MouseEvent) => {
+          event.preventDefault();
+          onOpen?.(to);
+        }}
+        sx={{ display: 'block', fontSize: 0 }}
+      >
+        {label}
+      </Link>
+    ) : (
+      <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>
+        {label}
+      </Text>
+    )}
     {note && (
       <Text sx={{ display: 'block', fontSize: 0, color: 'fg.subtle', mt: 1 }}>
         {note}
@@ -816,26 +833,49 @@ export const McpDashboard = ({
               ],
             }}
           >
-            <Count label="Clients connected" value={clients.length} />
+            <Count
+              label="Clients connected"
+              value={clients.length}
+              to={routes.agents}
+              onOpen={navigate}
+            />
             <Count
               label="Sandboxes bound"
+              to={routes.sandboxes}
+              onOpen={navigate}
               value={
                 sandboxes.filter(
                   binding => (binding.state ?? 'active') === 'active',
                 ).length
               }
             />
-            <Count label="Tasks running" value={data?.tasks.length ?? 0} />
-            <Count label="Calls today" value={data?.today.calls ?? 0} />
+            <Count
+              label="Tasks running"
+              value={data?.tasks.length ?? 0}
+              to={routes.runs}
+              onOpen={navigate}
+            />
+            <Count
+              label="Calls today"
+              value={data?.today.calls ?? 0}
+              to={routes.calls}
+              onOpen={navigate}
+            />
             <Count
               label="Refusals today"
               value={data?.today.refusals ?? 0}
+              to={routes.audit}
+              onOpen={navigate}
               tone={(data?.today.refusals ?? 0) > 0 ? 'danger' : 'neutral'}
             />
             <Count
               label="Credits by agents"
               value={data?.today.credits ?? 0}
               note="today"
+              // Credits are summed from the day's calls, which the Calls tab
+              // lists.
+              to={routes.calls}
+              onOpen={navigate}
             />
           </Box>
         ))}
@@ -1020,29 +1060,6 @@ export const McpDashboard = ({
             }}
           />
         ))}
-
-      {!loading && (
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 3,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <Button
-            size="small"
-            leadingVisual={TelescopeIcon}
-            onClick={() => navigate(routes.observability)}
-          >
-            Observability
-          </Button>
-          <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-            Refreshed {timeAgo(data?.at) || 'just now'}, and again every ten
-            seconds.
-          </Text>
-        </Box>
-      )}
 
       {/* Disconnecting is a revocation: it is confirmed, and it is said what
           it does to the agent still holding a token. */}

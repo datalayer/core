@@ -26,11 +26,7 @@
 
 /** What a failed request actually was, in the reader's terms. */
 export type McpErrorReason =
-  | 'unauthenticated'
-  | 'forbidden'
-  | 'not-found'
-  | 'unavailable'
-  | 'unknown';
+  'unauthenticated' | 'forbidden' | 'not-found' | 'unavailable' | 'unknown';
 
 export interface McpErrorState {
   reason: McpErrorReason;
@@ -44,7 +40,10 @@ export interface McpErrorState {
  * Describe a failure in terms of what the reader was looking at; `subject`
  * names it as it appears on screen ("Connected agents", "Audit").
  */
-export type McpErrorStateFn = (error: unknown, subject: string) => McpErrorState;
+export type McpErrorStateFn = (
+  error: unknown,
+  subject: string,
+) => McpErrorState;
 
 /**
  * Where the MCP surfaces live in the application drawing them.
@@ -82,5 +81,8 @@ export interface McpRoutes {
   agents: string;
   /** The effective policy. */
   policies: string;
+  /** The calls list, where an Overview count of calls or credits leads. */
+  calls?: string;
+  /** The bound code sandboxes, where the Overview's sandbox count leads. */
+  sandboxes?: string;
 }
-
