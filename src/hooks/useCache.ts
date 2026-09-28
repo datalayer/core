@@ -124,6 +124,18 @@ const DEFAULT_QUERY_OPTIONS = {
 };
 
 /**
+ * A list of what a space holds. Refetched every time a page mounts it: an item
+ * created elsewhere — a cell has no create mutation here to clear this cache —
+ * would otherwise stay missing from the list for the five minutes the default
+ * options keep it fresh, and coming back to the list is exactly when somebody
+ * looks for it.
+ */
+const LIST_QUERY_OPTIONS = {
+  ...DEFAULT_QUERY_OPTIONS,
+  refetchOnMount: 'always' as const,
+};
+
+/**
  * Refresh what a visitor sees, not just what the editor is looking at.
  *
  * `invalidateQueries` marks queries stale and refetches the **active** ones —
@@ -2830,7 +2842,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return [];
       },
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
       enabled: !!spaceId,
     });
   };
@@ -2997,7 +3009,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return [];
       },
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
       enabled: !!spaceId,
     });
   };
@@ -3211,7 +3223,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return [];
       },
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
       enabled: !!spaceId,
     });
   };
@@ -5294,7 +5306,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5439,7 +5451,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5512,7 +5524,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5631,7 +5643,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
