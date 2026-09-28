@@ -176,11 +176,16 @@ const Summary = ({
   title,
   children,
   action,
+  to,
+  onOpen,
 }: {
   icon: typeof PlugIcon;
   title: string;
   children: React.ReactNode;
   action?: { label: string; onClick: () => void };
+  /** The tab this summary stands for: the title opens it. */
+  to?: string;
+  onOpen?: (to: string) => void;
 }): JSX.Element => (
   <Box
     sx={{
@@ -196,7 +201,24 @@ const Summary = ({
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Icon size={16} />
-      <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>{title}</Text>
+      {to ? (
+        <Link
+          href={to}
+          onClick={event => {
+            // A modified click asks for a new tab; `href` is real, so let it.
+            if (event.metaKey || event.ctrlKey || event.shiftKey) {
+              return;
+            }
+            event.preventDefault();
+            onOpen?.(to);
+          }}
+          sx={{ fontSize: 1, fontWeight: 'semibold' }}
+        >
+          {title}
+        </Link>
+      ) : (
+        <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>{title}</Text>
+      )}
     </Box>
     <Box sx={{ fontSize: 0, color: 'fg.muted', display: 'grid', gap: 1 }}>
       {children}
@@ -369,6 +391,8 @@ export const McpHome = ({
           <Summary
             icon={PlugIcon}
             title="Agents"
+            to={routes.agents}
+            onOpen={navigate}
             action={{
               label: 'Connected agents',
               onClick: () => navigate(routes.agents),
@@ -397,6 +421,8 @@ export const McpHome = ({
           <Summary
             icon={PulseIcon}
             title="Runs"
+            to={routes.runs}
+            onOpen={navigate}
             action={{ label: 'All runs', onClick: () => navigate(routes.runs) }}
           >
             {runs.length === 0 ? (
@@ -416,6 +442,8 @@ export const McpHome = ({
           <Summary
             icon={TelescopeIcon}
             title="Observability"
+            to={routes.observability}
+            onOpen={navigate}
             action={{
               label: 'Runs and metrics',
               onClick: () => navigate(routes.observability),
@@ -458,6 +486,8 @@ export const McpHome = ({
           <Summary
             icon={KeyIcon}
             title="Policies"
+            to={routes.policies}
+            onOpen={navigate}
             action={{
               label: 'What applies',
               onClick: () => navigate(routes.policies),

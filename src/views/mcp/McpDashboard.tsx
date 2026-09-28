@@ -200,6 +200,10 @@ const Count = ({
       <Link
         href={to}
         onClick={(event: MouseEvent) => {
+          // A modified click asks for a new tab; `href` is real, so let it.
+          if (event.metaKey || event.ctrlKey || event.shiftKey) {
+            return;
+          }
           event.preventDefault();
           onOpen?.(to);
         }}
