@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-const EXT_URN_PREFIX = 'urn:dla:iam:ext::';
+import { IAM_PROVIDER_URN_PREFIX as EXT_URN_PREFIX } from '../models/URN';
 
 export function isExternalUrnHandle(handle?: string): boolean {
   const normalized = (handle || '').trim().toLowerCase();
@@ -30,7 +30,7 @@ export function formatFriendlyHandle(handle?: string): string {
         ? 'Google'
         : provider === 'linkedin'
           ? 'LinkedIn'
-        : providerRaw || 'External';
+          : providerRaw || 'External';
   const identifier = restParts.join(':').trim();
 
   if (!identifier) {

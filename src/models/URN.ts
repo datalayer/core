@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { IIAMProviderName } from './IAMProvidersSpecs';
+
+/** What an identity provider's account URN starts with, before its name. */
+export const IAM_PROVIDER_URN_PREFIX = 'urn:dla:iam:ext::';
+
 export class URN implements IURN {
   private _partition: string;
   private _service: string;
@@ -19,7 +24,8 @@ export class URN implements IURN {
     this._region = parts[3];
     this._account = parts[4];
     this._type = parts[5];
-    this._uid = parts[6];
+    // The rest, colons and all: a provider's account id may carry them.
+    this._uid = parts.slice(6).join(':');
   }
 
   get partition() {
@@ -45,6 +51,90 @@ export class URN implements IURN {
   get uid() {
     return this._uid;
   }
+
+  /** An identity provider's account (`urn:dla:iam:ext::github:…`). */
+  get isIAMProviderAccount(): boolean {
+    return this._service === 'iam' && this._region === 'ext' && !!this._type;
+  }
+
+  toString(): string {
+    return [
+      'urn',
+      this._partition,
+      this._service,
+      this._region,
+      this._account,
+      this._type,
+      this._uid,
+    ].join(':');
+  }
+}
+
+/** A URN, or `undefined` when the value is not one — never a throw. */
+export function parseURN(value?: string | null): URN | undefined {
+  const text = (value ?? '').trim();
+  if (!text.toLowerCase().startsWith('urn:') || text.split(':').length < 7) {
+    return undefined;
+  }
+  return new URN(text);
+}
+
+const IAM_PROVIDER_NAMES: ReadonlyArray<IIAMProviderName> = [
+  'bluesky',
+  'discord',
+  'github',
+  'google',
+  'linkedin',
+  'okta',
+  'x',
+];
+
+/**
+ * Where an account came from, read from its `origin`.
+ *
+ * - `datalayer`: made on Datalayer, with a password.
+ * - `iam-provider`: made by signing in with an identity provider, which it
+ *   still signs in through (`urn:dla:iam:ext::<provider>:<account id>`).
+ * - `urn`: any other URN — an AWS Marketplace or enterprise origin.
+ * - `unknown`: nothing recorded, or a value that is none of the above.
+ */
+export type IAccountOrigin =
+  | { kind: 'datalayer' }
+  | {
+      kind: 'iam-provider';
+      provider: IIAMProviderName;
+      accountId: string;
+      urn: URN;
+    }
+  | { kind: 'urn'; urn: URN }
+  | { kind: 'unknown'; value: string };
+
+export function accountOriginOf(origin?: string | null): IAccountOrigin {
+  const value = (origin ?? '').trim();
+  if (value === 'datalayer') {
+    return { kind: 'datalayer' };
+  }
+  const urn = parseURN(value);
+  if (!urn) {
+    return { kind: 'unknown', value };
+  }
+  const provider = urn.type.toLowerCase() as IIAMProviderName;
+  if (urn.isIAMProviderAccount && IAM_PROVIDER_NAMES.includes(provider)) {
+    return { kind: 'iam-provider', provider, accountId: urn.uid, urn };
+  }
+  return { kind: 'urn', urn };
+}
+
+/**
+ * Whether an account signs in through a provider: disconnecting that
+ * provider would leave it nothing to sign in with.
+ */
+export function signsInWith(
+  origin: string | null | undefined,
+  provider: IIAMProviderName,
+): boolean {
+  const parsed = accountOriginOf(origin);
+  return parsed.kind === 'iam-provider' && parsed.provider === provider;
 }
 
 /**
