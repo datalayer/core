@@ -37,8 +37,19 @@ describe('where each shell was left', () => {
 
   it('opens a shell never visited on its home page', () => {
     const { routeForView } = navigationStore.getState();
+    expect(routeForView('studio')).toBe('/studio');
     expect(routeForView('agentify')).toBe(NAVIGATION_VIEW_HOMES.agentify);
     expect(routeForView('admin')).toBe('/admin');
+    // The Power shell's own address, not the root that dispatches to a shell.
+    expect(routeForView('home')).toBe('/home');
+  });
+
+  it('files the Studio under its own shell, and never remembers the root', () => {
+    expect(viewForRoute('/studio')).toBe('studio');
+    expect(viewForRoute('/studio/apps/new?from=template')).toBe('studio');
+    expect(viewForRoute('/studios')).toBe('home');
+    expect(isRememberableRoute('/')).toBe(false);
+    expect(isRememberableRoute('/home')).toBe(true);
   });
 
   it('returns to the page a shell was left on', () => {
@@ -83,7 +94,7 @@ describe('where each shell was left', () => {
     });
     const { routeForView } = navigationStore.getState();
     expect(routeForView('agentify')).toBe('/agentify');
-    expect(routeForView('home')).toBe('/');
+    expect(routeForView('home')).toBe('/home');
   });
 
   it('does not remember the doors: sign-in, OAuth callbacks, the documentation', () => {

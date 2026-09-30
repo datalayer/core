@@ -35,11 +35,23 @@ import { createStore } from 'zustand/vanilla';
 import { registerSessionState } from '../sessionEnd';
 
 /** The signed-in shell: the platform, the business cases, or the admin. */
-export type NavigationView = 'home' | 'agentify' | 'admin';
+/**
+ * The four shells of the signed-in application.
+ *
+ * `studio` is where an agentic UI application is composed, validated and
+ * shipped — the default for somebody who has not chosen. `home` is the whole
+ * platform, shown as *Power*: the key is kept so a cookie written before the
+ * Studio existed still names the shell it meant. `agentify` is the business
+ * cases; `admin` is the platform's administration.
+ */
+export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin';
 
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
-  home: '/',
+  studio: '/studio',
+  // Not `/`: the root is the dispatcher that sends a reader to the shell
+  // they chose, so the Power shell needs an address of its own to be sent to.
+  home: '/home',
   agentify: '/agentify',
   admin: '/admin',
 };
@@ -106,7 +118,10 @@ type Persisted = {
 };
 
 const isView = (value: unknown): value is NavigationView =>
-  value === 'home' || value === 'agentify' || value === 'admin';
+  value === 'studio' ||
+  value === 'home' ||
+  value === 'agentify' ||
+  value === 'admin';
 
 function readCookie(name: string): string | undefined {
   if (typeof document === 'undefined') {
@@ -200,6 +215,11 @@ export function isRememberableRoute(route: string): boolean {
     return false;
   }
   const path = route.split('?')[0];
+  // The root dispatches to a shell and is nobody's page: remembered, it would
+  // send a shell back to the dispatcher, which would send it to itself.
+  if (path === '/') {
+    return false;
+  }
   return ![
     '/signin',
     '/signup',
@@ -223,6 +243,9 @@ export function isRememberableRoute(route: string): boolean {
  */
 export function viewForRoute(route: string): NavigationView {
   const path = route.split('?')[0];
+  if (path === '/studio' || path.startsWith('/studio/')) {
+    return 'studio';
+  }
   if (path === '/agentify' || path.startsWith('/agentify/')) {
     return 'agentify';
   }
@@ -235,7 +258,9 @@ export function viewForRoute(route: string): NavigationView {
 const initial = restore();
 
 export const navigationStore = createStore<NavigationState>((set, get) => ({
-  view: initial.view ?? 'home',
+  // The Studio, for a reader who never chose: a cookie from before it
+  // existed says `home`, and is honoured.
+  view: initial.view ?? 'studio',
   lastRouteByView: initial.lastRouteByView ?? {},
   tabsByView: initial.tabsByView ?? {},
   requestedRoute: undefined,
