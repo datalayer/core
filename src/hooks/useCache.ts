@@ -124,7 +124,9 @@ const DEFAULT_QUERY_OPTIONS = {
 };
 
 /**
- * A list of what a space holds. Refetched every time a page mounts it: an item
+ * A list of what a space holds — all of it, or the items of one type. Every
+ * such list takes these options (`spaceListsRefetchOnMount.unit.test.ts`
+ * holds them to it). Refetched every time a page mounts it: an item
  * created elsewhere — a cell has no create mutation here to clear this cache —
  * would otherwise stay missing from the list for the five minutes the default
  * options keep it fresh, and coming back to the list is exactly when somebody
@@ -5080,7 +5082,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5409,7 +5411,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 

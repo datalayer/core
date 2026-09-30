@@ -15,7 +15,7 @@
  * choice of surface — may stay.
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetSessionState } from '../sessionEnd';
 import {
   NAVIGATION_VIEW_HOMES,
@@ -97,6 +97,14 @@ describe('where each shell was left', () => {
     expect(routeForView('home')).toBe('/home');
   });
 
+  it('never sends a shell back to the root that dispatches to it', () => {
+    // The Power shell's page, before it had `/home`.
+    navigationStore.setState({ lastRouteByView: { home: '/' } });
+    expect(navigationStore.getState().routeForView('home')).toBe('/home');
+    navigationStore.setState({ lastRouteByView: { home: '/?tab=recent' } });
+    expect(navigationStore.getState().routeForView('home')).toBe('/home');
+  });
+
   it('does not remember the doors: sign-in, OAuth callbacks, the documentation', () => {
     expect(isRememberableRoute('/signin')).toBe(false);
     expect(isRememberableRoute('/oauth2/github/callback')).toBe(false);
@@ -127,5 +135,94 @@ describe('the end of a session', () => {
     expect(after.requestedRoute).toBeUndefined();
     expect(after.docsOrigin).toBeUndefined();
     expect(after.routeForView('agentify')).toBe('/agentify');
+  });
+});
+
+/**
+ * What the store opens on is decided once, when the module is first read —
+ * so each case here reads it afresh, over the storage a browser would hold.
+ */
+describe('what the last visit left', () => {
+  const SHELL_COOKIE = 'datalayer-signed-in-view';
+  const STORAGE_KEY = 'datalayer-navigation';
+
+  const forgetBrowser = () => {
+    document.cookie = `${SHELL_COOKIE}=; path=/; max-age=0`;
+    localStorage.clear();
+  };
+
+  const open = async () => {
+    vi.resetModules();
+    const module = await import('../substates/NavigationState');
+    return module.navigationStore.getState();
+  };
+
+  beforeEach(forgetBrowser);
+  afterEach(forgetBrowser);
+
+  it('opens on the Studio for a reader who never chose a shell', async () => {
+    const state = await open();
+    expect(state.view).toBe('studio');
+    expect(state.routeForView(state.view)).toBe('/studio');
+    expect(state.lastRouteByView).toEqual({});
+  });
+
+  it('honours the shell a cookie from before the Studio names', async () => {
+    document.cookie = `${SHELL_COOKIE}=home; path=/`;
+    const state = await open();
+    expect(state.view).toBe('home');
+    expect(state.routeForView(state.view)).toBe('/home');
+  });
+
+  it('keeps the other shells a cookie names, and ignores one it does not know', async () => {
+    document.cookie = `${SHELL_COOKIE}=agentify; path=/`;
+    expect((await open()).view).toBe('agentify');
+    document.cookie = `${SHELL_COOKIE}=power; path=/`;
+    expect((await open()).view).toBe('studio');
+  });
+
+  it('drops the root an earlier version wrote down as the Power shell page', async () => {
+    document.cookie = `${SHELL_COOKIE}=home; path=/`;
+    // As zustand's `persist` wrote it, when the landing kept this store.
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        state: {
+          lastRouteByView: {
+            home: '/',
+            agentify: '/agentify/tutor',
+            admin: '/items',
+            elsewhere: '/settings',
+          },
+          tabsByView: { library: 'featured' },
+        },
+        version: 0,
+      }),
+    );
+    const state = await open();
+    expect(state.view).toBe('home');
+    // The root, a page filed under the wrong shell and a shell that does not
+    // exist are gone from the store itself, so no later write puts them back.
+    expect(state.lastRouteByView).toEqual({ agentify: '/agentify/tutor' });
+    expect(state.routeForView('home')).toBe('/home');
+    expect(state.routeForView('admin')).toBe('/admin');
+    expect(state.tabsByView).toEqual({ library: 'featured' });
+
+    state.setViewTab('library', 'recent');
+    const written = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(written.lastRouteByView).toEqual({ agentify: '/agentify/tutor' });
+  });
+
+  it('reads storage it cannot make sense of as nothing remembered', async () => {
+    document.cookie = `${SHELL_COOKIE}=home; path=/`;
+    for (const stored of ['5', 'null', '"text"', '{"state":7}', 'not json']) {
+      localStorage.setItem(STORAGE_KEY, stored);
+      const state = await open();
+      expect(state.view).toBe('home');
+      expect(state.lastRouteByView).toEqual({});
+    }
+    forgetBrowser();
+    localStorage.setItem(STORAGE_KEY, '{"lastRouteByView":"/studio"}');
+    expect((await open()).view).toBe('studio');
   });
 });

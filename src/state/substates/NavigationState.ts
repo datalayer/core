@@ -165,7 +165,8 @@ function restore(): Persisted {
         (Persisted & { state?: Persisted }) | null;
       // The landing kept this under the same key through zustand's
       // `persist`, which wraps what it writes in `{ state, version }`.
-      persisted = parsed?.state ?? parsed ?? {};
+      const kept = parsed?.state ?? parsed;
+      persisted = kept && typeof kept === 'object' ? kept : {};
     } catch {
       persisted = {};
     }
@@ -186,7 +187,34 @@ function restore(): Persisted {
   if (isView(shell)) {
     persisted.view = shell;
   }
+  persisted.lastRouteByView = restoredRoutes(persisted.lastRouteByView);
   return persisted;
+}
+
+/**
+ * The shells' pages as they were written down, less the ones no shell
+ * returns to.
+ *
+ * What is in storage was written by whichever version ran last, under that
+ * version's rules. Before the Power shell had `/home`, its page could be the
+ * root — which is now the dispatcher, and would send the shell to itself —
+ * and an earlier version filed pages under the shell the toggle named. Such
+ * a page is dropped here rather than carried, so the next write does not put
+ * it back.
+ */
+function restoredRoutes(
+  stored: unknown,
+): Partial<Record<NavigationView, string>> {
+  const routes: Partial<Record<NavigationView, string>> = {};
+  if (!stored || typeof stored !== 'object') {
+    return routes;
+  }
+  for (const [view, route] of Object.entries(stored)) {
+    if (isView(view) && isRouteOfView(route, view)) {
+      routes[view] = route;
+    }
+  }
+  return routes;
 }
 
 function persist(state: NavigationState): void {
@@ -255,6 +283,15 @@ export function viewForRoute(route: string): NavigationView {
   return 'home';
 }
 
+/** Whether a page may be the one a shell returns to. */
+function isRouteOfView(route: unknown, view: NavigationView): route is string {
+  return (
+    typeof route === 'string' &&
+    isRememberableRoute(route) &&
+    viewForRoute(route) === view
+  );
+}
+
 const initial = restore();
 
 export const navigationStore = createStore<NavigationState>((set, get) => ({
@@ -300,9 +337,11 @@ export const navigationStore = createStore<NavigationState>((set, get) => ({
     // Only a page of that shell: an earlier version filed pages under the
     // shell the toggle named rather than the one the route belonged to, so a
     // reader can still have `/items` written down as Agentify's page. Going
-    // "to Agentify" must never land on a Home page.
+    // "to Agentify" must never land on a Home page. Nor a page that is not
+    // remembered at all: the root was the Power shell's page before `/home`,
+    // and returning to it would hand the reader back to the dispatcher.
     const remembered = get().lastRouteByView[view];
-    return remembered && viewForRoute(remembered) === view
+    return isRouteOfView(remembered, view)
       ? remembered
       : NAVIGATION_VIEW_HOMES[view];
   },
