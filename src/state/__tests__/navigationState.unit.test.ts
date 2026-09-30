@@ -50,6 +50,8 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/studio')).toBe('studio');
     expect(viewForRoute('/studio/apps/new?from=template')).toBe('studio');
     expect(viewForRoute('/studios')).toBe('home');
+    expect(viewForRoute('/settings/profile')).toBe('studio');
+    expect(viewForRoute('/settingsx')).toBe('home');
     expect(viewForRoute('/power')).toBe('home');
     expect(isRememberableRoute('/')).toBe(true);
     expect(isRememberableRoute('/power')).toBe(true);
@@ -61,12 +63,10 @@ describe('where each shell was left', () => {
 
   it('returns to the page a shell was left on', () => {
     const state = navigationStore.getState();
-    state.rememberRoute('/settings/preferences');
+    state.rememberRoute('/items');
     state.setView('agentify');
     state.rememberRoute('/agentify/tutor/lessons');
-    expect(navigationStore.getState().routeForView('home')).toBe(
-      '/settings/preferences',
-    );
+    expect(navigationStore.getState().routeForView('home')).toBe('/items');
     expect(navigationStore.getState().routeForView('agentify')).toBe(
       '/agentify/tutor/lessons',
     );

@@ -267,8 +267,15 @@ export function isRememberableRoute(route: string): boolean {
  */
 export function viewForRoute(route: string): NavigationView {
   const path = route.split('?')[0];
-  // The root is the Studio: what a signed-in reader opens on.
-  if (path === '/' || path === '/studio' || path.startsWith('/studio/')) {
+  // The root is the Studio: what a signed-in reader opens on. The settings
+  // are read from it too, with its sidebar beside them.
+  if (
+    path === '/' ||
+    path === '/studio' ||
+    path.startsWith('/studio/') ||
+    path === '/settings' ||
+    path.startsWith('/settings/')
+  ) {
     return 'studio';
   }
   if (path === '/agentify' || path.startsWith('/agentify/')) {
