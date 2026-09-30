@@ -35,11 +35,24 @@ import { createStore } from 'zustand/vanilla';
 import { registerSessionState } from '../sessionEnd';
 
 /** The signed-in shell: the platform, the business cases, or the admin. */
-export type NavigationView = 'home' | 'agentify' | 'admin';
+/**
+ * The four shells of the signed-in application.
+ *
+ * `studio` is where an agentic UI application is composed, validated and
+ * shipped — the default for somebody who has not chosen, and what the root
+ * shows. `home` is the whole platform, shown as *Power*, at `/power`: the key
+ * is kept so a cookie written before the Studio existed still names the
+ * shell it meant. `agentify` is the business cases; `admin` is the
+ * platform's administration.
+ */
+export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin';
 
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
-  home: '/',
+  studio: '/studio',
+  // Not `/`: the root is the Studio's, so the Power shell has an address of
+  // its own to be sent to.
+  home: '/power',
   agentify: '/agentify',
   admin: '/admin',
 };
@@ -106,7 +119,10 @@ type Persisted = {
 };
 
 const isView = (value: unknown): value is NavigationView =>
-  value === 'home' || value === 'agentify' || value === 'admin';
+  value === 'studio' ||
+  value === 'home' ||
+  value === 'agentify' ||
+  value === 'admin';
 
 function readCookie(name: string): string | undefined {
   if (typeof document === 'undefined') {
@@ -150,7 +166,8 @@ function restore(): Persisted {
         (Persisted & { state?: Persisted }) | null;
       // The landing kept this under the same key through zustand's
       // `persist`, which wraps what it writes in `{ state, version }`.
-      persisted = parsed?.state ?? parsed ?? {};
+      const kept = parsed?.state ?? parsed;
+      persisted = kept && typeof kept === 'object' ? kept : {};
     } catch {
       persisted = {};
     }
@@ -171,7 +188,34 @@ function restore(): Persisted {
   if (isView(shell)) {
     persisted.view = shell;
   }
+  persisted.lastRouteByView = restoredRoutes(persisted.lastRouteByView);
   return persisted;
+}
+
+/**
+ * The shells' pages as they were written down, less the ones no shell
+ * returns to.
+ *
+ * What is in storage was written by whichever version ran last, under that
+ * version's rules. Before the Power shell had an address of its own, its
+ * page could be the root — which is now the Studio's, and would send Power
+ * to the Studio — and an earlier version filed pages under the shell the
+ * toggle named. Such a page is dropped here rather than carried, so the next
+ * write does not put it back.
+ */
+function restoredRoutes(
+  stored: unknown,
+): Partial<Record<NavigationView, string>> {
+  const routes: Partial<Record<NavigationView, string>> = {};
+  if (!stored || typeof stored !== 'object') {
+    return routes;
+  }
+  for (const [view, route] of Object.entries(stored)) {
+    if (isView(view) && isRouteOfView(route, view)) {
+      routes[view] = route;
+    }
+  }
+  return routes;
 }
 
 function persist(state: NavigationState): void {
@@ -223,6 +267,17 @@ export function isRememberableRoute(route: string): boolean {
  */
 export function viewForRoute(route: string): NavigationView {
   const path = route.split('?')[0];
+  // The root is the Studio: what a signed-in reader opens on. The settings
+  // are read from it too, with its sidebar beside them.
+  if (
+    path === '/' ||
+    path === '/studio' ||
+    path.startsWith('/studio/') ||
+    path === '/settings' ||
+    path.startsWith('/settings/')
+  ) {
+    return 'studio';
+  }
   if (path === '/agentify' || path.startsWith('/agentify/')) {
     return 'agentify';
   }
@@ -232,10 +287,21 @@ export function viewForRoute(route: string): NavigationView {
   return 'home';
 }
 
+/** Whether a page may be the one a shell returns to. */
+function isRouteOfView(route: unknown, view: NavigationView): route is string {
+  return (
+    typeof route === 'string' &&
+    isRememberableRoute(route) &&
+    viewForRoute(route) === view
+  );
+}
+
 const initial = restore();
 
 export const navigationStore = createStore<NavigationState>((set, get) => ({
-  view: initial.view ?? 'home',
+  // The Studio, for a reader who never chose: a cookie from before it
+  // existed says `home`, and is honoured.
+  view: initial.view ?? 'studio',
   lastRouteByView: initial.lastRouteByView ?? {},
   tabsByView: initial.tabsByView ?? {},
   requestedRoute: undefined,
@@ -275,9 +341,10 @@ export const navigationStore = createStore<NavigationState>((set, get) => ({
     // Only a page of that shell: an earlier version filed pages under the
     // shell the toggle named rather than the one the route belonged to, so a
     // reader can still have `/items` written down as Agentify's page. Going
-    // "to Agentify" must never land on a Home page.
+    // "to Agentify" must never land on a Home page — nor Power on the root,
+    // which was its page before it had `/power` and is now the Studio's.
     const remembered = get().lastRouteByView[view];
-    return remembered && viewForRoute(remembered) === view
+    return isRouteOfView(remembered, view)
       ? remembered
       : NAVIGATION_VIEW_HOMES[view];
   },

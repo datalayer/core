@@ -124,6 +124,20 @@ const DEFAULT_QUERY_OPTIONS = {
 };
 
 /**
+ * A list of what a space holds — all of it, or the items of one type. Every
+ * such list takes these options (`spaceListsRefetchOnMount.unit.test.ts`
+ * holds them to it). Refetched every time a page mounts it: an item
+ * created elsewhere — a cell has no create mutation here to clear this cache —
+ * would otherwise stay missing from the list for the five minutes the default
+ * options keep it fresh, and coming back to the list is exactly when somebody
+ * looks for it.
+ */
+const LIST_QUERY_OPTIONS = {
+  ...DEFAULT_QUERY_OPTIONS,
+  refetchOnMount: 'always' as const,
+};
+
+/**
  * Refresh what a visitor sees, not just what the editor is looking at.
  *
  * `invalidateQueries` marks queries stale and refetches the **active** ones —
@@ -1142,6 +1156,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
+  /**
+   * A published agentic UI application: what it answers, and its definition
+   * as the library hands it over — `model_s`, the string the Studio reads
+   * the definition from, left unparsed because the Studio owns its shape.
+   */
+  const toApp = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'app',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? false,
+      model_s: raw.model_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      lastUpdateDate: raw.last_update_ts_dt
+        ? new Date(raw.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: raw.published_ts_dt
+        ? new Date(raw.published_ts_dt)
+        : undefined,
+      owner: toItemOwner(raw),
+    };
+  };
+
   /** An evaluator of the platform's catalogue (B5-01), published as an agent is. */
   const toEvaluator = (raw: any): any => {
     return {
@@ -1684,6 +1725,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toInvestigation(item);
       case 'evaluator':
         return toEvaluator(item);
+      // Without this a published app answered `{}`, as a deck once did: a
+      // card with no type and no name.
+      case 'app':
+        return toApp(item);
       case 'sitecard':
         return toSiteCard(item);
       default:
@@ -2830,7 +2875,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return [];
       },
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
       enabled: !!spaceId,
     });
   };
@@ -2997,7 +3042,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return [];
       },
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
       enabled: !!spaceId,
     });
   };
@@ -3211,7 +3256,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return [];
       },
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
       enabled: !!spaceId,
     });
   };
@@ -5068,7 +5113,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5294,7 +5339,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5397,7 +5442,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5439,7 +5484,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5512,7 +5557,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -5631,7 +5676,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
+      ...LIST_QUERY_OPTIONS,
     });
   };
 
@@ -7816,6 +7861,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     'evalset',
     'dataset',
     'agent',
+    // An agentic UI application, published from the Studio.
+    'app',
   ];
 
   type LibrarySearchArgs = {

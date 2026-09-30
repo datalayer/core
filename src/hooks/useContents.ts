@@ -437,6 +437,9 @@ export const useContentSources = (filters: ContentSourceListFilters = {}) => {
     queryFn: () => listSources(token ?? '', filters, contentsUrl),
     enabled: Boolean(token && contentsUrl),
     staleTime: 30_000,
+    // Coming back to a list is when somebody looks for what they just made:
+    // it is read again, whatever made it.
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
 };
