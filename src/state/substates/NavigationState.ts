@@ -39,19 +39,20 @@ import { registerSessionState } from '../sessionEnd';
  * The four shells of the signed-in application.
  *
  * `studio` is where an agentic UI application is composed, validated and
- * shipped — the default for somebody who has not chosen. `home` is the whole
- * platform, shown as *Power*: the key is kept so a cookie written before the
- * Studio existed still names the shell it meant. `agentify` is the business
- * cases; `admin` is the platform's administration.
+ * shipped — the default for somebody who has not chosen, and what the root
+ * shows. `home` is the whole platform, shown as *Power*, at `/power`: the key
+ * is kept so a cookie written before the Studio existed still names the
+ * shell it meant. `agentify` is the business cases; `admin` is the
+ * platform's administration.
  */
 export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin';
 
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
   studio: '/studio',
-  // Not `/`: the root is the dispatcher that sends a reader to the shell
-  // they chose, so the Power shell needs an address of its own to be sent to.
-  home: '/home',
+  // Not `/`: the root is the Studio's, so the Power shell has an address of
+  // its own to be sent to.
+  home: '/power',
   agentify: '/agentify',
   admin: '/admin',
 };
@@ -196,11 +197,11 @@ function restore(): Persisted {
  * returns to.
  *
  * What is in storage was written by whichever version ran last, under that
- * version's rules. Before the Power shell had `/home`, its page could be the
- * root — which is now the dispatcher, and would send the shell to itself —
- * and an earlier version filed pages under the shell the toggle named. Such
- * a page is dropped here rather than carried, so the next write does not put
- * it back.
+ * version's rules. Before the Power shell had an address of its own, its
+ * page could be the root — which is now the Studio's, and would send Power
+ * to the Studio — and an earlier version filed pages under the shell the
+ * toggle named. Such a page is dropped here rather than carried, so the next
+ * write does not put it back.
  */
 function restoredRoutes(
   stored: unknown,
@@ -243,11 +244,6 @@ export function isRememberableRoute(route: string): boolean {
     return false;
   }
   const path = route.split('?')[0];
-  // The root dispatches to a shell and is nobody's page: remembered, it would
-  // send a shell back to the dispatcher, which would send it to itself.
-  if (path === '/') {
-    return false;
-  }
   return ![
     '/signin',
     '/signup',
@@ -271,7 +267,8 @@ export function isRememberableRoute(route: string): boolean {
  */
 export function viewForRoute(route: string): NavigationView {
   const path = route.split('?')[0];
-  if (path === '/studio' || path.startsWith('/studio/')) {
+  // The root is the Studio: what a signed-in reader opens on.
+  if (path === '/' || path === '/studio' || path.startsWith('/studio/')) {
     return 'studio';
   }
   if (path === '/agentify' || path.startsWith('/agentify/')) {
@@ -337,9 +334,8 @@ export const navigationStore = createStore<NavigationState>((set, get) => ({
     // Only a page of that shell: an earlier version filed pages under the
     // shell the toggle named rather than the one the route belonged to, so a
     // reader can still have `/items` written down as Agentify's page. Going
-    // "to Agentify" must never land on a Home page. Nor a page that is not
-    // remembered at all: the root was the Power shell's page before `/home`,
-    // and returning to it would hand the reader back to the dispatcher.
+    // "to Agentify" must never land on a Home page — nor Power on the root,
+    // which was its page before it had `/power` and is now the Studio's.
     const remembered = get().lastRouteByView[view];
     return isRouteOfView(remembered, view)
       ? remembered

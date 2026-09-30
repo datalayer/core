@@ -40,16 +40,23 @@ describe('where each shell was left', () => {
     expect(routeForView('studio')).toBe('/studio');
     expect(routeForView('agentify')).toBe(NAVIGATION_VIEW_HOMES.agentify);
     expect(routeForView('admin')).toBe('/admin');
-    // The Power shell's own address, not the root that dispatches to a shell.
-    expect(routeForView('home')).toBe('/home');
+    // The Power shell's own address, not the root: the root is the Studio's.
+    expect(routeForView('home')).toBe('/power');
   });
 
-  it('files the Studio under its own shell, and never remembers the root', () => {
+  it('files the Studio, and the root it opens on, under its own shell', () => {
+    expect(viewForRoute('/')).toBe('studio');
+    expect(viewForRoute('/?tab=recent')).toBe('studio');
     expect(viewForRoute('/studio')).toBe('studio');
     expect(viewForRoute('/studio/apps/new?from=template')).toBe('studio');
     expect(viewForRoute('/studios')).toBe('home');
-    expect(isRememberableRoute('/')).toBe(false);
-    expect(isRememberableRoute('/home')).toBe(true);
+    expect(viewForRoute('/power')).toBe('home');
+    expect(isRememberableRoute('/')).toBe(true);
+    expect(isRememberableRoute('/power')).toBe(true);
+    // Opening the root is being in the Studio, and coming back returns there.
+    navigationStore.getState().rememberRoute('/');
+    expect(navigationStore.getState().view).toBe('studio');
+    expect(navigationStore.getState().routeForView('studio')).toBe('/');
   });
 
   it('returns to the page a shell was left on', () => {
@@ -94,15 +101,15 @@ describe('where each shell was left', () => {
     });
     const { routeForView } = navigationStore.getState();
     expect(routeForView('agentify')).toBe('/agentify');
-    expect(routeForView('home')).toBe('/home');
+    expect(routeForView('home')).toBe('/power');
   });
 
-  it('never sends a shell back to the root that dispatches to it', () => {
-    // The Power shell's page, before it had `/home`.
+  it('never sends Power to the root, which is the Studio', () => {
+    // The Power shell's page, before it had `/power`.
     navigationStore.setState({ lastRouteByView: { home: '/' } });
-    expect(navigationStore.getState().routeForView('home')).toBe('/home');
+    expect(navigationStore.getState().routeForView('home')).toBe('/power');
     navigationStore.setState({ lastRouteByView: { home: '/?tab=recent' } });
-    expect(navigationStore.getState().routeForView('home')).toBe('/home');
+    expect(navigationStore.getState().routeForView('home')).toBe('/power');
   });
 
   it('does not remember the doors: sign-in, OAuth callbacks, the documentation', () => {
@@ -171,7 +178,7 @@ describe('what the last visit left', () => {
     document.cookie = `${SHELL_COOKIE}=home; path=/`;
     const state = await open();
     expect(state.view).toBe('home');
-    expect(state.routeForView(state.view)).toBe('/home');
+    expect(state.routeForView(state.view)).toBe('/power');
   });
 
   it('keeps the other shells a cookie names, and ignores one it does not know', async () => {
@@ -204,7 +211,7 @@ describe('what the last visit left', () => {
     // The root, a page filed under the wrong shell and a shell that does not
     // exist are gone from the store itself, so no later write puts them back.
     expect(state.lastRouteByView).toEqual({ agentify: '/agentify/tutor' });
-    expect(state.routeForView('home')).toBe('/home');
+    expect(state.routeForView('home')).toBe('/power');
     expect(state.routeForView('admin')).toBe('/admin');
     expect(state.tabsByView).toEqual({ library: 'featured' });
 
