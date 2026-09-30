@@ -1156,6 +1156,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
+  /**
+   * A published agentic UI application: what it answers, and its definition
+   * as the library hands it over — `model_s`, the string the Studio reads
+   * the definition from, left unparsed because the Studio owns its shape.
+   */
+  const toApp = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'app',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? false,
+      model_s: raw.model_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      lastUpdateDate: raw.last_update_ts_dt
+        ? new Date(raw.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: raw.published_ts_dt
+        ? new Date(raw.published_ts_dt)
+        : undefined,
+      owner: toItemOwner(raw),
+    };
+  };
+
   /** An evaluator of the platform's catalogue (B5-01), published as an agent is. */
   const toEvaluator = (raw: any): any => {
     return {
@@ -1698,6 +1725,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toInvestigation(item);
       case 'evaluator':
         return toEvaluator(item);
+      // Without this a published app answered `{}`, as a deck once did: a
+      // card with no type and no name.
+      case 'app':
+        return toApp(item);
       case 'sitecard':
         return toSiteCard(item);
       default:
@@ -7830,6 +7861,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     'evalset',
     'dataset',
     'agent',
+    // An agentic UI application, published from the Studio.
+    'app',
   ];
 
   type LibrarySearchArgs = {

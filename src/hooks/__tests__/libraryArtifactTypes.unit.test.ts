@@ -31,6 +31,16 @@ describe('the library types searched by default', () => {
     expect(defaults()).toContain('deck');
   });
 
+  it('include apps, and an app is mapped as one rather than as nothing', () => {
+    expect(defaults()).toContain('app');
+    // The type switch answers `{}` for a kind it does not know, which a card
+    // draws as a nameless notebook: the kind needs its case.
+    expect(source).toMatch(/case 'app':\s*return toApp\(item\);/);
+    expect(source).toMatch(
+      /const toApp = [\s\S]*?type: 'app',[\s\S]*?model_s: raw\.model_s,/,
+    );
+  });
+
   it('keep every type that was already there', () => {
     expect(defaults()).toEqual(
       expect.arrayContaining([
