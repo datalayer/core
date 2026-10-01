@@ -52,6 +52,10 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/studios')).toBe('home');
     expect(viewForRoute('/settings/profile')).toBe('studio');
     expect(viewForRoute('/settingsx')).toBe('home');
+    // The agentspecs catalogue is read from the Studio, with its sidebar.
+    expect(viewForRoute('/agentspecs')).toBe('studio');
+    expect(viewForRoute('/agentspecs/skills')).toBe('studio');
+    expect(viewForRoute('/agentspecsx')).toBe('home');
     expect(viewForRoute('/power')).toBe('home');
     expect(isRememberableRoute('/')).toBe(true);
     expect(isRememberableRoute('/power')).toBe(true);

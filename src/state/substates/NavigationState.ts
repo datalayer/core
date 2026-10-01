@@ -268,13 +268,16 @@ export function isRememberableRoute(route: string): boolean {
 export function viewForRoute(route: string): NavigationView {
   const path = route.split('?')[0];
   // The root is the Studio: what a signed-in reader opens on. The settings
-  // are read from it too, with its sidebar beside them.
+  // are read from it too, with its sidebar beside them — and so is the
+  // agentspecs catalogue, the specs an app is composed from.
   if (
     path === '/' ||
     path === '/studio' ||
     path.startsWith('/studio/') ||
     path === '/settings' ||
-    path.startsWith('/settings/')
+    path.startsWith('/settings/') ||
+    path === '/agentspecs' ||
+    path.startsWith('/agentspecs/')
   ) {
     return 'studio';
   }
