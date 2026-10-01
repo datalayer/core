@@ -37,7 +37,7 @@ import {
   CopyIcon,
   KeyIcon,
   PulseIcon,
-  ShareIcon,
+  RssIcon,
   ShieldCheckIcon,
   TelescopeIcon,
   ToolsIcon,
@@ -476,7 +476,7 @@ export const McpHome = ({
             </Text>
           </Summary>
 
-          <Summary icon={ShareIcon} title="Reach">
+          <Summary icon={RssIcon} title="Reach">
             <Text>
               Which notebooks and sources an agent can actually reach, as a list
               you can read at a glance, arrives with sharing to agents as
