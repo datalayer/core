@@ -3,7 +3,7 @@ title: OTEL Client
 description: Python client and CLI for the Datalayer OTEL observability service.
 ---
 
-[![Datalayer](https://assets.datalayer.tech/datalayer-25.svg)](https://datalayer.io)
+[![Datalayer](https://images.datalayer.io/legacy/datalayer-25.svg)](https://datalayer.ai)
 
 # Datalayer OTEL Client
 
