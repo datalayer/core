@@ -58,6 +58,20 @@ describe('where each shell was left', () => {
     expect(isShellNeutralRoute('/settings/profile')).toBe(true);
     expect(isShellNeutralRoute('/docs/cli?x=1')).toBe(true);
     expect(isShellNeutralRoute('/docsx')).toBe(false);
+    // A fragment is not part of the path, any more than a query is.
+    expect(isShellNeutralRoute('/settings#profile')).toBe(true);
+    expect(isShellNeutralRoute('/docs#install')).toBe(true);
+    expect(isShellNeutralRoute('/docs/cli?x=1#flags')).toBe(true);
+    expect(isShellNeutralRoute('/docs/cli#flags?x=1')).toBe(true);
+    expect(isRememberableRoute('/settings#profile')).toBe(false);
+    expect(isRememberableRoute('/docs#install')).toBe(false);
+    expect(viewForRoute('/settings#profile', 'home')).toBe('home');
+    expect(viewForRoute('/docs#install', 'agentify')).toBe('agentify');
+    // And a shell's own page stays its shell's with one.
+    expect(viewForRoute('/studio#apps')).toBe('studio');
+    expect(viewForRoute('/admin#users', 'studio')).toBe('admin');
+    expect(viewForRoute('/#top')).toBe('studio');
+    expect(isRememberableRoute('/signin#next')).toBe(false);
     // The decks too: a host draws them beside the shell they were opened from.
     expect(isShellNeutralRoute('/decks/funding/seed')).toBe(true);
     expect(viewForRoute('/decks', 'admin')).toBe('admin');
@@ -269,5 +283,10 @@ describe('a shell-neutral page keeps the shell the reader is in', () => {
     expect(store.getState().routeForView('studio')).not.toMatch(
       /^\/(settings|docs)/,
     );
+    // Nor with a fragment: `/settings#profile` once read as the Studio's page.
+    store.getState().rememberRoute('/settings#profile');
+    store.getState().rememberRoute('/docs#install');
+    expect(store.getState().view).toBe('home');
+    expect(store.getState().routeForView('home')).toBe('/power');
   });
 });

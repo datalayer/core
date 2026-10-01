@@ -233,6 +233,19 @@ function persist(state: NavigationState): void {
 }
 
 /**
+ * The path of a route: what is before its query and its fragment.
+ *
+ * A route is what the reader was at — `/settings/profile?tab=keys#tokens` —
+ * and the shell it belongs to is decided by its path alone. Cutting only at
+ * `?` left a fragment attached, so `/settings#profile` was not `/settings`:
+ * it read as a shell's own page and moved the shell.
+ */
+function pathOf(route: string): string {
+  const end = route.search(/[?#]/);
+  return end === -1 ? route : route.slice(0, end);
+}
+
+/**
  * Whether a page is worth remembering as a shell's.
  *
  * Not the sign-in pages, the OAuth callbacks or the documentation: coming
@@ -243,7 +256,7 @@ export function isRememberableRoute(route: string): boolean {
   if (!route.startsWith('/')) {
     return false;
   }
-  const path = route.split('?')[0];
+  const path = pathOf(route);
   return (
     ![
       '/signin',
@@ -268,7 +281,7 @@ export function isRememberableRoute(route: string): boolean {
  * returns to one.
  */
 export function isShellNeutralRoute(route: string): boolean {
-  const path = route.split('?')[0];
+  const path = pathOf(route);
   return ['/settings', '/docs', '/decks'].some(
     prefix => path === prefix || path.startsWith(`${prefix}/`),
   );
@@ -292,7 +305,7 @@ export function viewForRoute(
   route: string,
   current?: NavigationView,
 ): NavigationView {
-  const path = route.split('?')[0];
+  const path = pathOf(route);
   if (current && isShellNeutralRoute(route)) {
     return current;
   }
