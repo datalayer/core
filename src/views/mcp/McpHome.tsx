@@ -27,17 +27,18 @@
  * @module views/mcp/McpHome
  */
 
-import type { JSX } from 'react';
+import type { ComponentType, JSX } from 'react';
 import { useState } from 'react';
+import { AiAgentIcon } from '@datalayer/icons-react';
 import { Button, Heading, IconButton, Link, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import {
   CheckIcon,
   CopyIcon,
   KeyIcon,
-  PlugIcon,
   PulseIcon,
   ShareIcon,
+  ShieldCheckIcon,
   TelescopeIcon,
   ToolsIcon,
 } from '@primer/octicons-react';
@@ -179,7 +180,7 @@ const Summary = ({
   to,
   onOpen,
 }: {
-  icon: typeof PlugIcon;
+  icon: ComponentType<{ size?: number }>;
   title: string;
   children: React.ReactNode;
   action?: { label: string; onClick: () => void };
@@ -389,7 +390,7 @@ export const McpHome = ({
           }}
         >
           <Summary
-            icon={PlugIcon}
+            icon={AiAgentIcon}
             title="Agents"
             to={routes.agents}
             onOpen={navigate}
@@ -484,7 +485,7 @@ export const McpHome = ({
           </Summary>
 
           <Summary
-            icon={KeyIcon}
+            icon={ShieldCheckIcon}
             title="Policies"
             to={routes.policies}
             onOpen={navigate}
