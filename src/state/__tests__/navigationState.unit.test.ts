@@ -58,6 +58,10 @@ describe('where each shell was left', () => {
     expect(isShellNeutralRoute('/settings/profile')).toBe(true);
     expect(isShellNeutralRoute('/docs/cli?x=1')).toBe(true);
     expect(isShellNeutralRoute('/docsx')).toBe(false);
+    // The decks too: a host draws them beside the shell they were opened from.
+    expect(isShellNeutralRoute('/decks/funding/seed')).toBe(true);
+    expect(viewForRoute('/decks', 'admin')).toBe('admin');
+    expect(isRememberableRoute('/decks')).toBe(false);
     expect(viewForRoute('/settings/profile', 'home')).toBe('home');
     expect(viewForRoute('/docs/cli', 'agentify')).toBe('agentify');
     expect(viewForRoute('/docs', 'studio')).toBe('studio');

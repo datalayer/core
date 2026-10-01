@@ -259,7 +259,8 @@ export function isRememberableRoute(route: string): boolean {
 }
 
 /**
- * Whether a page belongs to no shell: the settings and the documentation.
+ * Whether a page belongs to no shell: the settings, the documentation and
+ * the decks.
  *
  * They are read from whichever shell the reader is in — its sidebar stays
  * beside them and the header's selector does not move — so they are never a
@@ -268,7 +269,7 @@ export function isRememberableRoute(route: string): boolean {
  */
 export function isShellNeutralRoute(route: string): boolean {
   const path = route.split('?')[0];
-  return ['/settings', '/docs'].some(
+  return ['/settings', '/docs', '/decks'].some(
     prefix => path === prefix || path.startsWith(`${prefix}/`),
   );
 }
