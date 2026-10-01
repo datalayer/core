@@ -20,6 +20,7 @@ import { forgetSessionState } from '../sessionEnd';
 import {
   NAVIGATION_VIEW_HOMES,
   isRememberableRoute,
+  isShellNeutralRoute,
   navigationStore,
   viewForRoute,
 } from '../substates/NavigationState';
@@ -52,6 +53,20 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/studios')).toBe('home');
     expect(viewForRoute('/settings/profile')).toBe('studio');
     expect(viewForRoute('/settingsx')).toBe('home');
+    // The settings and the documentation belong to no shell: read from the
+    // one the reader is in, they keep it.
+    expect(isShellNeutralRoute('/settings/profile')).toBe(true);
+    expect(isShellNeutralRoute('/docs/cli?x=1')).toBe(true);
+    expect(isShellNeutralRoute('/docsx')).toBe(false);
+    expect(viewForRoute('/settings/profile', 'home')).toBe('home');
+    expect(viewForRoute('/docs/cli', 'agentify')).toBe('agentify');
+    expect(viewForRoute('/docs', 'studio')).toBe('studio');
+    // A shell's own page is its shell's, whatever the reader was in.
+    expect(viewForRoute('/power', 'studio')).toBe('home');
+    expect(viewForRoute('/studio/apps', 'home')).toBe('studio');
+    // So neither is a page a shell returns to, nor one that moves the shell.
+    expect(isRememberableRoute('/settings/profile')).toBe(false);
+    expect(isRememberableRoute('/docs/cli')).toBe(false);
     // The agentspecs catalogue is read from the Studio, with its sidebar.
     expect(viewForRoute('/agentspecs')).toBe('studio');
     expect(viewForRoute('/agentspecs/skills')).toBe('studio');
@@ -235,5 +250,20 @@ describe('what the last visit left', () => {
     forgetBrowser();
     localStorage.setItem(STORAGE_KEY, '{"lastRouteByView":"/studio"}');
     expect((await open()).view).toBe('studio');
+  });
+});
+
+describe('a shell-neutral page keeps the shell the reader is in', () => {
+  it('does not move the shell, nor become the page a shell returns to', () => {
+    const store = navigationStore;
+    store.getState().rememberRoute('/power');
+    expect(store.getState().view).toBe('home');
+    store.getState().rememberRoute('/settings/profile');
+    store.getState().rememberRoute('/docs/cli');
+    expect(store.getState().view).toBe('home');
+    expect(store.getState().routeForView('home')).toBe('/power');
+    expect(store.getState().routeForView('studio')).not.toMatch(
+      /^\/(settings|docs)/,
+    );
   });
 });

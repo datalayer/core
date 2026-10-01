@@ -244,16 +244,33 @@ export function isRememberableRoute(route: string): boolean {
     return false;
   }
   const path = route.split('?')[0];
-  return ![
-    '/signin',
-    '/signup',
-    '/login',
-    '/logout',
-    '/oauth2',
-    '/oauth',
-    '/docs',
-    '/join',
-  ].some(prefix => path === prefix || path.startsWith(`${prefix}/`));
+  return (
+    ![
+      '/signin',
+      '/signup',
+      '/login',
+      '/logout',
+      '/oauth2',
+      '/oauth',
+      '/join',
+    ].some(prefix => path === prefix || path.startsWith(`${prefix}/`)) &&
+    !isShellNeutralRoute(route)
+  );
+}
+
+/**
+ * Whether a page belongs to no shell: the settings and the documentation.
+ *
+ * They are read from whichever shell the reader is in — its sidebar stays
+ * beside them and the header's selector does not move — so they are never a
+ * shell's own page: opening one does not change the shell, and no shell
+ * returns to one.
+ */
+export function isShellNeutralRoute(route: string): boolean {
+  const path = route.split('?')[0];
+  return ['/settings', '/docs'].some(
+    prefix => path === prefix || path.startsWith(`${prefix}/`),
+  );
 }
 
 /**
@@ -264,9 +281,20 @@ export function isRememberableRoute(route: string): boolean {
  * reached Home through a sidebar link while the toggle still said Agentify
  * had their Home pages filed under Agentify — and the toggle, seeing
  * "Agentify" already chosen, did nothing when they clicked it.
+ *
+ * A shell-neutral page (the settings, the documentation) has no shell of its
+ * own: given the shell the reader is in (`current`), that is the answer, so
+ * the sidebar and the header stay where they were. Without it the settings
+ * read as the Studio's and the documentation as Power's, as they once were.
  */
-export function viewForRoute(route: string): NavigationView {
+export function viewForRoute(
+  route: string,
+  current?: NavigationView,
+): NavigationView {
   const path = route.split('?')[0];
+  if (current && isShellNeutralRoute(route)) {
+    return current;
+  }
   // The root is the Studio: what a signed-in reader opens on. The settings
   // are read from it too, with its sidebar beside them — and so is the
   // agentspecs catalogue, the specs an app is composed from.
