@@ -16,7 +16,13 @@ import {
 import { Box, Button, Text, Tooltip } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
 
-export type PrincipalType = 'personal' | 'organization' | 'team';
+/**
+ * Who a principal is: a person, an organization, a team — or an application,
+ * a deployed LOOP application that acts in its own name (its IAM application
+ * principal), drawn as a person is: the avatar it chose on the tinted disc.
+ */
+export type PrincipalType =
+  'personal' | 'organization' | 'team' | 'application';
 
 type AvatarComponent = ComponentType<
   SVGProps<SVGSVGElement> & {
