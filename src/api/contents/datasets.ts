@@ -11,6 +11,8 @@ import {
 } from '../../models/contents';
 import type { JsonValue } from '../../models/contents';
 import type {
+  DataServerAttachment,
+  DatasetClone,
   DatasetPublication,
   DatasetPublicationCreate,
   DatasetPublicationList,
@@ -127,17 +129,6 @@ export const unpublishDataset = async (
     }),
   );
 
-/** The Dataset a clone produced, and where it came from. */
-export type DatasetClone = {
-  uid: string;
-  name: string;
-  sourceUid: string;
-  publicationUid: string;
-  revisionUid: string;
-  fileCount: number;
-  totalSize: number;
-};
-
 /**
  * Take a published Dataset into your own catalog.
  *
@@ -185,29 +176,6 @@ export const listPublishedDatasets = async (
       token,
     }),
   );
-
-/** A published Data Server's catalog, as the library shows it. */
-export type DataServerPublication = {
-  uid: string;
-  sourceUid: string;
-  actorUid: string;
-  ownerUid: string;
-  name: string;
-  description?: string | null;
-  tags: string[];
-  connectors: string[];
-  relations: string[];
-  status: string;
-  createdAt: string;
-};
-
-/** The Datasource an attach produced, naming the published Data Server. */
-export type DataServerAttachment = {
-  uid: string;
-  name: string;
-  sourceUid: string;
-  publicationUid: string;
-};
 
 /**
  * Attach a published Data Server as a Datasource of your own.

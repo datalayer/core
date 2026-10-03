@@ -6,7 +6,8 @@
 import { create } from 'zustand';
 import { registerSessionState } from '../state/sessionEnd';
 
-export type PrincipalCacheKind = 'personal' | 'team' | 'organization';
+export type PrincipalCacheKind =
+  'personal' | 'team' | 'organization' | 'service';
 
 /**
  * A resolved principal snapshot kept in memory so repeated renders (across
@@ -169,4 +170,6 @@ export const usePrincipalCacheStore = create<PrincipalCacheState>(
 export default usePrincipalCacheStore;
 
 // What one session resolved is not the next one's to paint.
-registerSessionState({ forget: () => usePrincipalCacheStore.getState().reset() });
+registerSessionState({
+  forget: () => usePrincipalCacheStore.getState().reset(),
+});

@@ -16,7 +16,8 @@ import { useNavigate } from '../../hooks';
 import { PrincipalAvatar } from './PrincipalAvatar';
 import { displayHandleText } from '../display/DisplayHandle';
 
-export type PrincipalKind = 'personal' | 'team' | 'organization';
+/** A service principal is the one a deployed LOOP application acts through (I-02). */
+export type PrincipalKind = 'personal' | 'team' | 'organization' | 'service';
 
 export type PrincipalDetailsOverlayProps = {
   kind: PrincipalKind;
@@ -123,6 +124,11 @@ export function buildPrincipalProfilePath({
     if (safeHandle) {
       return `/${safeHandle}`;
     }
+    return null;
+  }
+
+  // A service principal has no profile page of its own.
+  if (kind === 'service') {
     return null;
   }
 
