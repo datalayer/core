@@ -131,6 +131,15 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/agentifyx')).toBe('home');
   });
 
+  it('gives LOOP a shell of its own: its app pages and its workspace', () => {
+    expect(viewForRoute('/loop/apps/abc')).toBe('loop');
+    expect(viewForRoute('/loop')).toBe('loop');
+    expect(viewForRoute('/looping')).toBe('home');
+    expect(NAVIGATION_VIEW_HOMES.loop).toBe('/loop/apps');
+    navigationStore.setState({ lastRouteByView: {} });
+    expect(navigationStore.getState().routeForView('loop')).toBe('/loop/apps');
+  });
+
   it('never sends a shell to a page that is not its own', () => {
     // What an earlier version could leave behind.
     navigationStore.setState({

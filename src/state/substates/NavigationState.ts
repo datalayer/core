@@ -36,16 +36,18 @@ import { registerSessionState } from '../sessionEnd';
 
 /** The signed-in shell: the platform, the business cases, or the admin. */
 /**
- * The four shells of the signed-in application.
+ * The five shells of the signed-in application.
  *
  * `studio` is where an agentic UI application is composed, validated and
  * shipped — the default for somebody who has not chosen, and what the root
  * shows. `home` is the whole platform, shown as *Power*, at `/power`: the key
  * is kept so a cookie written before the Studio existed still names the
  * shell it meant. `agentify` is the business cases; `admin` is the
- * platform's administration.
+ * platform's administration. `loop` is LOOP: AI applications built by spec,
+ * by drag and drop or in Python — the Studio's app pages under a sidebar of
+ * their own, and the LOOP workspace at `/loop`.
  */
-export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin';
+export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin' | 'loop';
 
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
@@ -55,6 +57,8 @@ export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
   home: '/power',
   agentify: '/agentify',
   admin: '/admin',
+  // The applications: what a builder opens LOOP for.
+  loop: '/loop/apps',
 };
 
 /** Well-known view identifiers for {@link NavigationState.tabsByView}. */
@@ -122,7 +126,8 @@ const isView = (value: unknown): value is NavigationView =>
   value === 'studio' ||
   value === 'home' ||
   value === 'agentify' ||
-  value === 'admin';
+  value === 'admin' ||
+  value === 'loop';
 
 function readCookie(name: string): string | undefined {
   if (typeof document === 'undefined') {
@@ -328,6 +333,9 @@ export function viewForRoute(
   }
   if (path === '/admin' || path.startsWith('/admin/')) {
     return 'admin';
+  }
+  if (path === '/loop' || path.startsWith('/loop/')) {
+    return 'loop';
   }
   return 'home';
 }
