@@ -68,9 +68,9 @@ export function PrincipalAvatar({
    * Answering the icon here first drew that same icon WITHOUT the disc, so a
    * person who had chosen one was a bare drawing among circles.
    */
-  // An application is drawn as a person is: its chosen avatar, or its emoji,
-  // on the same disc (LOOP I-07).
-  if (kind === 'personal' || kind === 'application') {
+  // A service principal — an application's — is drawn as a person is: its
+  // chosen avatar, or its emoji, on the same disc (LOOP I-07).
+  if (kind === 'personal' || kind === 'service') {
     return (
       <UserAvatar
         avatarUrl={avatarUrl}

@@ -529,13 +529,13 @@ class McpMixin:
         payload = response.json()
         return dict(payload.get("agent") or {})
 
-    # Application principals (IAM, LOOP I-02) --------------------------------
+    # Service principals (IAM, LOOP I-02) --------------------------------
 
-    def list_app_principals(
+    def list_service_principals(
         self, *, app_uid: str = "", org_uid: str = ""
     ) -> list[dict[str, Any]]:
         """
-        The caller's application principals, revoked ones included.
+        The caller's service principals, revoked ones included.
 
         A deployed LOOP application acts in its own name: ai-agents makes its
         principal at the first deploy. An organization's are listed for its
@@ -546,28 +546,28 @@ class McpMixin:
         }
         query = "&".join(f"{k}={v}" for k, v in params.items())
         response = self._fetch(  # type: ignore[attr-defined]
-            self._iam_url("/app-principals" + (f"?{query}" if query else "")),
+            self._iam_url("/service-principals" + (f"?{query}" if query else "")),
             method="GET",
         )
         payload = response.json()
         principals = payload.get("principals", []) if isinstance(payload, dict) else []
         return [dict(principal) for principal in principals]
 
-    def rotate_app_principal_key(
+    def rotate_service_principal_key(
         self, uid: str, *, org_uid: str = ""
     ) -> dict[str, Any]:
         """Give the principal a new key — answered once. The old one stops at once."""
         suffix = f"?org_uid={org_uid}" if org_uid else ""
         response = self._fetch(  # type: ignore[attr-defined]
-            self._iam_url(f"/app-principals/{uid}/rotate{suffix}"), method="POST"
+            self._iam_url(f"/service-principals/{uid}/rotate{suffix}"), method="POST"
         )
         return dict((response.json() or {}).get("principal") or {})
 
-    def revoke_app_principal(self, uid: str, *, org_uid: str = "") -> dict[str, Any]:
+    def revoke_service_principal(self, uid: str, *, org_uid: str = "") -> dict[str, Any]:
         """Stop the principal, keeping it readable for its audit."""
         suffix = f"?org_uid={org_uid}" if org_uid else ""
         response = self._fetch(  # type: ignore[attr-defined]
-            self._iam_url(f"/app-principals/{uid}/revoke{suffix}"), method="POST"
+            self._iam_url(f"/service-principals/{uid}/revoke{suffix}"), method="POST"
         )
         return dict((response.json() or {}).get("principal") or {})
 

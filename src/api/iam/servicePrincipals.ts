@@ -4,7 +4,7 @@
  */
 
 /**
- * Application principals: a deployed LOOP application as a principal of its
+ * Service principals: a deployed LOOP application as a principal of its
  * own (plans/LOOP.md, I-02).
  *
  * The service agents' kin — a key that is exchanged for an hour's token, an
@@ -14,14 +14,14 @@
  * makes one at the application's first deploy; these calls are for reading,
  * rotating and revoking it.
  *
- * @module api/iam/appPrincipals
+ * @module api/iam/servicePrincipals
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import type { ServiceAgent } from './serviceAgents';
 
-export interface AppPrincipal extends ServiceAgent {
+export interface ServicePrincipal extends ServiceAgent {
   /** The application it is the principal of. */
   appUid: string;
   /** Whose it is: a person's uid, or an organization's. */
@@ -31,7 +31,7 @@ export interface AppPrincipal extends ServiceAgent {
 }
 
 /** A principal as it comes back from a write, with the key — that once. */
-export interface AppPrincipalWithKey extends AppPrincipal {
+export interface ServicePrincipalWithKey extends ServicePrincipal {
   key: string;
 }
 
@@ -51,7 +51,7 @@ interface WirePrincipal {
   key?: string | null;
 }
 
-const fromWire = (principal: WirePrincipal): AppPrincipal => ({
+const fromWire = (principal: WirePrincipal): ServicePrincipal => ({
   uid: principal.uid,
   name: principal.name ?? '',
   description: principal.description ?? '',
@@ -66,21 +66,21 @@ const fromWire = (principal: WirePrincipal): AppPrincipal => ({
   orgUid: principal.org_uid ?? '',
 });
 
-const withKey = (principal: WirePrincipal): AppPrincipalWithKey => ({
+const withKey = (principal: WirePrincipal): ServicePrincipalWithKey => ({
   ...fromWire(principal),
   key: principal.key ?? '',
 });
 
 const principalsUrl = (baseUrl: string, suffix = '', orgUid?: string): string =>
-  `${baseUrl}${API_BASE_PATHS.IAM}/app-principals${suffix}` +
+  `${baseUrl}${API_BASE_PATHS.IAM}/service-principals${suffix}` +
   (orgUid ? `?org_uid=${encodeURIComponent(orgUid)}` : '');
 
-/** The caller's application principals — or an organization's, for its owners. */
-export const listAppPrincipals = async (
+/** The caller's service principals — or an organization's, for its owners. */
+export const listServicePrincipals = async (
   token: string,
   options: { appUid?: string; orgUid?: string } = {},
   baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
-): Promise<AppPrincipal[]> => {
+): Promise<ServicePrincipal[]> => {
   const query = new URLSearchParams();
   if (options.appUid) query.set('app_uid', options.appUid);
   if (options.orgUid) query.set('org_uid', options.orgUid);
@@ -89,7 +89,7 @@ export const listAppPrincipals = async (
     success: boolean;
     principals?: WirePrincipal[];
   }>({
-    url: `${baseUrl}${API_BASE_PATHS.IAM}/app-principals${suffix}`,
+    url: `${baseUrl}${API_BASE_PATHS.IAM}/service-principals${suffix}`,
     method: 'GET',
     token,
   });
@@ -97,7 +97,7 @@ export const listAppPrincipals = async (
 };
 
 /** Make one. **The key is in this answer and in no other.** */
-export const createAppPrincipal = async (
+export const createServicePrincipal = async (
   token: string,
   principal: {
     appUid: string;
@@ -107,7 +107,7 @@ export const createAppPrincipal = async (
     orgUid?: string;
   },
   baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
-): Promise<AppPrincipalWithKey> => {
+): Promise<ServicePrincipalWithKey> => {
   const response = await requestDatalayerAPI<{
     success: boolean;
     principal?: WirePrincipal;
@@ -126,12 +126,12 @@ export const createAppPrincipal = async (
 };
 
 /** Replace its key. The old one stops working with this call. */
-export const rotateAppPrincipalKey = async (
+export const rotateServicePrincipalKey = async (
   token: string,
   uid: string,
   orgUid?: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
-): Promise<AppPrincipalWithKey> => {
+): Promise<ServicePrincipalWithKey> => {
   const response = await requestDatalayerAPI<{
     success: boolean;
     principal?: WirePrincipal;
@@ -144,12 +144,12 @@ export const rotateAppPrincipalKey = async (
 };
 
 /** Stop it, keeping it readable for its audit. */
-export const revokeAppPrincipal = async (
+export const revokeServicePrincipal = async (
   token: string,
   uid: string,
   orgUid?: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
-): Promise<AppPrincipal> => {
+): Promise<ServicePrincipal> => {
   const response = await requestDatalayerAPI<{
     success: boolean;
     principal?: WirePrincipal;

@@ -4,7 +4,7 @@
  */
 
 /**
- * Application principals (LOOP I-02): a deployed application as a principal
+ * Service principals (LOOP I-02): a deployed application as a principal
  * of its own, which a person may own as an organization may. As for service
  * agents, the key is in a write's answer and in no read's.
  */
@@ -12,15 +12,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import {
-  createAppPrincipal,
-  listAppPrincipals,
-  revokeAppPrincipal,
-  rotateAppPrincipalKey,
-} from '../appPrincipals';
+  createServicePrincipal,
+  listServicePrincipals,
+  revokeServicePrincipal,
+  rotateServicePrincipalKey,
+} from '../servicePrincipals';
 
 const IAM = 'https://iam.test';
 
-describe('application principals API', () => {
+describe('service principals API', () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it('reads a person’s principals, of one application, with no key', async () => {
@@ -40,13 +40,13 @@ describe('application principals API', () => {
           },
         ],
       } as never);
-    const [principal] = await listAppPrincipals(
+    const [principal] = await listServicePrincipals(
       'token',
       { appUid: 'app-1' },
       IAM,
     );
     expect(call.mock.calls[0][0].url).toBe(
-      `${IAM}/api/iam/v1/app-principals?app_uid=app-1`,
+      `${IAM}/api/iam/v1/service-principals?app_uid=app-1`,
     );
     expect(principal).toMatchObject({
       uid: '01AP',
@@ -70,7 +70,7 @@ describe('application principals API', () => {
           key: 'dla_sa_x',
         },
       } as never);
-    const made = await createAppPrincipal(
+    const made = await createServicePrincipal(
       'token',
       {
         appUid: 'app-1',
@@ -81,26 +81,26 @@ describe('application principals API', () => {
       IAM,
     );
     expect(call.mock.calls[0][0].url).toBe(
-      `${IAM}/api/iam/v1/app-principals?org_uid=01ORG`,
+      `${IAM}/api/iam/v1/service-principals?org_uid=01ORG`,
     );
     expect(call.mock.calls[0][0].body).toMatchObject({
       app_uid: 'app-1',
       scopes: ['runtimes:read'],
     });
     expect(made.key).toBe('dla_sa_x');
-    const rotated = await rotateAppPrincipalKey(
+    const rotated = await rotateServicePrincipalKey(
       'token',
       '01AP',
       undefined,
       IAM,
     );
     expect(call.mock.calls[1][0].url).toBe(
-      `${IAM}/api/iam/v1/app-principals/01AP/rotate`,
+      `${IAM}/api/iam/v1/service-principals/01AP/rotate`,
     );
     expect(rotated.key).toBe('dla_sa_x');
-    await revokeAppPrincipal('token', '01AP', '01ORG', IAM);
+    await revokeServicePrincipal('token', '01AP', '01ORG', IAM);
     expect(call.mock.calls[2][0].url).toBe(
-      `${IAM}/api/iam/v1/app-principals/01AP/revoke?org_uid=01ORG`,
+      `${IAM}/api/iam/v1/service-principals/01AP/revoke?org_uid=01ORG`,
     );
   });
 });
