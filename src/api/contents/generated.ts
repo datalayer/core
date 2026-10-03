@@ -402,6 +402,13 @@ export interface CredentialRotation {
   credentialUid: string;
 }
 
+export interface DataServerAttachment {
+  name: string;
+  publicationUid: string;
+  sourceUid: string;
+  uid: string;
+}
+
 export interface DataServerConfiguration {
   connectors?: Array<DataServerConnector>;
   identityExpiresAt?: string | null;
@@ -476,6 +483,27 @@ export interface DataServerJobs {
   jobs: Array<DataServerJob>;
 }
 
+export interface DataServerPublication {
+  actorUid: string;
+  connectors?: Array<string>;
+  createdAt: string;
+  description?: string | null;
+  name: string;
+  ownerUid: string;
+  relations?: Array<string>;
+  sourceUid: string;
+  status: string;
+  tags?: Array<string>;
+  uid: string;
+  unpublishedAt?: string | null;
+  unpublishedBy?: string | null;
+}
+
+export interface DataServerPublicationList {
+  items: Array<DataServerPublication>;
+  nextOffset?: number | null;
+}
+
 export interface DataServerRegister {
   connectors?: Array<DataServerConnector>;
   registrationIdentity: string;
@@ -524,6 +552,16 @@ export interface DataServerStatus {
     | 'revoked';
 }
 
+export interface DatasetClone {
+  fileCount: number;
+  name: string;
+  publicationUid: string;
+  revisionUid: string;
+  sourceUid: string;
+  totalSize: number;
+  uid: string;
+}
+
 export interface DatasetConfiguration {
   currentRevisionUid?: string | null;
   kind: 'dataset';
@@ -558,6 +596,7 @@ export interface DatasetPublicationCreate {
 
 export interface DatasetPublicationList {
   items: Array<DatasetPublication>;
+  nextOffset?: number | null;
 }
 
 export interface DatasetRevision {
@@ -604,6 +643,7 @@ export interface DatasetRevisionFileCreate {
 
 export interface DatasetRevisionList {
   items: Array<DatasetRevision>;
+  nextOffset?: number | null;
 }
 
 export interface DatasourceCapabilities {
@@ -742,7 +782,7 @@ export interface FlightConnectivity {
 
 export interface Grant {
   accessLevel: 'view' | 'update' | 'execute';
-  principalKind: 'user' | 'team' | 'organization';
+  principalKind: 'user' | 'team' | 'organization' | 'agent';
   principalUid: string;
   uid?: string | null;
 }
@@ -954,6 +994,7 @@ export interface McpToolManifest {
 }
 
 export interface McpToolView {
+  annotations?: Record<string, unknown>;
   description?: string | null;
   inputSchema?: Record<string, unknown>;
   name: string;
@@ -1009,6 +1050,17 @@ export interface PartWritten {
   part: string;
 }
 
+export interface PendingRevocation {
+  mountPath: string;
+  sandboxUid: string;
+  sourceUid: string;
+  uid: string;
+}
+
+export interface PendingRevocationList {
+  items: Array<PendingRevocation>;
+}
+
 export interface PingResponse {
   message?: 'Pong.';
   success?: true;
@@ -1049,6 +1101,7 @@ export interface PreparedAttachment {
   mode: 'ro' | 'rw';
   mountPath?: string | null;
   mountSession?: MountSession | null;
+  mountToken?: string | null;
   providerResourceId?: string | null;
   readyAt?: string | null;
   required?: boolean;
@@ -1070,7 +1123,7 @@ export interface PresignedAccess {
   url: string;
 }
 
-export type PrincipalKind = 'user' | 'team' | 'organization';
+export type PrincipalKind = 'user' | 'team' | 'organization' | 'agent';
 
 export interface PublishTableRequest {
   relation: string;
@@ -1360,6 +1413,7 @@ export interface VolumeConfiguration {
   concurrentWriters: boolean;
   defaultMountPath: string;
   kind: 'volume';
+  managed?: boolean;
   scope: 'user' | 'space';
   storageClass?: string | null;
 }
