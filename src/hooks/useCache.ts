@@ -471,6 +471,8 @@ export const queryKeys = {
     userOrgs: () => [...queryKeys.organizations.all(), 'user'] as const,
     members: (orgId: string) =>
       [...queryKeys.organizations.detail(orgId), 'members'] as const,
+    pluginsOff: (orgId: string) =>
+      [...queryKeys.organizations.detail(orgId), 'plugins-off'] as const,
   },
 
   // Teams
