@@ -16,6 +16,7 @@ import { AlienIcon } from '@datalayer/icons-react';
 import { Box, useColorPalette } from '@datalayer/primer-addons';
 import { DLAvatar } from './DLAvatar';
 import { getPrincipalAvatarIcon } from '../principal/PrincipalAppearance';
+import { FluentEmoji } from '../emoji/FluentEmoji';
 
 /**
  * Returns `true` when the given URL points to a real user avatar (i.e. not a
@@ -37,7 +38,8 @@ export type UserAvatarProps = {
   /**
    * A literal emoji, checked before `avatarIcon`/`avatarUrl` — an agent's
    * face is its emoji, not a photograph or a chosen icon standing in for
-   * one.
+   * one. Drawn in Fluent Emoji, the same on every platform (LOOP T-20); the
+   * system's, as text, only for one Datalayer ships no drawing of.
    */
   avatarEmoji?: string;
   /** Avatar edge length in pixels. Defaults to 100. */
@@ -98,12 +100,15 @@ export const UserAvatar = ({
           alignItems: 'center',
           justifyContent: 'center',
           bg: fallbackBackground || 'canvas.default',
-          fontSize: Math.round(size * 0.5),
-          lineHeight: 1,
           ...ringSx,
         }}
       >
-        {avatarEmoji}
+        {/* Named by the disc it sits on, so the drawing is decoration. */}
+        <FluentEmoji
+          emoji={avatarEmoji}
+          size={iconSize ?? Math.round(size * 0.6)}
+          label=""
+        />
       </Box>
     );
   }
