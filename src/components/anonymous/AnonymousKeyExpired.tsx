@@ -69,6 +69,12 @@ export type AnonymousKeyExpiredProps = {
   temporary?: boolean;
   /** Called after a successful sign-in, once the token is stored. */
   onSignedIn?: () => void;
+  /**
+   * Called on *Sign up with email*, for a host with a router to send the
+   * reader to its own sign-up page; without it, the form opens its sign-up
+   * address.
+   */
+  onSignUp?: () => void;
 };
 
 export function AnonymousKeyExpired({
@@ -76,6 +82,7 @@ export function AnonymousKeyExpired({
   sandboxStillRuns = false,
   temporary = true,
   onSignedIn,
+  onSignUp,
 }: AnonymousKeyExpiredProps): JSX.Element {
   const { configuration } = useCoreStore();
 
@@ -211,6 +218,7 @@ export function AnonymousKeyExpired({
               : undefined
           }
           onSignIn={handleSignIn}
+          onSignUp={onSignUp}
         />
       </Box>
     </Box>

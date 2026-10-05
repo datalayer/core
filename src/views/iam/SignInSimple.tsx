@@ -227,6 +227,12 @@ export interface SignInSimpleProps {
    */
   signUpHref?: string;
   /**
+   * Called on the sign-up button instead of opening `signUpHref`: a host
+   * with a router sends the reader to its own sign-up page without leaving
+   * the app.
+   */
+  onSignUp?: () => void;
+  /**
    * Forgot-password URL for password form.
    */
   forgotPasswordHref?: string;
@@ -308,6 +314,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   signUpDescription = 'Create a free Datalayer account with your email address.',
   signUpLabel = 'Sign up with email',
   signUpHref = 'https://datalayer.ai/signup',
+  onSignUp,
   forgotPasswordHref = '/password',
   forgotPasswordLabel = 'Forgot password?',
   showForgotPassword = true,
@@ -441,8 +448,12 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   }, [apiKeyValue, onApiKeySignIn, closeApiKeyDialog]);
 
   const handleSignUp = useCallback(() => {
+    if (onSignUp) {
+      onSignUp();
+      return;
+    }
     window.location.assign(signUpHref);
-  }, [signUpHref]);
+  }, [onSignUp, signUpHref]);
 
   const handleForgotPassword = useCallback(() => {
     if (!forgotPasswordHref) {
