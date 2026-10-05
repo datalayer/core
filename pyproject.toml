@@ -102,11 +102,14 @@ examples = [
 fsspec = [
     "fsspec>=2024.6.0",
 ]
+# Every logfire release up to 5.1.1 caps `opentelemetry-sdk<1.45`, so this extra
+# cannot resolve until one lifts it: install logfire with `--no-deps` (it runs on
+# 1.45) or wait.
 otel = [
-    "logfire>=3.0.0",
-    "opentelemetry-api>=1.20.0",
-    "opentelemetry-sdk>=1.20.0",
-    "opentelemetry-exporter-otlp-proto-http>=1.20.0",
+    "logfire>=5.1.1",
+    "opentelemetry-api>=1.45.0",
+    "opentelemetry-sdk>=1.45.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.0",
 ]
 
 # The core's command groups, as a reactor CLI extension: any reactor CLI
