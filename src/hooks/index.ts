@@ -7,6 +7,7 @@ export * from './useAuthorization';
 export * from './useBackdrop';
 export * from './useBackdropJupyterLab';
 export * from './useCache';
+export * from './libraryApp';
 export * from './useContainsFocus';
 export * from './useContents';
 export * from './useDatalayer';

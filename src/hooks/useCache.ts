@@ -85,6 +85,7 @@ type INotebook = any;
 type ISpaceItem = any;
 type IStudentItem = any;
 import { asSpace } from './cacheConverters';
+import { libraryAppFieldsOf } from './libraryApp';
 import { useCoreStore, useIAMStore, profileStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { useDatalayer } from './useDatalayer';
@@ -1161,10 +1162,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * A published agentic UI application: what it answers, and its definition
    * as the library hands it over — `model_s`, the string the Studio reads
-   * the definition from, left unparsed because the Studio owns its shape.
+   * the definition from, left unparsed because the Studio owns its shape —
+   * and its face, its kind and whether it runs live (`libraryAppFieldsOf`),
+   * so its card draws it and the gallery opens one that runs live.
    */
   const toApp = (raw: any): any => {
     return {
+      ...libraryAppFieldsOf(raw),
       id: raw.uid,
       type: 'app',
       name: raw.name_t,
