@@ -55,6 +55,18 @@ const TONES: Record<
 };
 
 /**
+ * The tone of each named label. A role or a stage is a quality, not a
+ * verdict, so none is in attention's amber: the theme keeps success, attention
+ * and danger for verdicts (LOOP T-14, T-29) — *admin* is quiet.
+ */
+export const NAMED_LABEL_TONES = {
+  alpha: 'accent',
+  admin: 'neutral',
+  default: 'accent',
+  soon: 'neutral',
+} as const satisfies Record<string, StatusLabelTone>;
+
+/**
  * The pill the named labels below are made of.
  *
  * Exported for a qualification that has no label of its own yet; prefer one of
@@ -86,7 +98,7 @@ export function StatusLabel(
 export function AlphaLabel(props: StatusLabelProps = {}): JSX.Element {
   const { children = 'alpha', ...rest } = props;
   return (
-    <StatusLabel tone="accent" {...rest}>
+    <StatusLabel tone={NAMED_LABEL_TONES.alpha} {...rest}>
       {children}
     </StatusLabel>
   );
@@ -98,7 +110,7 @@ export function AlphaLabel(props: StatusLabelProps = {}): JSX.Element {
 export function AdminLabel(props: StatusLabelProps = {}): JSX.Element {
   const { children = 'admin', ...rest } = props;
   return (
-    <StatusLabel tone="attention" {...rest}>
+    <StatusLabel tone={NAMED_LABEL_TONES.admin} {...rest}>
       {children}
     </StatusLabel>
   );
@@ -110,7 +122,7 @@ export function AdminLabel(props: StatusLabelProps = {}): JSX.Element {
 export function DefaultLabel(props: StatusLabelProps = {}): JSX.Element {
   const { children = 'default', ...rest } = props;
   return (
-    <StatusLabel tone="accent" {...rest}>
+    <StatusLabel tone={NAMED_LABEL_TONES.default} {...rest}>
       {children}
     </StatusLabel>
   );
@@ -120,7 +132,7 @@ export function DefaultLabel(props: StatusLabelProps = {}): JSX.Element {
 export function SoonLabel(props: StatusLabelProps = {}): JSX.Element {
   const { children = 'soon', ...rest } = props;
   return (
-    <StatusLabel tone="neutral" {...rest}>
+    <StatusLabel tone={NAMED_LABEL_TONES.soon} {...rest}>
       {children}
     </StatusLabel>
   );
