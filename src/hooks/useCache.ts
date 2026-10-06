@@ -2245,6 +2245,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (settings.docsInPlace !== undefined) {
           body.docs_in_place_b = settings.docsInPlace;
         }
+        if (settings.showAdvanced !== undefined) {
+          body.show_advanced_b = settings.showAdvanced;
+        }
         return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/users/${userId}/settings`,
           method: 'PUT',
