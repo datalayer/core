@@ -33,6 +33,8 @@ interface SpanRow {
 }
 
 const GRID_COLS = '140px 1fr 160px 90px';
+/** Narrower: for a panel beside other content. */
+const COMPACT_GRID_COLS = '96px minmax(0, 1fr) 96px 64px';
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -60,9 +62,22 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
   loading,
   selectedSpanId,
   onSelectSpan,
+  emptyText,
+  compact = false,
+  defaultExpanded = false,
+  renderSpanMark,
+  describeSpan,
 }) => {
-  // Set of expanded span_ids (show their children)
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // The span_ids unfolded (or, when every span starts unfolded, folded).
+  const [toggled, setToggled] = useState<Set<string>>(new Set());
+  const expanded = useMemo(
+    () => ({
+      has: (spanId: string) =>
+        defaultExpanded ? !toggled.has(spanId) : toggled.has(spanId),
+    }),
+    [toggled, defaultExpanded],
+  );
+  const gridCols = compact ? COMPACT_GRID_COLS : GRID_COLS;
 
   // Build the span tree from flat input
   const roots = useMemo(() => buildSpanTree(spans), [spans]);
@@ -86,7 +101,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
   }, [roots, expanded]);
 
   const toggleExpand = useCallback((spanId: string) => {
-    setExpanded(prev => {
+    setToggled(prev => {
       const next = new Set(prev);
       if (next.has(spanId)) {
         next.delete(spanId);
@@ -113,7 +128,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
         </Blankslate.Visual>
         <Blankslate.Heading>No traces found</Blankslate.Heading>
         <Blankslate.Description>
-          Send some telemetry data first.
+          {emptyText ?? 'Send some telemetry data first.'}
         </Blankslate.Description>
       </Blankslate>
     );
@@ -125,7 +140,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: GRID_COLS,
+          gridTemplateColumns: gridCols,
           gap: 2,
           px: 3,
           position: 'sticky',
@@ -158,10 +173,13 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
       {visibleRows.map(({ span, depth, hasChildren }, idx) => {
         const isSelected = selectedSpanId === span.span_id;
         const isExpanded = expanded.has(span.span_id);
-        const indent = depth * 20;
+        const indent = depth * (compact ? 12 : 20);
+        const description = describeSpan?.(span);
         return (
           <Box
             key={`${span.trace_id}-${span.span_id}-${idx}`}
+            data-otel-span={span.span_id}
+            data-otel-span-name={span.span_name}
             onClick={() => {
               if (hasChildren) {
                 toggleExpand(span.span_id);
@@ -170,7 +188,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
             }}
             sx={{
               display: 'grid',
-              gridTemplateColumns: GRID_COLS,
+              gridTemplateColumns: gridCols,
               gap: 2,
               px: 3,
               py: '5px',
@@ -190,7 +208,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
             {/* Time */}
             <Text
               sx={{
-                fontSize: 1,
+                fontSize: compact ? 0 : 1,
                 fontFamily: 'mono',
                 color: 'fg.muted',
                 whiteSpace: 'nowrap',
@@ -243,17 +261,25 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                   ─
                 </Box>
               ) : null}
+              {renderSpanMark?.(span)}
               <Text
                 sx={{
                   fontSize: 1,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  flexShrink: description ? 0 : 1,
+                  maxWidth: description ? '60%' : undefined,
                 }}
                 title={span.span_name}
               >
                 {span.span_name}
               </Text>
+              {span.in_progress && (
+                <Label variant="attention" size="small">
+                  running
+                </Label>
+              )}
               {span.status_code === 'ERROR' && (
                 <Label variant="danger" size="small">
                   ERROR
@@ -311,8 +337,24 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                   </Box>
                 );
               })()}
+              {description && (
+                <Text
+                  sx={{
+                    fontSize: 1,
+                    color: 'fg.muted',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
+                  }}
+                  title={description}
+                  data-otel-span-description=""
+                >
+                  {description}
+                </Text>
+              )}
               {/* Scope tag for instrumented libraries */}
-              {span.otel_scope_name && (
+              {span.otel_scope_name && !compact && (
                 <Label
                   size="small"
                   variant="secondary"
@@ -351,7 +393,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                     : 'fg.default',
               }}
             >
-              {formatDuration(span.duration_ms)}
+              {span.in_progress ? '…' : formatDuration(span.duration_ms)}
             </Text>
           </Box>
         );

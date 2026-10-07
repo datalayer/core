@@ -12,7 +12,7 @@
  * @module otel/OtelSpanDetail
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Text,
@@ -120,12 +120,30 @@ const CollapsibleSection: React.FC<{
   );
 };
 
+/**
+ * A value as the detail unfolds it: JSON text of an object or an array (the
+ * GenAI conventions carry a tool call's arguments and result so) is the value
+ * it says; anything else is itself.
+ */
+export function unfoldedValue(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  const text = value.trim();
+  if (!/^[[{]/.test(text)) return value;
+  try {
+    const parsed: unknown = JSON.parse(text);
+    return typeof parsed === 'object' && parsed !== null ? parsed : value;
+  } catch {
+    return value;
+  }
+}
+
 /** Recursive attribute row – supports nested objects and arrays. */
 const AttributeRow: React.FC<{
   attrKey: string;
   value: unknown;
   depth: number;
-}> = ({ attrKey, value, depth }) => {
+}> = ({ attrKey, value: given, depth }) => {
+  const value = useMemo(() => unfoldedValue(given), [given]);
   const [open, setOpen] = useState(depth < 1);
   const isObject =
     typeof value === 'object' && value !== null && !Array.isArray(value);

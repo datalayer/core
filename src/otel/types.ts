@@ -9,6 +9,8 @@
  * @module otel/types
  */
 
+import type { ReactNode } from 'react';
+
 /** A single span in a trace. */
 export interface OtelSpan {
   trace_id: string;
@@ -26,6 +28,12 @@ export interface OtelSpan {
   attributes?: Record<string, unknown>;
   events?: OtelSpanEvent[];
   links?: OtelSpanLink[];
+  /**
+   * The span has started and not ended yet: a live, in-page span
+   * (`createOtelLiveTracer`). Its `end_time` is its `start_time` and its
+   * `duration_ms` 0 until it ends.
+   */
+  in_progress?: boolean;
   /** Nested children (computed client-side from parent_span_id). */
   children?: OtelSpan[];
   /** Depth in a span tree (computed client-side). */
@@ -111,6 +119,16 @@ export interface OtelTracesListProps {
   loading?: boolean;
   selectedSpanId?: string | null;
   onSelectSpan?: (span: OtelSpan) => void;
+  /** What is said while there is no span. */
+  emptyText?: string;
+  /** Narrower columns, for a panel beside other content. */
+  compact?: boolean;
+  /** Every span with children starts unfolded: a live record, read as it grows. */
+  defaultExpanded?: boolean;
+  /** A mark drawn before a span's name (an icon, an emoji). */
+  renderSpanMark?: (span: OtelSpan) => ReactNode;
+  /** A line that says what a span carried, drawn after its name. */
+  describeSpan?: (span: OtelSpan) => string | undefined;
 }
 
 /** Props for the span detail panel. */

@@ -20,6 +20,13 @@ export { OtelSearchBar } from './OtelSearchBar';
 export { OtelSpanDetail } from './OtelSpanDetail';
 export { OtelSpanTree } from './OtelSpanTree';
 export { OtelTimeline } from './OtelTimeline';
+export {
+  OtelLiveSpans,
+  DEFAULT_SPAN_FACETS,
+  filterSpansByFacets,
+} from './OtelLiveSpans';
+export type { OtelLiveSpansProps, OtelSpanFacet } from './OtelLiveSpans';
+export { unfoldedValue } from './OtelSpanDetail';
 export { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';
 export { OtelSqlView } from './OtelSqlView';
 export type { OtelSqlViewProps } from './OtelSqlView';

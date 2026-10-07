@@ -51,6 +51,28 @@ export {
   flattenSpanTree,
 } from './utils';
 
+// ── In the page ───────────────────────────────────────────────────────────────
+export {
+  createOtelLiveTracer,
+  traceparentOf,
+  PEER_SERVICE,
+  spanConcerns,
+  spansOfService,
+  useOtelLiveSpans,
+  useOtelLiveTracer,
+} from './live';
+export type {
+  OtelAttributeValue,
+  OtelAttributes,
+  OtelLiveExport,
+  OtelLiveSpan,
+  OtelLiveTracer,
+  OtelLiveTracerOptions,
+  OtelSpanContext,
+  OtelSpanKindName,
+  OtelStartSpanOptions,
+} from './live';
+
 // ── Auth helpers ──────────────────────────────────────────────────────────────
 export {
   resolveOtelAuth,
@@ -102,6 +124,13 @@ export { OtelMetricsList } from './views';
 export { OtelMetricsChart } from './views';
 export type { OtelMetricsChartProps } from './views';
 export { OtelTimeline } from './views';
+export {
+  OtelLiveSpans,
+  DEFAULT_SPAN_FACETS,
+  filterSpansByFacets,
+  unfoldedValue,
+} from './views';
+export type { OtelLiveSpansProps, OtelSpanFacet } from './views';
 export { OtelTimelineRangeSlider } from './views';
 export { OtelSqlView } from './views';
 export type { OtelSqlViewProps } from './views';
