@@ -150,7 +150,7 @@ export const SecretNew = ({
           <PageHeader.Title>New Secret</PageHeader.Title>
         </PageHeader.TitleArea>
       </PageHeader>
-      <Box display="grid" gridTemplateColumns="1fr 1fr" sx={{ gap: 3 }}>
+      <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
         <Box>
           <Box sx={{ label: { marginTop: 2 } }}>
             <FormControl required>

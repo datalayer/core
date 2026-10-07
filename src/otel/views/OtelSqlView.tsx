@@ -15,10 +15,10 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { Box } from '@datalayer/primer-addons';
 import {
   ActionList,
   ActionMenu,
-  Box,
   Button,
   Text,
   Textarea,
@@ -150,23 +150,19 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
 
   return (
     <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minHeight: 0,
-        height: '100%',
-        gap: 3,
-        p: 4,
-        bg: 'canvas.default',
-        color: 'fg.default',
-        overflow: 'auto',
-      }}
+      display="flex"
+      flexDirection="column"
+      flex={1}
+      minHeight={0}
+      height="100%"
+      gap={3}
+      p={4}
+      bg="canvas.default"
+      color="fg.default"
+      overflow="auto"
     >
       {/* ── Toolbar: presets + hint ── */}
-      <Box
-        sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}
-      >
+      <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
         <ActionMenu>
           <ActionMenu.Button size="small">Preset queries</ActionMenu.Button>
           <ActionMenu.Overlay width="large">
@@ -188,22 +184,22 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
         </ActionMenu>
         <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
           ⌘ Enter to run · Tables:{' '}
-          <Box as="code" sx={{ fontFamily: 'mono', fontSize: 0 }}>
+          <Box as="code" fontFamily="mono" fontSize={0}>
             spans
           </Box>
           {', '}
-          <Box as="code" sx={{ fontFamily: 'mono', fontSize: 0 }}>
+          <Box as="code" fontFamily="mono" fontSize={0}>
             metrics
           </Box>
           {', '}
-          <Box as="code" sx={{ fontFamily: 'mono', fontSize: 0 }}>
+          <Box as="code" fontFamily="mono" fontSize={0}>
             logs
           </Box>
         </Text>
       </Box>
 
       {/* ── SQL editor ── */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box display="flex" flexDirection="column" gap={2}>
         <Textarea
           aria-label="SQL query"
           value={sql}
@@ -214,7 +210,7 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
           resize="vertical"
           sx={{ fontFamily: 'mono', fontSize: 1, width: '100%' }}
         />
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box display="flex" alignItems="center" gap={2}>
           <Button
             variant="primary"
             onClick={handleRun}
@@ -230,13 +226,11 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
       {/* ── Error banner ── */}
       {error && (
         <Box
-          sx={{
-            p: 3,
-            bg: 'danger.subtle',
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'danger.muted',
-          }}
+          p={3}
+          bg="danger.subtle"
+          borderRadius={2}
+          border="1px solid"
+          borderColor="danger.muted"
         >
           <Text sx={{ color: 'danger.fg', fontFamily: 'mono', fontSize: 1 }}>
             {error}
@@ -247,7 +241,7 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
       {/* ── Results table ── */}
       {!error && rows.length > 0 && (
         <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box display="flex" alignItems="center" gap={1} mb={1}>
             <TableIcon size={14} />
             <Text sx={{ fontSize: 1, fontWeight: 'bold', color: 'fg.default' }}>
               Results
@@ -259,21 +253,19 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
               as="button"
               onClick={clear}
               title="Clear results"
-              sx={{
-                ml: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                px: 2,
-                py: '2px',
-                border: 'none',
-                borderRadius: 2,
-                bg: 'transparent',
-                color: 'fg.muted',
-                cursor: 'pointer',
-                fontSize: 0,
-                '&:hover': { color: 'danger.fg', bg: 'danger.subtle' },
-              }}
+              ml="auto"
+              display="flex"
+              alignItems="center"
+              gap={1}
+              px={2}
+              py="2px"
+              border="none"
+              borderRadius={2}
+              bg="transparent"
+              color="fg.muted"
+              cursor="pointer"
+              fontSize={0}
+              hover={{ color: 'danger.fg', bg: 'danger.subtle' }}
             >
               <XCircleIcon size={12} />
               <Text sx={{ fontSize: 0 }}>Clear</Text>
@@ -307,53 +299,47 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
                 URL.revokeObjectURL(url);
               }}
               title="Download as CSV"
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                px: 2,
-                py: '2px',
-                border: 'none',
-                borderRadius: 2,
-                bg: 'transparent',
-                color: 'fg.muted',
-                cursor: 'pointer',
-                fontSize: 0,
-                '&:hover': { color: 'accent.fg', bg: 'accent.subtle' },
-              }}
+              display="flex"
+              alignItems="center"
+              gap={1}
+              px={2}
+              py="2px"
+              border="none"
+              borderRadius={2}
+              bg="transparent"
+              color="fg.muted"
+              cursor="pointer"
+              fontSize={0}
+              hover={{ color: 'accent.fg', bg: 'accent.subtle' }}
             >
               <DownloadIcon size={12} />
               <Text sx={{ fontSize: 0 }}>CSV</Text>
             </Box>
           </Box>
           <Box
-            sx={{
-              flex: 1,
-              minHeight: 200,
-              overflow: 'auto',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 2,
-            }}
+            flex={1}
+            minHeight={200}
+            overflow="auto"
+            border="1px solid"
+            borderColor="border.default"
+            borderRadius={2}
           >
-            <Box as="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+            <Box as="table" width="100%" borderCollapse="collapse">
               <Box as="thead">
-                <Box as="tr" sx={{ bg: 'canvas.subtle' }}>
+                <Box as="tr" bg="canvas.subtle">
                   {columns.map(col => (
                     <Box
                       key={col}
                       as="th"
-                      sx={{
-                        px: 3,
-                        py: 2,
-                        textAlign: 'left',
-                        fontWeight: 'bold',
-                        fontSize: 0,
-                        color: 'fg.muted',
-                        borderBottom: '1px solid',
-                        borderColor: 'border.default',
-                        whiteSpace: 'nowrap',
-                      }}
+                      px={3}
+                      py={2}
+                      textAlign="left"
+                      fontWeight="bold"
+                      fontSize={0}
+                      color="fg.muted"
+                      borderBottom="1px solid"
+                      borderColor="border.default"
+                      whiteSpace="nowrap"
                     >
                       {col}
                     </Box>
@@ -365,8 +351,8 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
                   <Box
                     key={ri}
                     as="tr"
+                    hover={{ bg: 'canvas.subtle' }}
                     sx={{
-                      '&:hover': { bg: 'canvas.subtle' },
                       '&:not(:last-child) td': {
                         borderBottom: '1px solid',
                         borderColor: 'border.muted',
@@ -377,16 +363,14 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
                       <Box
                         key={col}
                         as="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          fontSize: 0,
-                          fontFamily: 'mono',
-                          maxWidth: '300px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
+                        px={3}
+                        py={2}
+                        fontSize={0}
+                        fontFamily="mono"
+                        maxWidth="300px"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap"
                       >
                         {String(row[col] ?? '')}
                       </Box>
@@ -402,13 +386,11 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
       {/* ── Empty state ── */}
       {!error && !loading && rows.length === 0 && (
         <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'fg.muted',
-          }}
+          flex={1}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          color="fg.muted"
         >
           <Text sx={{ fontSize: 1 }}>Run a query to see results.</Text>
         </Box>
@@ -417,37 +399,33 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
       {/* ── Query history ── */}
       {history.length > 0 && (
         <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box display="flex" alignItems="center" gap={1} mb={1}>
             <HistoryIcon size={12} />
             <Text sx={{ fontSize: 0, fontWeight: 'bold', color: 'fg.muted' }}>
               History
             </Text>
           </Box>
           <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 2,
-              overflow: 'hidden',
-            }}
+            display="flex"
+            flexDirection="column"
+            border="1px solid"
+            borderColor="border.default"
+            borderRadius={2}
+            overflow="hidden"
           >
             {history.map((entry, i) => (
               <Box
                 key={i}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  px: 3,
-                  py: '6px',
-                  cursor: 'pointer',
-                  bg: i % 2 === 0 ? 'canvas.default' : 'canvas.subtle',
-                  borderTop: i > 0 ? '1px solid' : 'none',
-                  borderColor: 'border.muted',
-                  '&:hover': { bg: 'accent.subtle' },
-                }}
+                display="flex"
+                alignItems="center"
+                gap={2}
+                px={3}
+                py="6px"
+                cursor="pointer"
+                bg={i % 2 === 0 ? 'canvas.default' : 'canvas.subtle'}
+                borderTop={i > 0 ? '1px solid' : 'none'}
+                borderColor="border.muted"
+                hover={{ bg: 'accent.subtle' }}
                 onClick={() => setSql(entry)}
               >
                 <Text

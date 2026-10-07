@@ -13,8 +13,8 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { Box } from '@datalayer/primer-addons';
 import {
-  Box,
   Text,
   Label,
   Spinner,
@@ -99,25 +99,18 @@ const MetricGroup: React.FC<{
   }, [points]);
 
   return (
-    <Box
-      sx={{
-        borderBottom: '1px solid',
-        borderColor: 'border.default',
-      }}
-    >
+    <Box borderBottom="1px solid" borderColor="border.default">
       {/* Group header */}
       <Box
         onClick={() => setExpanded(!expanded)}
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '20px 1fr auto auto auto auto',
-          gap: 3,
-          alignItems: 'center',
-          px: 3,
-          py: 2,
-          cursor: 'pointer',
-          ':hover': { bg: 'canvas.subtle' },
-        }}
+        display="grid"
+        gridTemplateColumns="20px 1fr auto auto auto auto"
+        gap={3}
+        alignItems="center"
+        px={3}
+        py={2}
+        cursor="pointer"
+        hover={{ bg: 'canvas.subtle' }}
       >
         {expanded ? (
           <ChevronDownIcon size={16} />
@@ -125,8 +118,8 @@ const MetricGroup: React.FC<{
           <ChevronRightIcon size={16} />
         )}
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box display="flex" flexDirection="column" gap={0}>
+          <Box display="flex" alignItems="center" gap={2}>
             <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>{name}</Text>
             {first?.metric_type && (
               <Label size="small" variant={typeVariant(first.metric_type)}>
@@ -149,7 +142,7 @@ const MetricGroup: React.FC<{
           )}
         </Box>
 
-        <Box sx={{ textAlign: 'right' }}>
+        <Box textAlign="right">
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>latest</Text>
           <Text
             sx={{ fontSize: 1, fontWeight: 'bold', fontFamily: 'mono', ml: 1 }}
@@ -158,14 +151,14 @@ const MetricGroup: React.FC<{
           </Text>
         </Box>
 
-        <Box sx={{ textAlign: 'right' }}>
+        <Box textAlign="right">
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>avg</Text>
           <Text sx={{ fontSize: 1, fontFamily: 'mono', ml: 1 }}>
             {stats.avg.toFixed(2)}
           </Text>
         </Box>
 
-        <Box sx={{ textAlign: 'right' }}>
+        <Box textAlign="right">
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>min/max</Text>
           <Text sx={{ fontSize: 1, fontFamily: 'mono', ml: 1 }}>
             {stats.min.toFixed(1)}–{stats.max.toFixed(1)}
@@ -177,18 +170,16 @@ const MetricGroup: React.FC<{
 
       {/* Expanded data points */}
       {expanded && (
-        <Box sx={{ bg: 'canvas.subtle' }}>
+        <Box bg="canvas.subtle">
           {/* Column header */}
           <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: '20px 180px 1fr 140px 160px',
-              gap: 3,
-              px: 3,
-              py: 1,
-              borderTop: '1px solid',
-              borderColor: 'border.muted',
-            }}
+            display="grid"
+            gridTemplateColumns="20px 180px 1fr 140px 160px"
+            gap={3}
+            px={3}
+            py={1}
+            borderTop="1px solid"
+            borderColor="border.muted"
           >
             <Box />
             <Text sx={{ fontSize: 0, fontWeight: 'bold', color: 'fg.muted' }}>
@@ -240,17 +231,15 @@ const MetricRow: React.FC<{ metric: OtelMetric }> = ({ metric }) => {
   return (
     <>
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '20px 180px 1fr 140px 160px',
-          gap: 3,
-          alignItems: 'center',
-          px: 3,
-          py: 1,
-          borderTop: '1px solid',
-          borderColor: 'border.muted',
-          ':hover': { bg: 'canvas.inset' },
-        }}
+        display="grid"
+        gridTemplateColumns="20px 180px 1fr 140px 160px"
+        gap={3}
+        alignItems="center"
+        px={3}
+        py={1}
+        borderTop="1px solid"
+        borderColor="border.muted"
+        hover={{ bg: 'canvas.inset' }}
       >
         <Box />
         <Text sx={{ fontSize: 0, fontFamily: 'mono', color: 'fg.muted' }}>
@@ -267,7 +256,7 @@ const MetricRow: React.FC<{ metric: OtelMetric }> = ({ metric }) => {
         >
           {formatValue(metric.value, metric.unit)}
         </Text>
-        <Box sx={{ textAlign: 'right' }}>
+        <Box textAlign="right">
           {attrCount > 0 ? (
             <Label
               size="small"
@@ -286,16 +275,14 @@ const MetricRow: React.FC<{ metric: OtelMetric }> = ({ metric }) => {
         </Box>
       </Box>
       {showAttrs && metric.attributes && (
-        <Box sx={{ px: 5, py: 2, bg: 'canvas.inset' }}>
+        <Box px={5} py={2} bg="canvas.inset">
           <Box
             as="pre"
-            sx={{
-              m: 0,
-              fontSize: 0,
-              fontFamily: 'mono',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
+            m={0}
+            fontSize={0}
+            fontFamily="mono"
+            whiteSpace="pre-wrap"
+            wordBreak="break-word"
           >
             {JSON.stringify(metric.attributes, null, 2)}
           </Box>
@@ -342,14 +329,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          p: 5,
-        }}
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" p={5}>
         <Spinner size="medium" />
       </Box>
     );
@@ -371,28 +351,24 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
 
   return (
     <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minHeight: 0,
-        overflow: 'hidden',
-      }}
+      display="flex"
+      flexDirection="column"
+      flex={1}
+      minHeight={0}
+      overflow="hidden"
     >
       {/* Toolbar — fixed height, does not scroll */}
       <Box
-        sx={{
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          px: 3,
-          py: 2,
-          bg: 'canvas.subtle',
-          borderBottom: '1px solid',
-          borderColor: 'border.default',
-          zIndex: 0,
-        }}
+        flexShrink={0}
+        display="flex"
+        alignItems="center"
+        justifyContent="flex-end"
+        px={3}
+        py={2}
+        bg="canvas.subtle"
+        borderBottom="1px solid"
+        borderColor="border.default"
+        zIndex={0}
       >
         <SegmentedControl
           aria-label="Metrics view"
@@ -415,28 +391,26 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
       </Box>
 
       {/* Scroll area */}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+      <Box flex={1} minHeight={0} overflow="auto">
         {view === 'chart' ? (
-          <Box sx={{ px: 3, py: 2 }}>
+          <Box px={3} py={2}>
             <OtelMetricsChart metrics={metrics} height={280} />
           </Box>
         ) : (
           <>
             {/* Column header — sticky inside this scroll container */}
             <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: '20px 1fr auto auto auto auto',
-                gap: 3,
-                px: 3,
-                py: 1,
-                bg: 'canvas.subtle',
-                borderBottom: '2px solid',
-                borderColor: 'border.default',
-                position: 'sticky',
-                top: 0,
-                zIndex: 1,
-              }}
+              display="grid"
+              gridTemplateColumns="20px 1fr auto auto auto auto"
+              gap={3}
+              px={3}
+              py={1}
+              bg="canvas.subtle"
+              borderBottom="2px solid"
+              borderColor="border.default"
+              position="sticky"
+              top={0}
+              zIndex={1}
             >
               <Box />
               {['Metric Name', 'Latest', 'Average', 'Min/Max', 'Points'].map(

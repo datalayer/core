@@ -4,7 +4,8 @@
  */
 
 import { useEffect } from 'react';
-import { Heading, Box, Spinner } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Heading, Spinner } from '@primer/react';
 import { useBackdrop } from '..';
 import { useLayoutStore, BackdropDisplay } from '../../state';
 

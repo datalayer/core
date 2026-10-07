@@ -130,18 +130,18 @@ const TeamPolicyForm = ({
 
   if (layer.isPending && layer.data === undefined) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+      <Box display="flex" justifyContent="center" py={4}>
         <Spinner />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 3 }}>
+    <Box display="grid" gap={3}>
       {conflict && (
         <Flash variant="warning">
           <Text sx={{ fontSize: 1 }}>{conflict}</Text>
-          <Box sx={{ mt: 2 }}>
+          <Box mt={2}>
             <Button
               size="small"
               onClick={() => {
@@ -181,7 +181,7 @@ const TeamPolicyForm = ({
       />
 
       {!readOnly && (
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box display="flex" gap={2} alignItems="center">
           <Button
             variant="primary"
             onClick={apply}
@@ -195,7 +195,7 @@ const TeamPolicyForm = ({
             </Button>
           )}
           {layer.data && (
-            <Box sx={{ marginLeft: 'auto' }}>
+            <Box marginLeft="auto">
               <Button
                 variant="danger"
                 disabled={remove.isPending}
@@ -222,13 +222,11 @@ const TeamPolicyForm = ({
       {!readOnly && <TeamSessions teamUid={teamUid} teamName={teamName} />}
 
       <Box
-        sx={{
-          borderTop: '1px solid',
-          borderColor: 'border.muted',
-          pt: 3,
-          display: 'grid',
-          gap: 2,
-        }}
+        borderTop="1px solid"
+        borderColor="border.muted"
+        pt={3}
+        display="grid"
+        gap={2}
       >
         <Text as="h3" sx={{ fontSize: 1, fontWeight: 'semibold', m: 0 }}>
           History
@@ -300,13 +298,11 @@ const TeamSessions = ({
 
   return (
     <Box
-      sx={{
-        borderTop: '1px solid',
-        borderColor: 'border.muted',
-        pt: 3,
-        display: 'grid',
-        gap: 2,
-      }}
+      borderTop="1px solid"
+      borderColor="border.muted"
+      pt={3}
+      display="grid"
+      gap={2}
     >
       <Text as="h3" sx={{ fontSize: 1, fontWeight: 'semibold', m: 0 }}>
         Sessions
@@ -388,7 +384,7 @@ export const TeamPolicies = ({
 
   if (teams.isPending && !teams.data) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+      <Box display="flex" justifyContent="center" py={5}>
         <Spinner />
       </Box>
     );
@@ -413,7 +409,7 @@ export const TeamPolicies = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0, maxWidth: '52rem' }}>
+    <Box display="grid" gap={3} minWidth={0} maxWidth="52rem">
       {showTitle && (
         <Box>
           <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -426,7 +422,7 @@ export const TeamPolicies = ({
         </Box>
       )}
 
-      <Box sx={{ maxWidth: '20rem' }}>
+      <Box maxWidth="20rem">
         <Select
           value={current?.uid ?? ''}
           onChange={event => setChosen(event.target.value)}

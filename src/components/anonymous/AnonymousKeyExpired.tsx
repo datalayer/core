@@ -109,25 +109,21 @@ export function AnonymousKeyExpired({
 
   return (
     <Box
-      sx={{
-        height: '100%',
-        minHeight: 0,
-        overflowY: 'auto',
-        bg: 'canvas.default',
-        px: 4,
-        py: 4,
-      }}
+      height="100%"
+      minHeight={0}
+      overflowY="auto"
+      bg="canvas.default"
+      px={4}
+      py={4}
     >
-      <Box sx={{ maxWidth: 440, mx: 'auto' }}>
+      <Box maxWidth={440} mx="auto">
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-            color: 'attention.fg',
-            mb: 2,
-          }}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          gap={2}
+          color="attention.fg"
+          mb={2}
         >
           <KeyIcon size={20} />
           <Text

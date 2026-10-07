@@ -4,7 +4,7 @@
  */
 
 import { useEffect } from 'react';
-import { Box } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { useScreencapture, useToast } from '..';
 import { lazyWithPreload, WithSuspense } from '../../utils';
 import { useLayoutStore, ScreencaptureDisplay } from '../../state';

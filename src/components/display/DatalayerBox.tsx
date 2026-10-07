@@ -29,14 +29,12 @@ export const DatalayerBox = (
   return (
     <>
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingRight: 4,
-        }}
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        paddingRight={4}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box display="flex" alignItems="center" gap={1}>
           <Text
             as="h2"
             sx={{ borderLeft: '6px solid #28b899', paddingLeft: 2 }}
@@ -62,14 +60,12 @@ export const DatalayerBox = (
         )}
       </Box>
       <Box
-        sx={{
-          borderColor: 'border.default',
-          borderStyle: 'solid',
-          borderWidth: '1',
-          borderRadius: '2',
-          padding: 4,
-          marginTop: 2,
-        }}
+        borderColor="border.default"
+        borderStyle="solid"
+        borderWidth="1"
+        borderRadius="2"
+        padding={4}
+        marginTop={2}
       >
         {children}
       </Box>

@@ -4,7 +4,8 @@
  */
 
 import { useMemo } from 'react';
-import { Box, Label, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Label, Text } from '@primer/react';
 import { useCache } from '../../hooks';
 import { useIAMStore } from '../../state/substates';
 import { useSelectedPrincipal } from '../../hooks/useSelectedPrincipal';

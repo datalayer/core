@@ -284,7 +284,7 @@ export const RunDetail = ({
 
   if (!mock && (run.isLoading || !run.data)) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+      <Box display="flex" justifyContent="center" p={4}>
         <Spinner />
       </Box>
     );
@@ -296,7 +296,7 @@ export const RunDetail = ({
   const output = outputTextOf(task);
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       <Box>
         <Link
           href={routes.runs}
@@ -311,14 +311,7 @@ export const RunDetail = ({
         <Heading as="h2" sx={{ fontSize: 3, mt: 1, mb: 1 }}>
           {task.tool || 'Run'}
         </Heading>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
           <Label size="small" variant={look.variant}>
             {look.label}
           </Label>
@@ -340,15 +333,13 @@ export const RunDetail = ({
           is the thing the person came here to do. */}
       {task.status === 'input_required' && (
         <Box
-          sx={{
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'attention.emphasis',
-            borderRadius: 2,
-            p: 3,
-            display: 'grid',
-            gap: 2,
-          }}
+          borderWidth={1}
+          borderStyle="solid"
+          borderColor="attention.emphasis"
+          borderRadius={2}
+          p={3}
+          display="grid"
+          gap={2}
         >
           <Heading as="h3" sx={{ fontSize: 1 }}>
             This run is waiting on you
@@ -384,16 +375,14 @@ export const RunDetail = ({
         {output ? (
           <Box
             as="pre"
-            sx={{
-              fontFamily: 'mono',
-              fontSize: 0,
-              whiteSpace: 'pre-wrap',
-              overflowX: 'auto',
-              bg: 'canvas.subtle',
-              borderRadius: 2,
-              p: 3,
-              m: 0,
-            }}
+            fontFamily="mono"
+            fontSize={0}
+            whiteSpace="pre-wrap"
+            overflowX="auto"
+            bg="canvas.subtle"
+            borderRadius={2}
+            p={3}
+            m={0}
           >
             {output}
           </Box>

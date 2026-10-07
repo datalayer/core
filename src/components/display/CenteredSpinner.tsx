@@ -23,12 +23,10 @@ export const CenteredSpinner = ({
 }: ICenteredSpinnerProps) => {
   return (
     <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '40px',
-      }}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      minHeight="40px"
     >
       <Spinner size={size} />
       {message && <Text sx={{ marginLeft: 3 }}>{message}</Text>}

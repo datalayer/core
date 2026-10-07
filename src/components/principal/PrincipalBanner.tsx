@@ -9,7 +9,8 @@
  * can immediately see which principal a settings page applies to.
  */
 
-import { Box, Label, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Label, Text } from '@primer/react';
 import {
   OrganizationIcon,
   PeopleIcon,
@@ -63,43 +64,32 @@ export const PrincipalBanner = ({
 
   return (
     <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 3,
-        p: 3,
-        border: '1px solid',
-        borderColor,
-        borderRadius: 2,
-        bg,
-      }}
+      display="flex"
+      alignItems="center"
+      gap={3}
+      p={3}
+      border="1px solid"
+      borderColor={borderColor}
+      borderRadius={2}
+      bg={bg}
     >
       <Box
-        sx={{
-          width: 40,
-          height: 40,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '50%',
-          bg: 'canvas.default',
-          border: '1px solid',
-          borderColor,
-          color: fg,
-          flex: '0 0 auto',
-        }}
+        width={40}
+        height={40}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        borderRadius="50%"
+        bg="canvas.default"
+        border="1px solid"
+        borderColor={borderColor}
+        color={fg}
+        flex="0 0 auto"
       >
         <Icon size={20} />
       </Box>
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            flexWrap: 'wrap',
-          }}
-        >
+      <Box minWidth={0} flex={1}>
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
           <Text
             sx={{
               color: 'fg.muted',
@@ -131,10 +121,8 @@ export const PrincipalBanner = ({
       </Box>
       {rightContent ? (
         <Box
-          sx={{
-            flex: ['1 1 100%', '0 0 auto'],
-            width: ['100%', 'min(640px, 58%)'],
-          }}
+          flex={['1 1 100%', '0 0 auto']}
+          width={['100%', 'min(640px, 58%)']}
         >
           {rightContent}
         </Box>

@@ -24,7 +24,8 @@
 import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { AnchoredOverlay, Box, ThemeProvider } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { AnchoredOverlay, ThemeProvider } from '@primer/react';
 import {
   PrincipalDetailsCard,
   type PrincipalDetailsOverlayProps,
@@ -99,22 +100,20 @@ export function PrincipalHoverCard({
           onMouseLeave={hide}
           onFocus={show}
           onBlur={hide}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            /*
-             * Round, like the face it holds.
-             *
-             * This box stands between the stack and the avatar — it is the
-             * element `AvatarStack` sizes and clips as one of its items — so a
-             * square one clipped a round avatar into a square. It takes the
-             * shape of what it wraps.
-             */
-            borderRadius: '50%',
-            overflow: 'hidden',
-          }}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          cursor="pointer"
+          /*
+           * Round, like the face it holds.
+           *
+           * This box stands between the stack and the avatar — it is the
+           * element `AvatarStack` sizes and clips as one of its items — so a
+           * square one clipped a round avatar into a square. It takes the
+           * shape of what it wraps.
+           */
+          borderRadius="50%"
+          overflow="hidden"
         >
           {children}
         </Box>

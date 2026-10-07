@@ -17,7 +17,8 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { ActionList, ActionMenu, Box, Button, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { ActionList, ActionMenu, Button, Text } from '@primer/react';
 import {
   DownloadIcon,
   PauseIcon,
@@ -223,27 +224,23 @@ export const OtelLiveSpans: React.FC<OtelLiveSpansProps> = ({
   return (
     <Box
       data-otel-live-spans=""
-      sx={{
-        border: '1px solid',
-        borderColor: 'border.default',
-        borderRadius: 2,
-        bg: 'canvas.default',
-        color: 'fg.default',
-        minWidth: 0,
-      }}
+      border="1px solid"
+      borderColor="border.default"
+      borderRadius={2}
+      bg="canvas.default"
+      color="fg.default"
+      minWidth={0}
     >
       <Box
         role="toolbar"
         aria-label={label}
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 2,
-          alignItems: 'center',
-          p: 2,
-          borderBottom: '1px solid',
-          borderColor: 'border.default',
-        }}
+        display="flex"
+        flexWrap="wrap"
+        gap={2}
+        alignItems="center"
+        p={2}
+        borderBottom="1px solid"
+        borderColor="border.default"
       >
         {facets.map((facet, index) => (
           <FacetMenu
@@ -260,7 +257,7 @@ export const OtelLiveSpans: React.FC<OtelLiveSpansProps> = ({
             }
           />
         ))}
-        <Box sx={{ flex: 1 }} />
+        <Box flex={1} />
         <Text sx={{ fontSize: 0, color: 'fg.muted' }} data-otel-span-count="">
           {rows.length === shown.length
             ? `${rows.length} ${rows.length === 1 ? 'span' : 'spans'}`
@@ -309,14 +306,10 @@ export const OtelLiveSpans: React.FC<OtelLiveSpansProps> = ({
         </Button>
       </Box>
       <Box
-        sx={{
-          display: side ? 'grid' : 'block',
-          gridTemplateColumns: side
-            ? 'minmax(0, 3fr) minmax(0, 2fr)'
-            : undefined,
-        }}
+        display={side ? 'grid' : 'block'}
+        gridTemplateColumns={side ? 'minmax(0, 3fr) minmax(0, 2fr)' : undefined}
       >
-        <Box sx={{ maxHeight, overflowY: 'auto', minWidth: 0 }}>
+        <Box maxHeight={maxHeight} overflowY="auto" minWidth={0}>
           <OtelTracesList
             spans={rows}
             selectedSpanId={selectedSpanId}
@@ -331,13 +324,11 @@ export const OtelLiveSpans: React.FC<OtelLiveSpansProps> = ({
         {selectedSpan && (
           <Box
             data-otel-live-detail=""
-            sx={{
-              maxHeight,
-              overflowY: 'auto',
-              minWidth: 0,
-              borderTop: side ? 'none' : '1px solid',
-              borderColor: 'border.default',
-            }}
+            maxHeight={maxHeight}
+            overflowY="auto"
+            minWidth={0}
+            borderTop={side ? 'none' : '1px solid'}
+            borderColor="border.default"
           >
             <OtelSpanDetail
               span={selectedSpan}

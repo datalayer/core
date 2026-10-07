@@ -124,7 +124,7 @@ const APIKeysTable = () => {
               header: '',
               field: 'id',
               renderCell: apiKey => (
-                <Box display="flex" sx={{ gap: 1 }}>
+                <Box display="flex" gap={1}>
                   <IconButton
                     icon={EditIcon}
                     aria-label="Edit"

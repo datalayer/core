@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { Box } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { OtelLive } from '../../otel';
 
 export interface TracesViewProps {
@@ -25,7 +25,7 @@ export const TracesView: React.FC<TracesViewProps> = ({
   autoRefreshMs = 5000,
   limit = 200,
 }) => (
-  <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+  <Box display="flex" flex={1} minHeight={0} overflow="hidden">
     <OtelLive
       baseUrl={baseUrl}
       token={token}

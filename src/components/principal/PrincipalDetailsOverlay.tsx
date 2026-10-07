@@ -4,14 +4,8 @@
  */
 
 import type { JSX } from 'react';
-import {
-  ActionMenu,
-  Box,
-  Button,
-  Label,
-  Text,
-  ThemeProvider,
-} from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { ActionMenu, Button, Label, Text, ThemeProvider } from '@primer/react';
 import { useNavigate } from '../../hooks';
 import { PrincipalAvatar } from './PrincipalAvatar';
 import { displayHandleText } from '../display/DisplayHandle';
@@ -240,8 +234,8 @@ export function PrincipalDetailsCard({
     : '';
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, p: 4, minWidth: 420 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Box display="grid" gap={3} p={4} minWidth={420}>
+      <Box display="flex" alignItems="center" gap={2}>
         <PrincipalAvatar
           kind={kind}
           avatarUrl={avatarUrl}
@@ -255,7 +249,7 @@ export function PrincipalDetailsCard({
           square={false}
           ring
         />
-        <Box sx={{ display: 'grid', gap: 0.5 }}>
+        <Box display="grid" gap={0.5}>
           <Text sx={{ fontWeight: 'semibold' }}>{normalizedDisplayName}</Text>
           {kind === 'team' ? (
             teamHandleOnly ? (
@@ -274,12 +268,10 @@ export function PrincipalDetailsCard({
         </Box>
       </Box>
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '110px 1fr',
-          gap: 1,
-          alignItems: 'baseline',
-        }}
+        display="grid"
+        gridTemplateColumns="110px 1fr"
+        gap={1}
+        alignItems="baseline"
       >
         <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Kind</Text>
         <Text sx={{ fontSize: 1 }}>{kind}</Text>
@@ -395,7 +387,7 @@ export function PrincipalDetailsCard({
           </>
         )}
       </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+      <Box display="flex" justifyContent="flex-end" gap={2}>
         {kind === 'team' && organizationPath ? (
           <Button
             size="small"
@@ -438,19 +430,15 @@ export function PrincipalDetailsOverlay(
           <Box
             as="button"
             type="button"
-            sx={{
-              fontWeight: 'semibold',
-              color: 'accent.fg',
-              textDecoration: 'underline',
-              background: 'transparent',
-              border: 0,
-              padding: 0,
-              margin: 0,
-              cursor: 'pointer',
-              ':hover': {
-                textDecoration: 'underline',
-              },
-            }}
+            fontWeight="semibold"
+            color="accent.fg"
+            textDecoration="underline"
+            background="transparent"
+            border={0}
+            padding={0}
+            margin={0}
+            cursor="pointer"
+            hover={{ textDecoration: 'underline' }}
           >
             {normalizedDisplayName}
           </Box>

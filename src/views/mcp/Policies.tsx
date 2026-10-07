@@ -186,7 +186,7 @@ const ToolGroup = ({
   tools: McpToolRule[];
   organizationName?: string;
 }): JSX.Element => (
-  <Box sx={{ display: 'grid', gap: 2 }}>
+  <Box display="grid" gap={2}>
     <Box>
       <Text sx={{ fontSize: 1, fontWeight: 'semibold', display: 'block' }}>
         {title}
@@ -198,7 +198,7 @@ const ToolGroup = ({
         No tool of this kind is available to your agents.
       </Text>
     ) : (
-      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+      <Box display="flex" gap={1} flexWrap="wrap">
         {tools.map(tool => (
           <Label
             key={tool.tool}
@@ -282,7 +282,7 @@ export const Policies = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 4, minWidth: 0 }}>
+    <Box display="grid" gap={4} minWidth={0}>
       {showTitle && (
         <Box>
           <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -303,16 +303,9 @@ export const Policies = ({
           layers, and a picker offering one option is a control that asks a
           question it already knows the answer to. */}
       {(agents.data?.length ?? 0) > 1 && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            flexWrap: 'wrap',
-          }}
-        >
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
           <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Preview as</Text>
-          <Box sx={{ minWidth: '18rem' }}>
+          <Box minWidth="18rem">
             <Select
               value={previewAs}
               onChange={event => setPreviewAs(event.target.value)}
@@ -336,7 +329,7 @@ export const Policies = ({
       )}
 
       {policy.isPending && !policy.data ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+        <Box display="flex" justifyContent="center" py={6}>
           <Spinner />
         </Box>
       ) : rows.length === 0 && tools.length === 0 ? (
@@ -362,7 +355,7 @@ export const Policies = ({
         </Blankslate>
       ) : (
         <>
-          <Box sx={{ display: 'grid', gap: 2 }}>
+          <Box display="grid" gap={2}>
             <Heading as="h3" sx={{ fontSize: 2 }}>
               What applies to your agents
             </Heading>
@@ -386,7 +379,8 @@ export const Policies = ({
               as="table"
               aria-labelledby="effective-policy"
               aria-describedby="effective-policy-subtitle"
-              sx={{ width: '100%', borderCollapse: 'collapse' }}
+              width="100%"
+              borderCollapse="collapse"
             >
               <Box as="thead">
                 <Box as="tr">
@@ -394,16 +388,14 @@ export const Policies = ({
                     <Box
                       as="th"
                       key={header}
-                      sx={{
-                        textAlign: 'left',
-                        fontSize: 0,
-                        color: 'fg.muted',
-                        fontWeight: 'semibold',
-                        py: 2,
-                        px: 2,
-                        borderBottom: '1px solid',
-                        borderColor: 'border.default',
-                      }}
+                      textAlign="left"
+                      fontSize={0}
+                      color="fg.muted"
+                      fontWeight="semibold"
+                      py={2}
+                      px={2}
+                      borderBottom="1px solid"
+                      borderColor="border.default"
                     >
                       {header}
                     </Box>
@@ -415,13 +407,11 @@ export const Policies = ({
                   <Box as="tr" key={row.name}>
                     <Box
                       as="td"
-                      sx={{
-                        py: 2,
-                        px: 2,
-                        borderBottom: '1px solid',
-                        borderColor: 'border.muted',
-                        verticalAlign: 'top',
-                      }}
+                      py={2}
+                      px={2}
+                      borderBottom="1px solid"
+                      borderColor="border.muted"
+                      verticalAlign="top"
                     >
                       <Text sx={{ fontSize: 1, display: 'block' }}>
                         {row.label}
@@ -434,13 +424,11 @@ export const Policies = ({
                     </Box>
                     <Box
                       as="td"
-                      sx={{
-                        py: 2,
-                        px: 2,
-                        borderBottom: '1px solid',
-                        borderColor: 'border.muted',
-                        verticalAlign: 'top',
-                      }}
+                      py={2}
+                      px={2}
+                      borderBottom="1px solid"
+                      borderColor="border.muted"
+                      verticalAlign="top"
                     >
                       <Text sx={{ fontSize: 1 }}>
                         {ruleValueLabel(row.rule.value)}
@@ -448,14 +436,12 @@ export const Policies = ({
                     </Box>
                     <Box
                       as="td"
-                      sx={{
-                        py: 2,
-                        px: 2,
-                        borderBottom: '1px solid',
-                        borderColor: 'border.muted',
-                        verticalAlign: 'top',
-                        whiteSpace: 'nowrap',
-                      }}
+                      py={2}
+                      px={2}
+                      borderBottom="1px solid"
+                      borderColor="border.muted"
+                      verticalAlign="top"
+                      whiteSpace="nowrap"
                     >
                       <Label
                         size="small"
@@ -482,7 +468,7 @@ export const Policies = ({
             </Box>
           </Table.Container>
 
-          <Box sx={{ display: 'grid', gap: 3 }}>
+          <Box display="grid" gap={3}>
             <ToolGroup
               title="Read-only tools"
               description="Tools that only look: listing, reading a cell, reading a source."
@@ -513,15 +499,13 @@ export const Policies = ({
 
       {/* What this page becomes, said plainly rather than left as a gap. */}
       <Box
-        sx={{
-          p: 3,
-          border: '1px solid',
-          borderColor: 'border.default',
-          borderRadius: 2,
-          bg: 'canvas.subtle',
-          display: 'grid',
-          gap: 1,
-        }}
+        p={3}
+        border="1px solid"
+        borderColor="border.default"
+        borderRadius={2}
+        bg="canvas.subtle"
+        display="grid"
+        gap={1}
       >
         <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>Your own rules</Text>
         <Text sx={{ fontSize: 0, color: 'fg.muted' }}>

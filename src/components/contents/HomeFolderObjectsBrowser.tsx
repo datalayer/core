@@ -55,8 +55,12 @@ export type HomeFolderObjectsBrowserProps = {
 };
 
 /** Browser for the server-managed Home Folder metadata and version history. */
-export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
-  onSelectedObjectsChange, selectionDisabled = false }: HomeFolderObjectsBrowserProps) => {
+export const HomeFolderObjectsBrowser = ({
+  prefix,
+  selectedObjectUids = [],
+  onSelectedObjectsChange,
+  selectionDisabled = false,
+}: HomeFolderObjectsBrowserProps) => {
   const objects = useHomeFolderObjects({ prefix, limit: 100 });
   const [selected, setSelected] = useState<ContentObject>();
   const [uploadProgress, setUploadProgress] = useState<{
@@ -74,8 +78,12 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
   const toggleSelection = (object: ContentObject) => {
     if (!onSelectedObjectsChange) return;
     const selectedUids = new Set(selectedObjectUids);
-    selectedUids.has(object.uid) ? selectedUids.delete(object.uid) : selectedUids.add(object.uid);
-    onSelectedObjectsChange((objects.data?.items ?? []).filter(item => selectedUids.has(item.uid)));
+    selectedUids.has(object.uid)
+      ? selectedUids.delete(object.uid)
+      : selectedUids.add(object.uid);
+    onSelectedObjectsChange(
+      (objects.data?.items ?? []).filter(item => selectedUids.has(item.uid)),
+    );
   };
 
   const onUpload = (
@@ -126,7 +134,9 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
   const onDelete = (object: ContentObject) => {
     if (
       typeof window !== 'undefined' &&
-      !window.confirm(`Delete ${object.path}? You can restore an earlier version.`)
+      !window.confirm(
+        `Delete ${object.path}? You can restore an earlier version.`,
+      )
     ) {
       return;
     }
@@ -138,7 +148,7 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
 
   if (objects.isPending) {
     return (
-      <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
+      <Box p={4} display="flex" justifyContent="center">
         <Spinner />
       </Box>
     );
@@ -146,7 +156,7 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
 
   if (objects.isError) {
     return (
-      <Box sx={{ p: 3, border: '1px solid', borderColor: 'danger.muted' }}>
+      <Box p={3} border="1px solid" borderColor="danger.muted">
         <Text sx={{ color: 'danger.fg' }}>
           {objects.error instanceof Error
             ? objects.error.message
@@ -162,13 +172,11 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
   return (
     <Box>
       <Box
-        sx={{
-          mb: 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 3,
-        }}
+        mb={3}
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        gap={3}
       >
         <Text sx={{ color: 'fg.muted' }}>
           {prefix ? `home-folder:///${prefix}` : 'home-folder:///'}
@@ -193,7 +201,7 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
         </>
       </Box>
       {uploadProgress && (
-        <Box sx={{ mb: 3 }}>
+        <Box mb={3}>
           <ProgressBar
             progress={
               uploadProgress.total
@@ -209,12 +217,12 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
         </Box>
       )}
       {uploadObject.isError && (
-        <Box sx={{ mb: 3 }}>
+        <Box mb={3}>
           <Text as="p" sx={{ color: 'danger.fg', mb: 2 }}>
             {uploadObject.error.message}
           </Text>
           {failedUpload && (
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box display="flex" gap={2}>
               <Button size="small" onClick={() => onUpload(failedUpload)}>
                 Retry
               </Button>
@@ -231,13 +239,11 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
       )}
       {(objects.data?.items.length ?? 0) === 0 ? (
         <Box
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            border: '1px dashed',
-            borderColor: 'border.default',
-            borderRadius: 2,
-          }}
+          p={4}
+          textAlign="center"
+          border="1px dashed"
+          borderColor="border.default"
+          borderRadius={2}
         >
           <FileIcon size={24} />
           <Heading as="h3" sx={{ fontSize: 2, mt: 2 }}>
@@ -250,9 +256,9 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
       ) : (
         <Box
           as="table"
+          width="100%"
+          borderCollapse="collapse"
           sx={{
-            width: '100%',
-            borderCollapse: 'collapse',
             'th, td': {
               px: 3,
               py: 2,
@@ -277,14 +283,16 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
               <tr key={object.uid}>
                 {selectable && (
                   <td>
-                    <Checkbox aria-label={`Select ${object.path}`}
+                    <Checkbox
+                      aria-label={`Select ${object.path}`}
                       checked={selectedObjectUids.includes(object.uid)}
                       disabled={selectionDisabled || !object.currentVersionUid}
-                      onChange={() => toggleSelection(object)} />
+                      onChange={() => toggleSelection(object)}
+                    />
                   </td>
                 )}
                 <td>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box display="flex" alignItems="center" gap={2}>
                     <FileIcon />
                     <Text sx={{ fontFamily: 'mono' }}>{object.path}</Text>
                   </Box>
@@ -292,7 +300,7 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
                 <td>{formatBytes(object.size)}</td>
                 <td>{new Date(object.updatedAt).toLocaleString()}</td>
                 <td>
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                  <Box display="flex" justifyContent="flex-end" gap={2}>
                     <Button
                       size="small"
                       leadingVisual={HistoryIcon}
@@ -327,15 +335,13 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
 
       {selected && (
         <Box
-          sx={{
-            mt: 3,
-            p: 3,
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 2,
-          }}
+          mt={3}
+          p={3}
+          border="1px solid"
+          borderColor="border.default"
+          borderRadius={2}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+          <Box display="flex" justifyContent="space-between" gap={2}>
             <Heading as="h3" sx={{ fontSize: 2 }}>
               Versions of {selected.path}
             </Heading>
@@ -346,23 +352,25 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
           {versions.isPending ? (
             <Spinner size="small" />
           ) : versions.isError ? (
-            <Text sx={{ color: 'danger.fg' }}>Version history could not be loaded.</Text>
+            <Text sx={{ color: 'danger.fg' }}>
+              Version history could not be loaded.
+            </Text>
           ) : (
-            <Box as="ul" sx={{ listStyle: 'none', p: 0, mb: 0 }}>
+            <Box as="ul" listStyle="none" p={0} mb={0}>
               {versions.data?.items.map(version => {
                 const isCurrent = version.uid === selected.currentVersionUid;
                 return (
                   <Box
                     as="li"
                     key={version.uid}
+                    py={2}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    gap={3}
+                    borderColor="border.muted"
                     sx={{
-                      py: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 3,
                       borderBottom: '1px solid',
-                      borderColor: 'border.muted',
                       ':last-child': { borderBottom: 0 },
                     }}
                   >
@@ -370,7 +378,10 @@ export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
                       <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>
                         {version.uid}
                       </Text>
-                      <Text as="p" sx={{ color: 'fg.muted', m: 0, fontSize: 0 }}>
+                      <Text
+                        as="p"
+                        sx={{ color: 'fg.muted', m: 0, fontSize: 0 }}
+                      >
                         {new Date(version.createdAt).toLocaleString()} ·{' '}
                         {formatBytes(version.size)}
                       </Text>

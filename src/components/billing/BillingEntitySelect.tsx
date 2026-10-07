@@ -505,7 +505,7 @@ export function BillingEntitySelect({
   return (
     <FormControl>
       <FormControl.Label>{label}</FormControl.Label>
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+      <Box display="flex" justifyContent="center">
         <ActionMenu>
           <ActionMenu.Anchor>
             <Button
@@ -514,26 +514,18 @@ export function BillingEntitySelect({
               sx={{ width, justifyContent: 'space-between' }}
             >
               {isLoading ? (
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 2,
-                  }}
-                >
+                <Box display="inline-flex" alignItems="center" gap={2}>
                   <Spinner size="small" />
                   <Text sx={{ fontSize: 1 }}>Loading plan status...</Text>
                 </Box>
               ) : selectedAccount ? (
                 <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    minWidth: 0,
-                    gap: 2,
-                  }}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  width="100%"
+                  minWidth={0}
+                  gap={2}
                 >
                   <Text
                     sx={{
@@ -546,13 +538,11 @@ export function BillingEntitySelect({
                     @{selectedAccount.accountName}
                   </Text>
                   <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      gap: 1,
-                      flexShrink: 0,
-                    }}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="flex-end"
+                    gap={1}
+                    flexShrink={0}
                   >
                     <Label
                       size="small"
@@ -592,17 +582,15 @@ export function BillingEntitySelect({
             </Button>
           </ActionMenu.Anchor>
           <ActionMenu.Overlay width="large">
-            <Box sx={{ p: 2 }}>
+            <Box p={2}>
               <Box
-                sx={{
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  bg: 'canvas.subtle',
-                  color: 'fg.muted',
-                  px: 3,
-                  py: 2,
-                }}
+                borderRadius={2}
+                border="1px solid"
+                borderColor="border.default"
+                bg="canvas.subtle"
+                color="fg.muted"
+                px={3}
+                py={2}
               >
                 <Text sx={{ fontSize: 1, lineHeight: 1.5 }}>
                   {flashMessage}
@@ -627,13 +615,7 @@ export function BillingEntitySelect({
             <ActionList selectionVariant="single">
               {isLoading ? (
                 <ActionList.Item disabled>
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 2,
-                    }}
-                  >
+                  <Box display="inline-flex" alignItems="center" gap={2}>
                     <Spinner size="small" />
                     <Text sx={{ fontSize: 1 }}>Loading plan status...</Text>
                   </Box>
@@ -671,14 +653,12 @@ export function BillingEntitySelect({
                           }}
                         >
                           <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              width: '100%',
-                              minWidth: 0,
-                              gap: 2,
-                            }}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            width="100%"
+                            minWidth={0}
+                            gap={2}
                           >
                             <Text
                               sx={{
@@ -691,13 +671,11 @@ export function BillingEntitySelect({
                               @{account.accountName}
                             </Text>
                             <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'flex-end',
-                                gap: 1,
-                                flexShrink: 0,
-                              }}
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="flex-end"
+                              gap={1}
+                              flexShrink={0}
                             >
                               <Label
                                 size="small"

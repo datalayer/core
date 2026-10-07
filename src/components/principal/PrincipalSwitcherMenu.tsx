@@ -5,10 +5,10 @@
 
 import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { Box } from '@datalayer/primer-addons';
 import {
   ActionList,
   ActionMenu,
-  Box,
   Button,
   Text,
   ThemeProvider,
@@ -301,41 +301,35 @@ export function PrincipalSwitcherMenu({
               as="button"
               type="button"
               aria-label="Switch principal"
-              sx={{
-                width: fullWidth ? '100%' : 'auto',
-                boxSizing: 'border-box',
-                px: 2,
-                py: 2,
-                fontSize: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 2,
+              width={fullWidth ? '100%' : 'auto'}
+              boxSizing="border-box"
+              px={2}
+              py={2}
+              fontSize={0}
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              gap={2}
+              bg="canvas.subtle"
+              border="1px solid"
+              borderColor="border.default"
+              borderRadius={2}
+              cursor="pointer"
+              textAlign="left"
+              transition="background-color 120ms ease"
+              hover={{ bg: 'canvas.subtle' }}
+              focusVisible={{
                 bg: 'canvas.subtle',
-                border: '1px solid',
-                borderColor: 'border.default',
-                borderRadius: 2,
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'background-color 120ms ease',
-                ':hover': {
-                  bg: 'canvas.subtle',
-                },
-                ':focus-visible': {
-                  bg: 'canvas.subtle',
-                  outline: '2px solid',
-                  outlineColor: 'accent.emphasis',
-                  outlineOffset: '2px',
-                },
+                outline: '2px solid',
+                outlineColor: 'accent.emphasis',
+                outlineOffset: '2px',
               }}
             >
               <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  color: 'fg.muted',
-                  flexShrink: 0,
-                }}
+                display="inline-flex"
+                alignItems="center"
+                color="fg.muted"
+                flexShrink={0}
               >
                 {selectedPrincipalKind === 'organization' ? (
                   <PeopleIcon size={16} />
@@ -345,7 +339,7 @@ export function PrincipalSwitcherMenu({
                   <PersonIcon size={16} />
                 )}
               </Box>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Box minWidth={0} flex={1}>
                 <Text
                   sx={{
                     display: 'block',
@@ -362,24 +356,16 @@ export function PrincipalSwitcherMenu({
                 </Text>
               </Box>
               {isPlatformAdmin && isCurrentUserPrincipal ? (
-                <Box
-                  sx={{
-                    flexShrink: 0,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                  }}
-                >
+                <Box flexShrink={0} display="inline-flex" alignItems="center">
                   <AdminLabel />
                 </Box>
               ) : null}
               <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  color: 'fg.muted',
-                  flexShrink: 0,
-                  ml: isPlatformAdmin && isCurrentUserPrincipal ? 1 : 0,
-                }}
+                display="inline-flex"
+                alignItems="center"
+                color="fg.muted"
+                flexShrink={0}
+                ml={isPlatformAdmin && isCurrentUserPrincipal ? 1 : 0}
               >
                 <TriangleDownIcon size={12} />
               </Box>
@@ -396,20 +382,16 @@ export function PrincipalSwitcherMenu({
               }}
             >
               <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  minWidth: 0,
-                }}
+                display="inline-flex"
+                alignItems="center"
+                gap={1}
+                minWidth={0}
               >
                 <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    color: 'fg.muted',
-                    flexShrink: 0,
-                  }}
+                  display="inline-flex"
+                  alignItems="center"
+                  color="fg.muted"
+                  flexShrink={0}
                 >
                   {selectedPrincipalKind === 'organization' ? (
                     <PeopleIcon size={16} />
@@ -420,12 +402,10 @@ export function PrincipalSwitcherMenu({
                   )}
                 </Box>
                 <Box
-                  sx={{
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
+                  minWidth={0}
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
                 >
                   <Text
                     sx={{
@@ -477,13 +457,11 @@ export function PrincipalSwitcherMenu({
                 </ActionList.LeadingVisual>
                 <Box
                   as="span"
-                  sx={{
-                    display: 'block',
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
+                  display="block"
+                  minWidth={0}
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
                 >
                   {String(
                     user?.friendlyName ||
@@ -491,7 +469,7 @@ export function PrincipalSwitcherMenu({
                       personalHandle ||
                       'Me',
                   ).trim()}
-                  <Box as="span" sx={{ color: 'fg.muted' }}>
+                  <Box as="span" color="fg.muted">
                     {' '}
                     · <DisplayHandle handle={personalHandle || 'me'} />
                   </Box>
@@ -541,13 +519,11 @@ export function PrincipalSwitcherMenu({
                       <Box
                         as="span"
                         title={displayHandleText(organization.handle)}
-                        sx={{
-                          display: 'block',
-                          minWidth: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
+                        display="block"
+                        minWidth={0}
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap"
                       >
                         {String(
                           organization?.display_name ||
@@ -556,7 +532,7 @@ export function PrincipalSwitcherMenu({
                             organization?.handle ||
                             'Organization',
                         ).trim()}
-                        <Box as="span" sx={{ color: 'fg.muted' }}>
+                        <Box as="span" color="fg.muted">
                           {' '}
                           · <DisplayHandle handle={organization.handle} />
                         </Box>
@@ -598,13 +574,11 @@ export function PrincipalSwitcherMenu({
                       <Box
                         as="span"
                         title={`${displayHandleText(orgHandle)}/${displayHandleText(team.handle, { withAt: false })}`}
-                        sx={{
-                          display: 'block',
-                          minWidth: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
+                        display="block"
+                        minWidth={0}
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap"
                       >
                         {String(
                           team.displayName ||
@@ -612,7 +586,7 @@ export function PrincipalSwitcherMenu({
                             team.handle ||
                             'Team',
                         ).trim()}
-                        <Box as="span" sx={{ color: 'fg.muted' }}>
+                        <Box as="span" color="fg.muted">
                           {' '}
                           · <DisplayHandle handle={orgHandle} />/
                           <DisplayHandle handle={team.handle} withAt={false} />

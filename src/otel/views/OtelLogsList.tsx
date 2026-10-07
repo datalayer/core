@@ -13,7 +13,8 @@
  */
 
 import React, { useState } from 'react';
-import { Box, Text, Label, Spinner } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text, Label, Spinner } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
 import { LogIcon } from '@primer/octicons-react';
 import type { OtelLogsListProps, OtelLog } from '../types';
@@ -23,7 +24,7 @@ import { formatTime, severityVariant } from '../utils';
 
 /** Severity badge using Primer Label, centered in its grid cell. */
 const Severity: React.FC<{ text: string }> = ({ text }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <Box display="flex" alignItems="center" justifyContent="center">
     <Label size="small" variant={severityVariant(text)}>
       {text}
     </Label>
@@ -33,16 +34,14 @@ const Severity: React.FC<{ text: string }> = ({ text }) => (
 /** Expandable row detail for a single log record. */
 const LogDetail: React.FC<{ log: OtelLog }> = ({ log }) => (
   <Box
-    sx={{
-      gridColumn: '1 / -1',
-      bg: 'canvas.subtle',
-      borderBottom: '1px solid',
-      borderColor: 'border.default',
-      p: 3,
-    }}
+    gridColumn="1 / -1"
+    bg="canvas.subtle"
+    borderBottom="1px solid"
+    borderColor="border.default"
+    p={3}
   >
     {/* Body (potentially long) */}
-    <Box sx={{ mb: 2 }}>
+    <Box mb={2}>
       <Text
         sx={{
           fontSize: 0,
@@ -56,18 +55,16 @@ const LogDetail: React.FC<{ log: OtelLog }> = ({ log }) => (
       </Text>
       <Box
         as="pre"
-        sx={{
-          fontSize: 1,
-          fontFamily: 'mono',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          m: 0,
-          bg: 'canvas.default',
-          border: '1px solid',
-          borderColor: 'border.default',
-          borderRadius: 2,
-          p: 2,
-        }}
+        fontSize={1}
+        fontFamily="mono"
+        whiteSpace="pre-wrap"
+        wordBreak="break-word"
+        m={0}
+        bg="canvas.default"
+        border="1px solid"
+        borderColor="border.default"
+        borderRadius={2}
+        p={2}
       >
         {log.body}
       </Box>
@@ -75,7 +72,7 @@ const LogDetail: React.FC<{ log: OtelLog }> = ({ log }) => (
 
     {/* Trace correlation */}
     {log.trace_id && (
-      <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
+      <Box display="flex" gap={3} mb={2}>
         <Text sx={{ fontSize: 0, color: 'fg.muted', fontWeight: 'bold' }}>
           trace_id
         </Text>
@@ -106,24 +103,20 @@ const LogDetail: React.FC<{ log: OtelLog }> = ({ log }) => (
           Attributes
         </Text>
         <Box
-          sx={{
-            bg: 'canvas.default',
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 2,
-            p: 2,
-          }}
+          bg="canvas.default"
+          border="1px solid"
+          borderColor="border.default"
+          borderRadius={2}
+          p={2}
         >
           {Object.entries(log.attributes).map(([k, v]) => (
             <Box
               key={k}
-              sx={{
-                display: 'flex',
-                gap: 2,
-                py: 1,
-                borderBottom: '1px solid',
-                borderColor: 'border.muted',
-              }}
+              display="flex"
+              gap={2}
+              py={1}
+              borderBottom="1px solid"
+              borderColor="border.muted"
             >
               <Text
                 sx={{
@@ -166,7 +159,7 @@ export const OtelLogsList: React.FC<OtelLogsListProps> = ({
 
   if (loading && logs.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+      <Box display="flex" justifyContent="center" p={5}>
         <Spinner size="medium" />
       </Box>
     );
@@ -187,21 +180,19 @@ export const OtelLogsList: React.FC<OtelLogsListProps> = ({
   }
 
   return (
-    <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+    <Box flex={1} minHeight={0} overflow="auto">
       {/* Header */}
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: colTemplate,
-          bg: 'canvas.subtle',
-          borderBottom: '2px solid',
-          borderColor: 'border.default',
-          px: 3,
-          py: 1,
-          position: 'sticky',
-          top: 0,
-          zIndex: 1,
-        }}
+        display="grid"
+        gridTemplateColumns={colTemplate}
+        bg="canvas.subtle"
+        borderBottom="2px solid"
+        borderColor="border.default"
+        px={3}
+        py={1}
+        position="sticky"
+        top={0}
+        zIndex={1}
       >
         {['Time', 'Severity', 'Service', 'Body'].map(h => (
           <Text
@@ -227,23 +218,21 @@ export const OtelLogsList: React.FC<OtelLogsListProps> = ({
         return (
           <React.Fragment key={idx}>
             <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: colTemplate,
-                px: 3,
-                py: '5px',
-                borderBottom: '1px solid',
-                borderColor: 'border.muted',
-                cursor: 'pointer',
-                bg: selected
+              display="grid"
+              gridTemplateColumns={colTemplate}
+              px={3}
+              py="5px"
+              borderBottom="1px solid"
+              borderColor="border.muted"
+              cursor="pointer"
+              bg={
+                selected
                   ? 'accent.subtle'
                   : expanded
                     ? 'canvas.subtle'
-                    : 'canvas.default',
-                ':hover': {
-                  bg: selected || expanded ? undefined : 'canvas.subtle',
-                },
-              }}
+                    : 'canvas.default'
+              }
+              hover={{ bg: selected || expanded ? undefined : 'canvas.subtle' }}
               onClick={() => {
                 setExpandedIdx(expanded ? null : idx);
                 onSelectLog?.(log, idx);

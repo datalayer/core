@@ -133,15 +133,13 @@ export const Copyable = ({ text }: { text: string }): JSX.Element => {
   const [copied, setCopied] = useState(false);
   return (
     <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        p: 2,
-        bg: 'canvas.inset',
-        borderRadius: 2,
-        minWidth: 0,
-      }}
+      display="flex"
+      alignItems="center"
+      gap={2}
+      p={2}
+      bg="canvas.inset"
+      borderRadius={2}
+      minWidth={0}
     >
       <Text
         sx={{
@@ -189,18 +187,16 @@ const Summary = ({
   onOpen?: (to: string) => void;
 }): JSX.Element => (
   <Box
-    sx={{
-      p: 3,
-      border: '1px solid',
-      borderColor: 'border.default',
-      borderRadius: 2,
-      display: 'grid',
-      gap: 2,
-      alignContent: 'start',
-      minWidth: 0,
-    }}
+    p={3}
+    border="1px solid"
+    borderColor="border.default"
+    borderRadius={2}
+    display="grid"
+    gap={2}
+    alignContent="start"
+    minWidth={0}
   >
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Box display="flex" alignItems="center" gap={2}>
       <Icon size={16} />
       {to ? (
         <Link
@@ -221,7 +217,7 @@ const Summary = ({
         <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>{title}</Text>
       )}
     </Box>
-    <Box sx={{ fontSize: 0, color: 'fg.muted', display: 'grid', gap: 1 }}>
+    <Box fontSize={0} color="fg.muted" display="grid" gap={1}>
       {children}
     </Box>
     {action && (
@@ -264,7 +260,7 @@ export const McpHome = ({
   const live = activity.data?.clients.length ?? 0;
 
   return (
-    <Box sx={{ display: 'grid', gap: 4, minWidth: 0 }}>
+    <Box display="grid" gap={4} minWidth={0}>
       {showTitle && (
         <Box>
           <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -281,17 +277,15 @@ export const McpHome = ({
         <>
           {/* What is going on now is one line and one link; the dashboard answers it. */}
           <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 3,
-              flexWrap: 'wrap',
-              p: 3,
-              borderRadius: 2,
-              bg: 'canvas.subtle',
-              border: '1px solid',
-              borderColor: 'border.default',
-            }}
+            display="flex"
+            alignItems="center"
+            gap={3}
+            flexWrap="wrap"
+            p={3}
+            borderRadius={2}
+            bg="canvas.subtle"
+            border="1px solid"
+            borderColor="border.default"
           >
             <Text sx={{ fontSize: 1 }}>
               {live > 0
@@ -308,12 +302,12 @@ export const McpHome = ({
           </Box>
 
           {/* The endpoint, and whether this browser is signed in to it. */}
-          <Box sx={{ display: 'grid', gap: 2 }}>
+          <Box display="grid" gap={2}>
             <Heading as="h3" sx={{ fontSize: 2 }}>
               The endpoint
             </Heading>
             <Copyable text={endpoint || 'https://mcp.datalayer.run/mcp'} />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box display="flex" alignItems="center" gap={2}>
               <KeyIcon size={14} />
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                 {signedIn
@@ -325,33 +319,25 @@ export const McpHome = ({
 
           {/* One card per client: the command that writes its configuration, and
             its manual for the format and the file it writes. */}
-          <Box sx={{ display: 'grid', gap: 2 }}>
+          <Box display="grid" gap={2}>
             <Heading as="h3" sx={{ fontSize: 2 }}>
               Set up a client
             </Heading>
             <Box
-              sx={{
-                display: 'grid',
-                gap: 3,
-                gridTemplateColumns: [
-                  '1fr',
-                  'repeat(2, 1fr)',
-                  'repeat(3, 1fr)',
-                ],
-              }}
+              display="grid"
+              gap={3}
+              gridTemplateColumns={['1fr', 'repeat(2, 1fr)', 'repeat(3, 1fr)']}
             >
               {MCP_CLIENTS.map(client => (
                 <Box
                   key={client.setup}
-                  sx={{
-                    p: 3,
-                    border: '1px solid',
-                    borderColor: 'border.default',
-                    borderRadius: 2,
-                    display: 'grid',
-                    gap: 2,
-                    minWidth: 0,
-                  }}
+                  p={3}
+                  border="1px solid"
+                  borderColor="border.default"
+                  borderRadius={2}
+                  display="grid"
+                  gap={2}
+                  minWidth={0}
                 >
                   <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>
                     {client.name}
@@ -383,11 +369,9 @@ export const McpHome = ({
 
       {showSummaries && (
         <Box
-          sx={{
-            display: 'grid',
-            gap: 3,
-            gridTemplateColumns: ['1fr', 'repeat(2, 1fr)', 'repeat(3, 1fr)'],
-          }}
+          display="grid"
+          gap={3}
+          gridTemplateColumns={['1fr', 'repeat(2, 1fr)', 'repeat(3, 1fr)']}
         >
           <Summary
             icon={AiAgentIcon}

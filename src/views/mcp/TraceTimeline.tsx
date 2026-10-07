@@ -125,7 +125,10 @@ export const timelineRows = (tree: McpSpanNode[]): TimelineRow[] => {
     // hold it: a zero-length span at the very end of a run is a mark that
     // has to fit inside the track, not one hanging off its right edge.
     const width = Math.max(MIN_BAR_PERCENT, ((end - start) / total) * 100);
-    const left = Math.min(100 - width, Math.max(0, ((start - first) / total) * 100));
+    const left = Math.min(
+      100 - width,
+      Math.max(0, ((start - first) / total) * 100),
+    );
     return { span, depth, left, width };
   });
 };
@@ -146,7 +149,10 @@ export const SERVICE_TONE: Record<string, string> = {
 
 /** The bar colour of a span, by the service that emitted it and how it ended. */
 export const toneOf = (span: OtelSpan): string => {
-  if (span.status_code === 'STATUS_CODE_ERROR' || span.status_code === 'ERROR') {
+  if (
+    span.status_code === 'STATUS_CODE_ERROR' ||
+    span.status_code === 'ERROR'
+  ) {
     return 'danger.emphasis';
   }
   return SERVICE_TONE[span.service_name] ?? 'neutral.emphasis';
@@ -179,7 +185,7 @@ export const TraceTimeline = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 1, minWidth: 0 }}>
+    <Box display="grid" gap={1} minWidth={0}>
       {traceId && (
         <Text sx={{ fontFamily: 'mono', fontSize: 0, color: 'fg.muted' }}>
           {traceId}
@@ -188,15 +194,13 @@ export const TraceTimeline = ({
       {rows.map(row => (
         <Box
           key={row.span.span_id}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 14rem) 1fr auto',
-            gap: 2,
-            alignItems: 'center',
-            minWidth: 0,
-          }}
+          display="grid"
+          gridTemplateColumns="minmax(0, 14rem) 1fr auto"
+          gap={2}
+          alignItems="center"
+          minWidth={0}
         >
-          <Box sx={{ pl: row.depth, minWidth: 0 }}>
+          <Box pl={row.depth} minWidth={0}>
             <Truncate
               title={`${row.span.span_name} · ${row.span.service_name}`}
               sx={{ fontSize: 0, maxWidth: '100%' }}
@@ -205,28 +209,30 @@ export const TraceTimeline = ({
             </Truncate>
           </Box>
           <Box
-            sx={{
-              position: 'relative',
-              height: '0.75rem',
-              bg: 'canvas.subtle',
-              borderRadius: 1,
-              minWidth: 0,
-            }}
+            position="relative"
+            height="0.75rem"
+            bg="canvas.subtle"
+            borderRadius={1}
+            minWidth={0}
           >
             <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                left: `${row.left}%`,
-                width: `${row.width}%`,
-                bg: toneOf(row.span),
-                borderRadius: 1,
-              }}
+              position="absolute"
+              top={0}
+              bottom={0}
+              left={`${row.left}%`}
+              width={`${row.width}%`}
+              bg={toneOf(row.span)}
+              borderRadius={1}
               title={`${row.span.service_name} · ${durationLabel(row.span.duration_ms)}`}
             />
           </Box>
-          <Text sx={{ fontSize: 0, color: 'fg.muted', fontVariantNumeric: 'tabular-nums' }}>
+          <Text
+            sx={{
+              fontSize: 0,
+              color: 'fg.muted',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
             {durationLabel(row.span.duration_ms)}
           </Text>
         </Box>
@@ -236,9 +242,11 @@ export const TraceTimeline = ({
 };
 
 /** The timeline under its own heading, as the Runs detail draws it. */
-export const TraceTimelineSection = (props: TraceTimelineProps): JSX.Element => (
+export const TraceTimelineSection = (
+  props: TraceTimelineProps,
+): JSX.Element => (
   <Box>
-    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+    <Box display="flex" gap={2} alignItems="center" mb={2}>
       <Heading as="h3" sx={{ fontSize: 1 }}>
         Where the time went
       </Heading>

@@ -76,9 +76,11 @@ export const toDatasourceRow = (item: CatalogSource): DatasourceRow => {
     uid: item.source.uid,
     name: item.source.name,
     description: item.source.description ?? '',
-    connector: DATASOURCE_CONNECTOR_LABELS[connector] ?? configuration.connectorType,
+    connector:
+      DATASOURCE_CONNECTOR_LABELS[connector] ?? configuration.connectorType,
     target: configuration.databaseOrProject ?? configuration.endpoint ?? '',
-    route: configuration.networkRoute === 'dataserver' ? 'dataserver' : 'direct',
+    route:
+      configuration.networkRoute === 'dataserver' ? 'dataserver' : 'direct',
     operations: (configuration.allowedOperations ?? []).join(', '),
     status: item.source.status,
     canExecute: item.permissions.execute,
@@ -103,8 +105,8 @@ const DatasourcesTable = ({
       <Blankslate.Heading>Datasources</Blankslate.Heading>
       <Blankslate.Description>
         <Text sx={{ textAlign: 'center' }}>
-          No Datasource yet. Connect a database, warehouse or query service
-          to run governed queries from notebooks and agents.
+          No Datasource yet. Connect a database, warehouse or query service to
+          run governed queries from notebooks and agents.
         </Text>
       </Blankslate.Description>
     </Blankslate>
@@ -130,7 +132,9 @@ const DatasourcesTable = ({
             field: 'target',
             renderCell: datasource =>
               datasource.target ? (
-                <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>{datasource.target}</Text>
+                <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>
+                  {datasource.target}
+                </Text>
               ) : (
                 <Text sx={{ color: 'fg.muted' }}>—</Text>
               ),
@@ -139,7 +143,11 @@ const DatasourcesTable = ({
             header: 'Route',
             field: 'route',
             renderCell: datasource => (
-              <Label variant={datasource.route === 'dataserver' ? 'accent' : 'secondary'}>
+              <Label
+                variant={
+                  datasource.route === 'dataserver' ? 'accent' : 'secondary'
+                }
+              >
                 {datasource.route === 'dataserver' ? 'Dataserver' : 'Direct'}
               </Label>
             ),
@@ -158,7 +166,11 @@ const DatasourcesTable = ({
             header: 'Status',
             field: 'status',
             renderCell: datasource => (
-              <Label variant={datasource.status === 'ready' ? 'success' : 'secondary'}>
+              <Label
+                variant={
+                  datasource.status === 'ready' ? 'success' : 'secondary'
+                }
+              >
                 {datasource.status}
               </Label>
             ),
@@ -209,7 +221,8 @@ const LiveDatasourcesTable = ({
         .sort((left, right) => left.name.localeCompare(right.name)),
     [datasourcesQuery.data],
   );
-  const showInitialSpinner = datasources.length === 0 && datasourcesQuery.isPending;
+  const showInitialSpinner =
+    datasources.length === 0 && datasourcesQuery.isPending;
 
   if (datasourcesQuery.isError && datasources.length === 0) {
     return (
@@ -219,7 +232,9 @@ const LiveDatasourcesTable = ({
         </Blankslate.Visual>
         <Blankslate.Heading>Datasources could not be listed</Blankslate.Heading>
         <Blankslate.Description>
-          <Text sx={{ textAlign: 'center' }}>{datasourcesQuery.error.message}</Text>
+          <Text sx={{ textAlign: 'center' }}>
+            {datasourcesQuery.error.message}
+          </Text>
         </Blankslate.Description>
         <Blankslate.PrimaryAction onClick={() => datasourcesQuery.refetch()}>
           Try again
@@ -231,12 +246,10 @@ const LiveDatasourcesTable = ({
     <Blankslate border spacious>
       {showInlineLoadingIndicator ? (
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '40px',
-          }}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          minHeight="40px"
         >
           <Spinner />
         </Box>
@@ -274,16 +287,14 @@ export const Datasources = ({
 }: DatasourcesProps = {}) => {
   const navigate = useNavigate();
   const body = (
-    <Box sx={{ maxWidth: embedded ? undefined : 960, mx: 'auto', width: '100%' }}>
+    <Box maxWidth={embedded ? undefined : 960} mx="auto" width="100%">
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: 3,
-          flexWrap: 'wrap',
-          mb: embedded ? 2 : 4,
-        }}
+        display="flex"
+        alignItems="flex-start"
+        justifyContent="space-between"
+        gap={3}
+        flexWrap="wrap"
+        mb={embedded ? 2 : 4}
       >
         <Box>
           {!embedded && (
@@ -309,7 +320,10 @@ export const Datasources = ({
         </Button>
       </Box>
       {mock ? (
-        <DatasourcesTable datasources={DATASOURCES_MOCK.map(toDatasourceRow)} mock />
+        <DatasourcesTable
+          datasources={DATASOURCES_MOCK.map(toDatasourceRow)}
+          mock
+        />
       ) : (
         <LiveDatasourcesTable
           datasourcesListRoute={datasourcesListRoute}

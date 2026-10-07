@@ -249,7 +249,7 @@ export const SecretEdit = ({
                 </FormControl.Validation>
               )}
             </FormControl>
-            <Box sx={{ marginTop: 3 }}>
+            <Box marginTop={3}>
               <Button
                 variant="primary"
                 disabled={
@@ -261,7 +261,7 @@ export const SecretEdit = ({
               </Button>
             </Box>
           </Box>
-          <Box sx={{ marginTop: 3 }}>
+          <Box marginTop={3}>
             <Heading
               as="h2"
               sx={{
@@ -274,18 +274,16 @@ export const SecretEdit = ({
               Danger zone
             </Heading>
             <Box
-              sx={{
-                border: '1px solid',
-                borderColor: 'danger.emphasis',
-                borderRadius: 2,
-                p: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 3,
-              }}
+              border="1px solid"
+              borderColor="danger.emphasis"
+              borderRadius={2}
+              p={3}
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              gap={3}
             >
-              <Box sx={{ display: 'grid', gap: 1 }}>
+              <Box display="grid" gap={1}>
                 <Text
                   sx={{ fontSize: 1, fontWeight: 'bold', color: 'danger.fg' }}
                 >

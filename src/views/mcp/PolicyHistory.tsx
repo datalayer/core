@@ -129,7 +129,7 @@ export const PolicyHistory = ({
 
   if ((events.isPending || removals.isPending) && rows.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+      <Box display="flex" justifyContent="center" py={3}>
         <Spinner size="small" />
       </Box>
     );
@@ -154,17 +154,15 @@ export const PolicyHistory = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 2 }}>
+    <Box display="grid" gap={2}>
       {rows.map(event => (
         <Box
           key={event.uid}
-          sx={{
-            display: 'flex',
-            gap: 2,
-            alignItems: 'baseline',
-            flexWrap: 'wrap',
-            fontSize: 0,
-          }}
+          display="flex"
+          gap={2}
+          alignItems="baseline"
+          flexWrap="wrap"
+          fontSize={0}
         >
           <Text sx={{ color: 'fg.muted', whiteSpace: 'nowrap' }}>
             <RelativeTime datetime={event.at} />

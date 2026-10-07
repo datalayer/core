@@ -290,7 +290,7 @@ export const AlertRules = ({
       rowHeader: true,
       width: 'growCollapse',
       renderCell: row => (
-        <Box sx={{ display: 'grid' }}>
+        <Box display="grid">
           <Text sx={{ fontSize: 1 }}>
             {labelOf(row.condition)} {operatorOf(row.operator)} {row.threshold}
           </Text>
@@ -391,15 +391,13 @@ export const AlertRules = ({
   const chosen = ALERT_CONDITIONS.find(entry => entry.name === draft.condition);
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       {showTitle && (
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'start',
-            justifyContent: 'space-between',
-            gap: 3,
-          }}
+          display="flex"
+          alignItems="start"
+          justifyContent="space-between"
+          gap={3}
         >
           <Box>
             <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -419,7 +417,7 @@ export const AlertRules = ({
       )}
 
       {rules.isPending && !rules.data ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+        <Box display="flex" justifyContent="center" py={5}>
           <Spinner />
         </Box>
       ) : rows.length > 0 ? (
@@ -485,7 +483,7 @@ export const AlertRules = ({
             },
           ]}
         >
-          <Box sx={{ display: 'grid', gap: 3 }}>
+          <Box display="grid" gap={3}>
             {refusal && (
               <Flash variant="danger">
                 <Text sx={{ fontSize: 1 }}>{refusal}</Text>
@@ -539,9 +537,7 @@ export const AlertRules = ({
               )}
             </FormControl>
 
-            <Box
-              sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}
-            >
+            <Box display="grid" gap={2} gridTemplateColumns="1fr 1fr">
               <FormControl>
                 <FormControl.Label>Comparison</FormControl.Label>
                 <Select
@@ -569,9 +565,7 @@ export const AlertRules = ({
               </FormControl>
             </Box>
 
-            <Box
-              sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}
-            >
+            <Box display="grid" gap={2} gridTemplateColumns="1fr 1fr">
               <FormControl>
                 <FormControl.Label>Over</FormControl.Label>
                 <Select
@@ -614,9 +608,7 @@ export const AlertRules = ({
               </FormControl>
             </Box>
 
-            <Box
-              sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}
-            >
+            <Box display="grid" gap={2} gridTemplateColumns="1fr 1fr">
               <FormControl>
                 <FormControl.Label>Measured over</FormControl.Label>
                 <Select

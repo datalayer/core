@@ -58,41 +58,39 @@ export const StudentResultCircle = (props: Props) => {
           event.preventDefault();
           event.stopPropagation();
         }}
-        sx={{
-          display: 'inline-block',
-          flex: 'none',
-          appearance: 'none',
-          p: 0,
-          bg: 'transparent',
-          cursor: 'default',
-          lineHeight: 0,
-          border: 'none',
-          outline: 'none',
-        }}
+        display="inline-block"
+        flex="none"
+        appearance="none"
+        p={0}
+        bg="transparent"
+        cursor="default"
+        lineHeight={0}
+        border="none"
+        outline="none"
       >
         <Box
           as="span"
           role="img"
           aria-hidden
-          sx={{
-            display: 'inline-block',
-            flex: 'none',
-            width: '14px',
-            height: '14px',
-            borderRadius: 3,
-            ml: 1,
-            pointerEvents: 'auto',
-            boxSizing: 'border-box',
-            backgroundColor: isNone
+          display="inline-block"
+          flex="none"
+          width="14px"
+          height="14px"
+          borderRadius={3}
+          ml={1}
+          pointerEvents="auto"
+          boxSizing="border-box"
+          backgroundColor={
+            isNone
               ? 'transparent'
               : status === 'pass'
                 ? okColor
                 : status === 'partial'
                   ? partialColor
-                  : nokColor,
-            border: isNone ? '1px solid' : 'none',
-            borderColor: isNone ? 'border.default' : 'transparent',
-          }}
+                  : nokColor
+          }
+          border={isNone ? '1px solid' : 'none'}
+          borderColor={isNone ? 'border.default' : 'transparent'}
         />
       </Box>
     </Tooltip>

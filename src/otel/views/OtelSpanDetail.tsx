@@ -13,8 +13,8 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { Box } from '@datalayer/primer-addons';
 import {
-  Box,
   Text,
   IconButton,
   UnderlineNav,
@@ -41,13 +41,11 @@ const MetadataRow: React.FC<{
   if (value === undefined || value === null || value === '') return null;
   return (
     <Box
-      sx={{
-        display: 'flex',
-        py: 1,
-        borderBottom: '1px solid',
-        borderColor: 'border.muted',
-        gap: 2,
-      }}
+      display="flex"
+      py={1}
+      borderBottom="1px solid"
+      borderColor="border.muted"
+      gap={2}
     >
       <Text
         sx={{
@@ -83,16 +81,14 @@ const CollapsibleSection: React.FC<{
   if (!data || Object.keys(data).length === 0) return null;
 
   return (
-    <Box sx={{ mt: 3 }}>
+    <Box mt={3}>
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          cursor: 'pointer',
-          py: 1,
-          userSelect: 'none',
-        }}
+        display="flex"
+        alignItems="center"
+        gap={1}
+        cursor="pointer"
+        py={1}
+        userSelect="none"
         onClick={() => setOpen(!open)}
       >
         {open ? <ChevronDownIcon size={16} /> : <ChevronRightIcon size={16} />}
@@ -101,15 +97,13 @@ const CollapsibleSection: React.FC<{
       </Box>
       {open && (
         <Box
-          sx={{
-            bg: 'canvas.subtle',
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'border.default',
-            p: 2,
-            mt: 1,
-            overflowX: 'auto',
-          }}
+          bg="canvas.subtle"
+          borderRadius={2}
+          border="1px solid"
+          borderColor="border.default"
+          p={2}
+          mt={1}
+          overflowX="auto"
         >
           {Object.entries(data).map(([key, val]) => (
             <AttributeRow key={key} attrKey={key} value={val} depth={0} />
@@ -152,32 +146,26 @@ const AttributeRow: React.FC<{
 
   return (
     <Box
-      sx={{
-        borderBottom: depth === 0 ? '1px solid' : 'none',
-        borderColor: 'border.muted',
-        pb: depth === 0 ? 1 : 0,
-        mb: depth === 0 ? 1 : 0,
-      }}
+      borderBottom={depth === 0 ? '1px solid' : 'none'}
+      borderColor="border.muted"
+      pb={depth === 0 ? 1 : 0}
+      mb={depth === 0 ? 1 : 0}
     >
       <Box
-        sx={{
-          display: 'flex',
-          gap: 2,
-          py: 1,
-          pl: depth * 16 + 'px',
-          alignItems: 'flex-start',
-        }}
+        display="flex"
+        gap={2}
+        py={1}
+        pl={depth * 16 + 'px'}
+        alignItems="flex-start"
       >
         {/* Expand toggle for nested */}
         {isNested ? (
           <Box
-            sx={{
-              cursor: 'pointer',
-              color: 'fg.muted',
-              userSelect: 'none',
-              width: 16,
-              flexShrink: 0,
-            }}
+            cursor="pointer"
+            color="fg.muted"
+            userSelect="none"
+            width={16}
+            flexShrink={0}
             onClick={() => setOpen(!open)}
           >
             {open ? (
@@ -187,7 +175,7 @@ const AttributeRow: React.FC<{
             )}
           </Box>
         ) : (
-          <Box sx={{ width: 16, flexShrink: 0 }} />
+          <Box width={16} flexShrink={0} />
         )}
         <Text
           sx={{
@@ -256,7 +244,7 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
 
   if (!span) {
     return (
-      <Box sx={{ p: 5, color: 'fg.muted', textAlign: 'center' }}>
+      <Box p={5} color="fg.muted" textAlign="center">
         <Text>Select a span to view details.</Text>
       </Box>
     );
@@ -281,29 +269,25 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
 
   return (
     <Box
-      sx={{
-        height: '100%',
-        overflow: 'auto',
-        borderLeft: '1px solid',
-        borderColor: 'border.default',
-        bg: 'canvas.default',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+      height="100%"
+      overflow="auto"
+      borderLeft="1px solid"
+      borderColor="border.default"
+      bg="canvas.default"
+      display="flex"
+      flexDirection="column"
     >
       {/* Header */}
       <Box
-        sx={{
-          px: 3,
-          py: 2,
-          borderBottom: '1px solid',
-          borderColor: 'border.default',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          bg: 'canvas.subtle',
-          flexShrink: 0,
-        }}
+        px={3}
+        py={2}
+        borderBottom="1px solid"
+        borderColor="border.default"
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        bg="canvas.subtle"
+        flexShrink={0}
       >
         <Text sx={{ fontSize: 2, fontWeight: 'bold' }}>{span.span_name}</Text>
         {onClose && (
@@ -342,9 +326,9 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
       </UnderlineNav>
 
       {/* Tab content */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <Box flex={1} overflow="auto">
         {activeTab === 'details' && (
-          <Box sx={{ p: 3 }}>
+          <Box p={3}>
             <MetadataRow label="span_name" value={span.span_name} />
             <MetadataRow label="service_name" value={span.service_name} />
             <MetadataRow label="otel_scope_name" value={span.otel_scope_name} />
@@ -377,24 +361,22 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
 
             {/* Events */}
             {span.events && span.events.length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box mt={3}>
+                <Box display="flex" alignItems="center" gap={1}>
                   <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>Events</Text>
                   <CounterLabel>{span.events.length}</CounterLabel>
                 </Box>
                 {span.events.map((ev, idx) => (
                   <Box
                     key={idx}
-                    sx={{
-                      bg: 'canvas.subtle',
-                      borderRadius: 2,
-                      border: '1px solid',
-                      borderColor: 'border.default',
-                      p: 2,
-                      mt: 2,
-                    }}
+                    bg="canvas.subtle"
+                    borderRadius={2}
+                    border="1px solid"
+                    borderColor="border.default"
+                    p={2}
+                    mt={2}
                   >
-                    <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Box display="flex" gap={2}>
                       <Label>{ev.name}</Label>
                       <Text
                         sx={{
@@ -407,7 +389,7 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
                       </Text>
                     </Box>
                     {ev.attributes && Object.keys(ev.attributes).length > 0 && (
-                      <Box sx={{ mt: 1 }}>
+                      <Box mt={1}>
                         {Object.entries(ev.attributes).map(([k, v]) => (
                           <AttributeRow
                             key={k}
@@ -425,8 +407,8 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
 
             {/* Links */}
             {span.links && span.links.length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box mt={3}>
+                <Box display="flex" alignItems="center" gap={1}>
                   <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>Links</Text>
                   <CounterLabel>{span.links.length}</CounterLabel>
                 </Box>
@@ -461,15 +443,13 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
         {activeTab === 'raw' && (
           <Box
             as="pre"
-            sx={{
-              p: 3,
-              fontSize: 0,
-              fontFamily: 'mono',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              m: 0,
-              bg: 'canvas.subtle',
-            }}
+            p={3}
+            fontSize={0}
+            fontFamily="mono"
+            whiteSpace="pre-wrap"
+            wordBreak="break-word"
+            m={0}
+            bg="canvas.subtle"
           >
             {JSON.stringify(span, null, 2)}
           </Box>

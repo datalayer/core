@@ -55,7 +55,7 @@ export const McpErrorBlankslate = ({
 }: McpErrorBlankslateProps): JSX.Element => {
   const Icon = VISUAL[state.reason];
   return (
-    <Box sx={{ width: '100%', minWidth: 0 }}>
+    <Box width="100%" minWidth={0}>
       <Blankslate border={border} spacious>
         <Blankslate.Visual>
           <Icon size="medium" />

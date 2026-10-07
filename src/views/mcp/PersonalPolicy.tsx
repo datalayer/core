@@ -220,14 +220,14 @@ export const PersonalPolicy = ({
 
   if (layer.isPending && layer.data === undefined) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+      <Box display="flex" justifyContent="center" py={5}>
         <Spinner />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0, maxWidth: '52rem' }}>
+    <Box display="grid" gap={3} minWidth={0} maxWidth="52rem">
       {showTitle && (
         <Box>
           <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -244,7 +244,7 @@ export const PersonalPolicy = ({
       {conflict && (
         <Flash variant="warning">
           <Text sx={{ fontSize: 1 }}>{conflict}</Text>
-          <Box sx={{ mt: 2 }}>
+          <Box mt={2}>
             <Button
               size="small"
               onClick={() => {
@@ -277,7 +277,7 @@ export const PersonalPolicy = ({
         }
       />
 
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+      <Box display="flex" gap={2} alignItems="center">
         <Button
           variant="primary"
           onClick={apply}
@@ -291,7 +291,7 @@ export const PersonalPolicy = ({
           </Button>
         )}
         {layer.data && (
-          <Box sx={{ marginLeft: 'auto' }}>
+          <Box marginLeft="auto">
             <Button
               variant="danger"
               disabled={remove.isPending}

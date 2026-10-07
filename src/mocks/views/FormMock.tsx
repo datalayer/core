@@ -4,8 +4,8 @@
  */
 
 import { useState } from 'react';
+import { Box } from '@datalayer/primer-addons';
 import {
-  Box,
   FormControl,
   TextInputWithTokens,
   Autocomplete,
@@ -29,7 +29,7 @@ export const FormMock = (props: Props) => {
     setTokens(tokens.filter(token => token.id !== tokenId));
   };
   return (
-    <Box display="grid" sx={{ gap: 3 }}>
+    <Box display="grid" gap={3}>
       <Heading>{title}</Heading>
       <FormControl>
         <FormControl.Label>TextInputWithTokens</FormControl.Label>

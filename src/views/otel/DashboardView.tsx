@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { Box } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { OtelLive } from '../../otel';
 
 export interface DashboardViewProps {
@@ -32,7 +32,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   limit = 200,
   onSignalRef,
 }) => (
-  <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+  <Box display="flex" flex={1} minHeight={0} overflow="hidden">
     <OtelLive
       baseUrl={baseUrl}
       wsBaseUrl={wsBaseUrl}

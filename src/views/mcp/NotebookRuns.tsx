@@ -82,14 +82,14 @@ export const NotebookRuns = ({
 
   if (runs.isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+      <Box display="flex" justifyContent="center" p={3}>
         <Spinner size="small" />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 2, minWidth: 0 }}>
+    <Box display="grid" gap={2} minWidth={0}>
       <Heading as="h3" sx={{ fontSize: 1 }}>
         Runs
       </Heading>
@@ -104,25 +104,24 @@ export const NotebookRuns = ({
           return (
             <Box
               key={task.uid}
-              sx={{
-                display: 'grid',
-                gap: 1,
-                p: 2,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor:
-                  task.status === 'input_required'
-                    ? 'attention.emphasis'
-                    : 'border.default',
-              }}
+              display="grid"
+              gap={1}
+              p={2}
+              borderRadius={2}
+              border="1px solid"
+              borderColor={
+                task.status === 'input_required'
+                  ? 'attention.emphasis'
+                  : 'border.default'
+              }
             >
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Box display="flex" gap={2} alignItems="center">
                 <Label size="small" variant={look.variant}>
                   {look.label}
                 </Label>
                 <Text sx={{ fontSize: 0 }}>{task.tool || 'Run'}</Text>
               </Box>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Box display="flex" gap={2} alignItems="center">
                 <Link
                   href={`${routes.runs}/${encodeURIComponent(task.uid)}`}
                   sx={{ fontFamily: 'mono', fontSize: 0 }}

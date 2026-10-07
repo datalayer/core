@@ -13,8 +13,8 @@
  */
 
 import React from 'react';
+import { Box } from '@datalayer/primer-addons';
 import {
-  Box,
   SegmentedControl,
   ActionMenu,
   ActionList,
@@ -45,17 +45,15 @@ export const OtelSearchBar: React.FC<OtelSearchBarProps> = ({
 
   return (
     <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        px: 3,
-        py: 2,
-        bg: 'canvas.subtle',
-        borderBottom: '1px solid',
-        borderColor: 'border.default',
-        flexWrap: 'wrap',
-      }}
+      display="flex"
+      alignItems="center"
+      gap={2}
+      px={3}
+      py={2}
+      bg="canvas.subtle"
+      borderBottom="1px solid"
+      borderColor="border.default"
+      flexWrap="wrap"
     >
       {/* Signal type tabs */}
       <SegmentedControl
@@ -102,7 +100,7 @@ export const OtelSearchBar: React.FC<OtelSearchBarProps> = ({
       </ActionMenu>
 
       {/* Search / query input */}
-      <Box sx={{ flex: 1, minWidth: 180 }}>
+      <Box flex={1} minWidth={180}>
         <TextInput
           leadingVisual={SearchIcon}
           value={query}

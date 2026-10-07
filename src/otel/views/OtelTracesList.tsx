@@ -15,7 +15,8 @@
  */
 
 import React, { useMemo, useCallback, useState } from 'react';
-import { Box, Text, Label, Spinner } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text, Label, Spinner } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
 import {
   TelescopeIcon,
@@ -114,7 +115,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+      <Box display="flex" justifyContent="center" p={5}>
         <Spinner size="medium" />
       </Box>
     );
@@ -135,21 +136,19 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
   }
 
   return (
-    <Box sx={{ width: '100%', flex: 1, minHeight: 0, overflow: 'auto' }}>
+    <Box width="100%" flex={1} minHeight={0} overflow="auto">
       {/* Header row */}
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: gridCols,
-          gap: 2,
-          px: 3,
-          position: 'sticky',
-          top: 0,
-          bg: 'canvas.subtle',
-          zIndex: 1,
-          borderBottom: '2px solid',
-          borderColor: 'border.default',
-        }}
+        display="grid"
+        gridTemplateColumns={gridCols}
+        gap={2}
+        px={3}
+        position="sticky"
+        top={0}
+        bg="canvas.subtle"
+        zIndex={1}
+        borderBottom="2px solid"
+        borderColor="border.default"
       >
         {['Time', 'Message', 'Scope', 'Duration'].map(h => (
           <Text
@@ -186,24 +185,22 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
               }
               onSelectSpan?.(span);
             }}
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: gridCols,
-              gap: 2,
-              px: 3,
-              py: '5px',
-              cursor: 'pointer',
-              bg: isSelected
+            display="grid"
+            gridTemplateColumns={gridCols}
+            gap={2}
+            px={3}
+            py="5px"
+            cursor="pointer"
+            bg={
+              isSelected
                 ? 'accent.subtle'
                 : depth > 0
                   ? 'canvas.inset'
-                  : 'canvas.default',
-              borderBottom: '1px solid',
-              borderColor: 'border.muted',
-              ':hover': {
-                bg: isSelected ? 'accent.subtle' : 'canvas.subtle',
-              },
-            }}
+                  : 'canvas.default'
+            }
+            borderBottom="1px solid"
+            borderColor="border.muted"
+            hover={{ bg: isSelected ? 'accent.subtle' : 'canvas.subtle' }}
           >
             {/* Time */}
             <Text
@@ -220,24 +217,20 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
 
             {/* Message (with indent + expand chevron) */}
             <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                overflow: 'hidden',
-                lineHeight: '22px',
-                pl: `${indent}px`,
-              }}
+              display="flex"
+              alignItems="center"
+              gap={1}
+              overflow="hidden"
+              lineHeight="22px"
+              pl={`${indent}px`}
             >
               {/* Expand/collapse chevron for spans with children */}
               {hasChildren ? (
                 <Box
-                  sx={{
-                    flexShrink: 0,
-                    color: 'fg.muted',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  flexShrink={0}
+                  color="fg.muted"
+                  display="flex"
+                  alignItems="center"
                 >
                   {isExpanded ? (
                     <ChevronDownIcon size={14} />
@@ -248,15 +241,13 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
               ) : depth > 0 ? (
                 /* Connector dash for child leaves */
                 <Box
-                  sx={{
-                    flexShrink: 0,
-                    width: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'fg.subtle',
-                    fontSize: 0,
-                  }}
+                  flexShrink={0}
+                  width="14px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  color="fg.subtle"
+                  fontSize={0}
                 >
                   ─
                 </Box>
@@ -291,29 +282,21 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                 if (!usage) return null;
                 return (
                   <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '2px',
-                      border: '1px solid',
-                      borderColor: 'border.default',
-                      borderRadius: 2,
-                      px: 1,
-                      fontSize: '10px',
-                      fontFamily: 'mono',
-                      color: 'fg.muted',
-                      flexShrink: 0,
-                      lineHeight: '16px',
-                    }}
+                    display="inline-flex"
+                    alignItems="center"
+                    gap="2px"
+                    border="1px solid"
+                    borderColor="border.default"
+                    borderRadius={2}
+                    px={1}
+                    fontSize="10px"
+                    fontFamily="mono"
+                    color="fg.muted"
+                    flexShrink={0}
+                    lineHeight="16px"
                   >
                     {usage.input != null && (
-                      <Box
-                        sx={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '1px',
-                        }}
-                      >
+                      <Box display="inline-flex" alignItems="center" gap="1px">
                         <Text sx={{ fontSize: '9px', color: 'fg.subtle' }}>
                           ↗
                         </Text>
@@ -321,13 +304,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                       </Box>
                     )}
                     {usage.output != null && (
-                      <Box
-                        sx={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '1px',
-                        }}
-                      >
+                      <Box display="inline-flex" alignItems="center" gap="1px">
                         <Text sx={{ fontSize: '9px', color: 'fg.subtle' }}>
                           ↙
                         </Text>

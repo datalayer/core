@@ -18,7 +18,8 @@
  */
 
 import React, { useCallback, useRef, useState, useMemo } from 'react';
-import { Box, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text } from '@primer/react';
 import type { OtelTimelineRangeSliderProps } from '../types';
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -229,16 +230,14 @@ export const OtelTimelineRangeSlider: React.FC<
 
   return (
     <Box
-      sx={{
-        width: '100%',
-        height,
-        px: 3,
-        py: 1,
-        userSelect: 'none',
-        bg: 'canvas.subtle',
-        borderBottom: '1px solid',
-        borderColor: 'border.default',
-      }}
+      width="100%"
+      height={height}
+      px={3}
+      py={1}
+      userSelect="none"
+      bg="canvas.subtle"
+      borderBottom="1px solid"
+      borderColor="border.default"
     >
       {/* Rail area */}
       <Box
@@ -248,46 +247,38 @@ export const OtelTimelineRangeSlider: React.FC<
         onPointerUp={handlePointerUp}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        sx={{
-          position: 'relative',
-          width: '100%',
-          height: RAIL_HEIGHT,
-          cursor: 'pointer',
-        }}
+        position="relative"
+        width="100%"
+        height={RAIL_HEIGHT}
+        cursor="pointer"
       >
         {/* Background rail */}
         <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            bg: 'canvas.inset',
-            borderRadius: 1,
-            border: '1px solid',
-            borderColor: 'border.muted',
-          }}
+          position="absolute"
+          inset={0}
+          bg="canvas.inset"
+          borderRadius={1}
+          border="1px solid"
+          borderColor="border.muted"
         />
 
         {/* Selected range track */}
         <Box
           onPointerDown={e => handlePointerDown(e, 'track')}
-          sx={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: `${startPct}%`,
-            width: `${endPct - startPct}%`,
-            bg: 'accent.muted',
-            opacity: 0.45,
-            borderTop: '2px solid',
-            borderBottom: '2px solid',
-            borderColor: 'accent.fg',
-            cursor: 'grab',
-            zIndex: 2,
-            transition: isDragging
-              ? 'none'
-              : 'left 0.05s ease, width 0.05s ease',
-            ':active': { cursor: 'grabbing' },
-          }}
+          position="absolute"
+          top={0}
+          bottom={0}
+          left={`${startPct}%`}
+          width={`${endPct - startPct}%`}
+          bg="accent.muted"
+          opacity={0.45}
+          borderTop="2px solid"
+          borderBottom="2px solid"
+          borderColor="accent.fg"
+          cursor="grab"
+          zIndex={2}
+          transition={isDragging ? 'none' : 'left 0.05s ease, width 0.05s ease'}
+          active={{ cursor: 'grabbing' }}
         />
 
         {/* Histogram bars – rendered above the selected track so activity is always visible */}
@@ -300,18 +291,16 @@ export const OtelTimelineRangeSlider: React.FC<
             return (
               <Box
                 key={i}
-                sx={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: `${pct}%`,
-                  width: `${barWidth}%`,
-                  height: `${barH}%`,
-                  bg: 'accent.fg',
-                  opacity: 0.35,
-                  borderRadius: '1px 1px 0 0',
-                  pointerEvents: 'none',
-                  zIndex: 4,
-                }}
+                position="absolute"
+                bottom={0}
+                left={`${pct}%`}
+                width={`${barWidth}%`}
+                height={`${barH}%`}
+                bg="accent.fg"
+                opacity={0.35}
+                borderRadius="1px 1px 0 0"
+                pointerEvents="none"
+                zIndex={4}
               />
             );
           })}
@@ -319,101 +308,79 @@ export const OtelTimelineRangeSlider: React.FC<
         {/* Start handle */}
         <Box
           onPointerDown={e => handlePointerDown(e, 'start')}
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: `${startPct}%`,
-            width: HANDLE_WIDTH,
-            height: HANDLE_HEIGHT,
-            ml: `-${HANDLE_WIDTH / 2}px`,
-            bg: 'accent.fg',
-            borderRadius: 1,
-            cursor: 'ew-resize',
-            zIndex: 3,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: isDragging ? 'none' : 'left 0.05s ease',
-            boxShadow: 'shadow.medium',
-            ':hover': { bg: 'accent.emphasis' },
-          }}
+          position="absolute"
+          top={0}
+          left={`${startPct}%`}
+          width={HANDLE_WIDTH}
+          height={HANDLE_HEIGHT}
+          ml={`-${HANDLE_WIDTH / 2}px`}
+          bg="accent.fg"
+          borderRadius={1}
+          cursor="ew-resize"
+          zIndex={3}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          transition={isDragging ? 'none' : 'left 0.05s ease'}
+          boxShadow="shadow.medium"
+          hover={{ bg: 'accent.emphasis' }}
         >
-          <Box
-            sx={{
-              width: '2px',
-              height: '40%',
-              bg: 'fg.onEmphasis',
-              borderRadius: 1,
-            }}
-          />
+          <Box width="2px" height="40%" bg="fg.onEmphasis" borderRadius={1} />
         </Box>
 
         {/* End handle */}
         <Box
           onPointerDown={e => handlePointerDown(e, 'end')}
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: `${endPct}%`,
-            width: HANDLE_WIDTH,
-            height: HANDLE_HEIGHT,
-            ml: `-${HANDLE_WIDTH / 2}px`,
-            bg: 'accent.fg',
-            borderRadius: 1,
-            cursor: 'ew-resize',
-            zIndex: 3,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: isDragging ? 'none' : 'left 0.05s ease',
-            boxShadow: 'shadow.medium',
-            ':hover': { bg: 'accent.emphasis' },
-          }}
+          position="absolute"
+          top={0}
+          left={`${endPct}%`}
+          width={HANDLE_WIDTH}
+          height={HANDLE_HEIGHT}
+          ml={`-${HANDLE_WIDTH / 2}px`}
+          bg="accent.fg"
+          borderRadius={1}
+          cursor="ew-resize"
+          zIndex={3}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          transition={isDragging ? 'none' : 'left 0.05s ease'}
+          boxShadow="shadow.medium"
+          hover={{ bg: 'accent.emphasis' }}
         >
-          <Box
-            sx={{
-              width: '2px',
-              height: '40%',
-              bg: 'fg.onEmphasis',
-              borderRadius: 1,
-            }}
-          />
+          <Box width="2px" height="40%" bg="fg.onEmphasis" borderRadius={1} />
         </Box>
 
         {/* Hover indicator: vertical dotted line + date tooltip */}
         {hoverPct !== null && !isDragging && (
           <>
             <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: `${hoverPct}%`,
-                width: '1px',
-                height: RAIL_HEIGHT,
-                borderLeft: '1px dashed',
-                borderColor: 'fg.default',
-                opacity: 0.55,
-                pointerEvents: 'none',
-                zIndex: 5,
-              }}
+              position="absolute"
+              top={0}
+              left={`${hoverPct}%`}
+              width="1px"
+              height={RAIL_HEIGHT}
+              borderLeft="1px dashed"
+              borderColor="fg.default"
+              opacity={0.55}
+              pointerEvents="none"
+              zIndex={5}
             />
             <Box
-              sx={{
-                position: 'absolute',
-                top: -36,
-                left: `${hoverPct}%`,
-                transform: 'translateX(-50%)',
-                bg: 'canvas.overlay',
-                border: '1px solid',
-                borderColor: 'border.default',
-                borderRadius: 2,
-                px: 2,
-                py: '2px',
-                pointerEvents: 'none',
-                zIndex: 10,
-                boxShadow: 'shadow.medium',
-                whiteSpace: 'nowrap',
-              }}
+              position="absolute"
+              top={-36}
+              left={`${hoverPct}%`}
+              transform="translateX(-50%)"
+              bg="canvas.overlay"
+              border="1px solid"
+              borderColor="border.default"
+              borderRadius={2}
+              px={2}
+              py="2px"
+              pointerEvents="none"
+              zIndex={10}
+              boxShadow="shadow.medium"
+              whiteSpace="nowrap"
             >
               <Text
                 sx={{
@@ -435,31 +402,22 @@ export const OtelTimelineRangeSlider: React.FC<
           return (
             <Box
               key={i}
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: `${pct}%`,
-                width: '1px',
-                height: RAIL_HEIGHT,
-                bg: 'border.muted',
-                pointerEvents: 'none',
-                opacity: 0.5,
-                zIndex: 1,
-              }}
+              position="absolute"
+              top={0}
+              left={`${pct}%`}
+              width="1px"
+              height={RAIL_HEIGHT}
+              bg="border.muted"
+              pointerEvents="none"
+              opacity={0.5}
+              zIndex={1}
             />
           );
         })}
       </Box>
 
       {/* Tick labels row */}
-      <Box
-        sx={{
-          position: 'relative',
-          width: '100%',
-          height: 20,
-          mt: '2px',
-        }}
-      >
+      <Box position="relative" width="100%" height={20} mt="2px">
         {ticks.map((t, i) => {
           const pct = ((t.getTime() - tlStart) / tlRange) * 100;
           return (

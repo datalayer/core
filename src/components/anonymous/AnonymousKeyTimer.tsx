@@ -230,7 +230,7 @@ export function AnonymousKeyTimer({
       */
       title={`${label}: this workspace is talking to the agent on a temporary key issued to nobody in particular. When it runs out the chat asks you to sign in. Sign in now for an account of your own.`}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', color: tone }}>
+      <Box display="flex" alignItems="center" color={tone}>
         <KeyIcon size={12} />
       </Box>
       <Box
@@ -242,7 +242,8 @@ export function AnonymousKeyTimer({
         width={RING}
         height={RING}
         viewBox={`0 0 ${RING} ${RING}`}
-        sx={{ display: 'block', flexShrink: 0 }}
+        display="block"
+        flexShrink={0}
       >
         {/* The whole trial, as a track. */}
         <circle

@@ -13,7 +13,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { Box, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text } from '@primer/react';
 import type { OtelTimelineProps } from '../types';
 import { toMs, formatDuration, serviceColor } from '../utils';
 
@@ -47,14 +48,14 @@ export const OtelTimeline: React.FC<OtelTimelineProps> = ({
 
   if (sortedSpans.length === 0) {
     return (
-      <Box sx={{ p: 3, color: 'fg.muted', textAlign: 'center' }}>
+      <Box p={3} color="fg.muted" textAlign="center">
         <Text>No spans to display.</Text>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ width: '100%', overflowX: 'auto', py: 1 }}>
+    <Box width="100%" overflowX="auto" py={1}>
       {sortedSpans.map(span => {
         const startOffset =
           ((toMs(span.start_time) - minTime) / totalDuration) * 100;
@@ -71,18 +72,14 @@ export const OtelTimeline: React.FC<OtelTimelineProps> = ({
         return (
           <Box
             key={span.span_id}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              height: barHeight,
-              mb: '2px',
-              cursor: 'pointer',
-              bg: isSelected ? 'accent.subtle' : 'canvas.default',
-              borderRadius: 1,
-              ':hover': {
-                bg: isSelected ? 'accent.subtle' : 'canvas.subtle',
-              },
-            }}
+            display="flex"
+            alignItems="center"
+            height={barHeight}
+            mb="2px"
+            cursor="pointer"
+            bg={isSelected ? 'accent.subtle' : 'canvas.default'}
+            borderRadius={1}
+            hover={{ bg: isSelected ? 'accent.subtle' : 'canvas.subtle' }}
             onClick={() => onSelectSpan?.(span)}
             title={`${span.service_name} / ${span.span_name} — ${formatDuration(span.duration_ms)}`}
           >
@@ -104,20 +101,18 @@ export const OtelTimeline: React.FC<OtelTimelineProps> = ({
               {span.span_name}
             </Text>
             {/* Bar area */}
-            <Box sx={{ flex: 1, position: 'relative', height: '100%' }}>
+            <Box flex={1} position="relative" height="100%">
               <Box
-                sx={{
-                  position: 'absolute',
-                  left: `${startOffset}%`,
-                  width: `${width}%`,
-                  height: barHeight - 6,
-                  top: '3px',
-                  bg: color,
-                  borderRadius: 1,
-                  opacity: isSelected ? 1 : 0.8,
-                  border: isSelected ? '2px solid' : 'none',
-                  borderColor: 'accent.emphasis',
-                }}
+                position="absolute"
+                left={`${startOffset}%`}
+                width={`${width}%`}
+                height={barHeight - 6}
+                top="3px"
+                bg={color}
+                borderRadius={1}
+                opacity={isSelected ? 1 : 0.8}
+                border={isSelected ? '2px solid' : 'none'}
+                borderColor="accent.emphasis"
               />
             </Box>
             {/* Duration */}
@@ -138,16 +133,14 @@ export const OtelTimeline: React.FC<OtelTimelineProps> = ({
       })}
       {/* Footer summary */}
       <Box
-        sx={{
-          borderTop: '1px solid',
-          borderColor: 'border.default',
-          mt: 2,
-          pt: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          fontSize: 0,
-          color: 'fg.muted',
-        }}
+        borderTop="1px solid"
+        borderColor="border.default"
+        mt={2}
+        pt={2}
+        display="flex"
+        justifyContent="space-between"
+        fontSize={0}
+        color="fg.muted"
       >
         <Text>
           {sortedSpans.length} span{sortedSpans.length !== 1 ? 's' : ''}

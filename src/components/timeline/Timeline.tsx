@@ -4,14 +4,11 @@
  */
 
 import { type ReactNode } from 'react';
-import { Box, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text } from '@primer/react';
 
 export type TimelineStatus =
-  | 'done'
-  | 'current'
-  | 'pending'
-  | 'failed'
-  | 'neutral';
+  'done' | 'current' | 'pending' | 'failed' | 'neutral';
 
 export type TimelineItem = {
   id: string;
@@ -79,19 +76,8 @@ export const Timeline = ({ items, renderTimestamp }: TimelineProps) => {
   }
 
   return (
-    <Box
-      sx={{
-        overflowX: 'auto',
-        pb: 1,
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'stretch',
-          minWidth: 'max-content',
-        }}
-      >
+    <Box overflowX="auto" pb={1}>
+      <Box display="flex" alignItems="stretch" minWidth="max-content">
         {items.map((item, index) => {
           const status = item.status || 'neutral';
           const style = statusStyles[status];
@@ -99,43 +85,30 @@ export const Timeline = ({ items, renderTimestamp }: TimelineProps) => {
           return (
             <Box
               key={item.id}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                minWidth: 220,
-                flex: hasNext ? '0 0 220px' : '0 0 auto',
-                pr: hasNext ? 0 : 1,
-              }}
+              display="flex"
+              flexDirection="column"
+              minWidth={220}
+              flex={hasNext ? '0 0 220px' : '0 0 auto'}
+              pr={hasNext ? 0 : 1}
             >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  minHeight: 28,
-                  mb: 2,
-                }}
-              >
+              <Box display="flex" alignItems="center" minHeight={28} mb={2}>
                 <Box
-                  sx={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    border: '2px solid',
-                    borderColor: style.dotBorder,
-                    bg: style.dotBackground,
-                    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.2)',
-                  }}
+                  width={16}
+                  height={16}
+                  borderRadius="50%"
+                  border="2px solid"
+                  borderColor={style.dotBorder}
+                  bg={style.dotBackground}
+                  boxShadow="inset 0 0 0 1px rgba(255,255,255,0.2)"
                 />
                 {hasNext ? (
                   <Box
-                    sx={{
-                      flex: 1,
-                      height: 4,
-                      ml: 2,
-                      mr: 2,
-                      borderRadius: 999,
-                      bg: style.lineColor,
-                    }}
+                    flex={1}
+                    height={4}
+                    ml={2}
+                    mr={2}
+                    borderRadius={999}
+                    bg={style.lineColor}
                   />
                 ) : null}
               </Box>

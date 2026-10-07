@@ -12,7 +12,8 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
-import { Box, Text, Button, Dialog } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text, Button, Dialog } from '@primer/react';
 import { TelescopeIcon, SignOutIcon } from '@primer/octicons-react';
 import { UserBadge } from '../profile';
 
@@ -111,26 +112,24 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
     <>
       <Box
         as="header"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 3,
-          px: 3,
-          py: 2,
-          bg: 'canvas.inset',
-          borderBottom: '1px solid',
-          borderColor: 'border.default',
-          flexShrink: 0,
-          // Allow overflow visible so the JWT popover can extend below the header.
-          overflow: 'visible',
-        }}
+        display="flex"
+        alignItems="center"
+        gap={3}
+        px={3}
+        py={2}
+        bg="canvas.inset"
+        borderBottom="1px solid"
+        borderColor="border.default"
+        flexShrink={0}
+        // Allow overflow visible so the JWT popover can extend below the header.
+        overflow="visible"
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box display="flex" alignItems="center" gap={2}>
           <TelescopeIcon size={20} />
           <Text sx={{ fontWeight: 'bold', fontSize: 2 }}>Datalayer OTEL</Text>
         </Box>
 
-        <Box sx={{ flex: 1 }} />
+        <Box flex={1} />
 
         {showGenerateButtons && (
           <>
@@ -200,26 +199,24 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
           ]}
         >
           {/* Request */}
-          <Box sx={{ mb: 2 }}>
+          <Box mb={2}>
             <Text sx={{ fontWeight: 'bold', fontSize: 1, color: 'fg.muted' }}>
               Request
             </Text>
             <Box
               as="pre"
-              sx={{
-                fontFamily: 'mono',
-                fontSize: 1,
-                p: 2,
-                mt: 1,
-                bg: 'canvas.inset',
-                borderRadius: 2,
-                overflow: 'auto',
-                color: 'fg.default',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-                border: '1px solid',
-                borderColor: 'border.default',
-              }}
+              fontFamily="mono"
+              fontSize={1}
+              p={2}
+              mt={1}
+              bg="canvas.inset"
+              borderRadius={2}
+              overflow="auto"
+              color="fg.default"
+              whiteSpace="pre-wrap"
+              wordBreak="break-all"
+              border="1px solid"
+              borderColor="border.default"
             >
               {dialogRequest}
             </Box>
@@ -231,19 +228,17 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
             </Text>
             <Box
               as="pre"
-              sx={{
-                fontFamily: 'mono',
-                fontSize: 1,
-                p: 2,
-                mt: 1,
-                bg: 'canvas.subtle',
-                borderRadius: 2,
-                overflow: 'auto',
-                maxHeight: 300,
-                color: dialogVariant === 'error' ? 'danger.fg' : 'fg.default',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-              }}
+              fontFamily="mono"
+              fontSize={1}
+              p={2}
+              mt={1}
+              bg="canvas.subtle"
+              borderRadius={2}
+              overflow="auto"
+              maxHeight={300}
+              color={dialogVariant === 'error' ? 'danger.fg' : 'fg.default'}
+              whiteSpace="pre-wrap"
+              wordBreak="break-all"
             >
               {dialogBody}
             </Box>

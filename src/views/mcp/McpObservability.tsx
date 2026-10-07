@@ -127,16 +127,14 @@ const SpanRow = ({
   return (
     <>
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          py: 1,
-          pl: depth * 3,
-          borderBottom: '1px solid',
-          borderColor: 'border.muted',
-          minWidth: 0,
-        }}
+        display="flex"
+        alignItems="center"
+        gap={2}
+        py={1}
+        pl={depth * 3}
+        borderBottom="1px solid"
+        borderColor="border.muted"
+        minWidth={0}
       >
         <Text
           sx={{
@@ -189,13 +187,11 @@ const Sli = ({
   note?: string;
 }): JSX.Element => (
   <Box
-    sx={{
-      p: 3,
-      border: '1px solid',
-      borderColor: 'border.default',
-      borderRadius: 2,
-      minWidth: 0,
-    }}
+    p={3}
+    border="1px solid"
+    borderColor="border.default"
+    borderRadius={2}
+    minWidth={0}
   >
     <Text sx={{ display: 'block', fontSize: 3, fontWeight: 'bold' }}>
       {value}
@@ -313,7 +309,7 @@ export const McpObservability = ({
   );
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       {showTitle && (
         <Box>
           <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -350,15 +346,8 @@ export const McpObservability = ({
       {telemetryNotice}
 
       {pane === 'runs' && (
-        <Box sx={{ display: 'grid', gap: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 2,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
+        <Box display="grid" gap={3}>
+          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
             <TextInput
               size="small"
               leadingVisual={SearchIcon}
@@ -413,7 +402,7 @@ export const McpObservability = ({
               onRetry={() => run.refetch()}
             />
           ) : run.isPending ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <Box display="flex" justifyContent="center" py={5}>
               <Spinner />
             </Box>
           ) : (run.data?.spans.length ?? 0) === 0 ? (
@@ -431,15 +420,8 @@ export const McpObservability = ({
               </Blankslate.Description>
             </Blankslate>
           ) : (
-            <Box sx={{ display: 'grid', gap: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 3,
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                }}
-              >
+            <Box display="grid" gap={2}>
+              <Box display="flex" gap={3} alignItems="center" flexWrap="wrap">
                 <Text
                   sx={{ fontSize: 0, color: 'fg.muted', fontFamily: 'mono' }}
                 >
@@ -465,12 +447,10 @@ export const McpObservability = ({
                   named rows underneath for the detail. */}
               <TraceTimeline tree={run.data?.tree ?? []} />
               <Box
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  borderRadius: 2,
-                  overflowX: 'auto',
-                }}
+                border="1px solid"
+                borderColor="border.default"
+                borderRadius={2}
+                overflowX="auto"
               >
                 {(run.data?.tree ?? []).map(node => (
                   <SpanRow key={node.span.span_id} node={node} depth={0} />
@@ -482,7 +462,7 @@ export const McpObservability = ({
       )}
 
       {pane === 'live' && (
-        <Box sx={{ display: 'grid', gap: 3 }}>
+        <Box display="grid" gap={3}>
           {/* The engine first. A run that has not started is not slow — it is
               waiting on something, and this says whether that something is
               the engine. */}
@@ -491,23 +471,14 @@ export const McpObservability = ({
             const queues = engine.data?.queues ?? [];
             return (
               <Box
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  borderRadius: 2,
-                  p: 3,
-                  display: 'grid',
-                  gap: 2,
-                }}
+                border="1px solid"
+                borderColor="border.default"
+                borderRadius={2}
+                p={3}
+                display="grid"
+                gap={2}
               >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    gap: 2,
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                  }}
-                >
+                <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
                   <Heading as="h3" sx={{ fontSize: 1 }}>
                     The durable engine
                   </Heading>
@@ -526,16 +497,14 @@ export const McpObservability = ({
                   </Text>
                 )}
                 {queues.length > 0 && (
-                  <Box sx={{ display: 'grid', gap: 1 }}>
+                  <Box display="grid" gap={1}>
                     {queues.map(queue => (
                       <Box
                         key={queue.name}
-                        sx={{
-                          display: 'flex',
-                          gap: 2,
-                          alignItems: 'center',
-                          fontSize: 0,
-                        }}
+                        display="flex"
+                        gap={2}
+                        alignItems="center"
+                        fontSize={0}
                       >
                         <Text sx={{ fontFamily: 'mono' }}>{queue.name}</Text>
                         <Text sx={{ color: 'fg.muted' }}>
@@ -558,7 +527,7 @@ export const McpObservability = ({
           {/* Then what is actually running, which is what "live" means to
               somebody who is not an operator. Polled rather than streamed:
               the pane is refreshed by the hook itself every five seconds. */}
-          <Box sx={{ display: 'grid', gap: 2 }}>
+          <Box display="grid" gap={2}>
             <Heading as="h3" sx={{ fontSize: 1 }}>
               Running now
             </Heading>
@@ -568,7 +537,7 @@ export const McpObservability = ({
                 onRetry={() => live.refetch()}
               />
             ) : live.isPending ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <Box display="flex" justifyContent="center" py={4}>
                 <Spinner />
               </Box>
             ) : (live.data?.items.length ?? 0) === 0 ? (
@@ -581,15 +550,13 @@ export const McpObservability = ({
               (live.data?.items ?? []).map(task => (
                 <Box
                   key={task.uid}
-                  sx={{
-                    display: 'flex',
-                    gap: 2,
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    py: 1,
-                    borderBottom: '1px solid',
-                    borderColor: 'border.muted',
-                  }}
+                  display="flex"
+                  gap={2}
+                  alignItems="center"
+                  flexWrap="wrap"
+                  py={1}
+                  borderBottom="1px solid"
+                  borderColor="border.muted"
                 >
                   <Label size="small" variant="success">
                     Working
@@ -617,28 +584,26 @@ export const McpObservability = ({
       )}
 
       {pane === 'metrics' && (
-        <Box sx={{ display: 'grid', gap: 3 }}>
+        <Box display="grid" gap={3}>
           {metrics.isError ? (
             <McpErrorBlankslate
               state={errorState(metrics.error, 'Metrics')}
               onRetry={() => metrics.refetch()}
             />
           ) : metrics.isPending && !metrics.data ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <Box display="flex" justifyContent="center" py={5}>
               <Spinner />
             </Box>
           ) : (
             <>
               <Box
-                sx={{
-                  display: 'grid',
-                  gap: 3,
-                  gridTemplateColumns: [
-                    '1fr',
-                    'repeat(2, 1fr)',
-                    'repeat(4, 1fr)',
-                  ],
-                }}
+                display="grid"
+                gap={3}
+                gridTemplateColumns={[
+                  '1fr',
+                  'repeat(2, 1fr)',
+                  'repeat(4, 1fr)',
+                ]}
               >
                 <Sli
                   label="Availability"
@@ -680,12 +645,10 @@ export const McpObservability = ({
               </Box>
 
               <Box
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  borderRadius: 2,
-                  overflowX: 'auto',
-                }}
+                border="1px solid"
+                borderColor="border.default"
+                borderRadius={2}
+                overflowX="auto"
               >
                 {MCP_METRIC_CATALOG.map(name => {
                   const reporting =
@@ -693,15 +656,13 @@ export const McpObservability = ({
                   return (
                     <Box
                       key={name}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 3,
-                        py: 1,
-                        px: 2,
-                        borderBottom: '1px solid',
-                        borderColor: 'border.muted',
-                      }}
+                      display="flex"
+                      alignItems="center"
+                      gap={3}
+                      py={1}
+                      px={2}
+                      borderBottom="1px solid"
+                      borderColor="border.muted"
                     >
                       <Text sx={{ fontSize: 0, fontFamily: 'mono', flex: 1 }}>
                         {name}

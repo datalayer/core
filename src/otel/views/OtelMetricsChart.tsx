@@ -20,7 +20,8 @@
 import React from 'react';
 import * as echarts from 'echarts';
 import ReactECharts from 'echarts-for-react';
-import { Box, Text, Label } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text, Label } from '@primer/react';
 import type { OtelMetric } from '../types';
 
 // ── Gradient palette ────────────────────────────────────────────────
@@ -350,13 +351,7 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
   );
 
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 2,
-      }}
-    >
+    <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
       {sortedTypes.map(mtype => {
         const nameMap = byType.get(mtype)!;
         const option = buildOption(mtype, nameMap);
@@ -368,15 +363,7 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
         return (
           <Box key={mtype}>
             {/* Section header */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                px: 1,
-                mb: 1,
-              }}
-            >
+            <Box display="flex" alignItems="center" gap={2} px={1} mb={1}>
               <Label size="small" variant={typeVariant(mtype)}>
                 {mtype}
               </Label>
@@ -389,15 +376,7 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
             </Box>
 
             {/* Stats row: sum + time interval */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 3,
-                px: 1,
-                mb: 1,
-              }}
-            >
+            <Box display="flex" alignItems="center" gap={3} px={1} mb={1}>
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                 <Text
                   as="span"

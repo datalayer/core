@@ -46,10 +46,7 @@ import {
 } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { McpErrorBlankslate } from '../../components/mcp';
-import {
-  useDecideMcpApproval,
-  useMcpApprovals,
-} from '../../hooks/useContents';
+import { useDecideMcpApproval, useMcpApprovals } from '../../hooks/useContents';
 import type { McpApproval } from '../../api/contents/generated';
 import { type McpErrorStateFn } from './types';
 
@@ -99,7 +96,10 @@ export const isDecidable = (
 export const approvalLook = (
   approval: Pick<McpApproval, 'status' | 'expiresAt'>,
   now: number = Date.now(),
-): { label: string; variant: 'attention' | 'success' | 'danger' | 'secondary' } =>
+): {
+  label: string;
+  variant: 'attention' | 'success' | 'danger' | 'secondary';
+} =>
   approval.status === 'pending' && !isDecidable(approval, now)
     ? APPROVAL_LOOK.expired
     : APPROVAL_LOOK[approval.status];
@@ -130,7 +130,7 @@ export const ApprovalQueue = ({
   const items = approvals.data?.items ?? [];
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       <Box>
         <Heading as="h3" sx={{ fontSize: 2, mb: 1 }}>
           Approvals
@@ -160,7 +160,7 @@ export const ApprovalQueue = ({
           onRetry={() => approvals.refetch()}
         />
       ) : approvals.isPending ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+        <Box display="flex" justifyContent="center" py={5}>
           <Spinner />
         </Box>
       ) : items.length === 0 ? (
@@ -176,24 +176,24 @@ export const ApprovalQueue = ({
           return (
             <Box
               key={approval.uid}
-              sx={{
-                border: '1px solid',
-                borderColor: decidable ? 'attention.emphasis' : 'border.default',
-                borderRadius: 2,
-                p: 3,
-                display: 'grid',
-                gap: 2,
-                minWidth: 0,
-              }}
+              border="1px solid"
+              borderColor={decidable ? 'attention.emphasis' : 'border.default'}
+              borderRadius={2}
+              p={3}
+              display="grid"
+              gap={2}
+              minWidth={0}
             >
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
                 <Label size="small" variant={look.variant}>
                   {look.label}
                 </Label>
                 <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>
                   {approval.tool}
                 </Text>
-                <Text sx={{ fontSize: 0, color: 'fg.muted', fontFamily: 'mono' }}>
+                <Text
+                  sx={{ fontSize: 0, color: 'fg.muted', fontFamily: 'mono' }}
+                >
                   {approval.actorUid}
                 </Text>
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
@@ -211,16 +211,14 @@ export const ApprovalQueue = ({
                   that hash, so this is the decision, not a summary of it. */}
               <Box
                 as="pre"
-                sx={{
-                  fontFamily: 'mono',
-                  fontSize: 0,
-                  whiteSpace: 'pre-wrap',
-                  overflowX: 'auto',
-                  bg: 'canvas.subtle',
-                  borderRadius: 2,
-                  p: 2,
-                  m: 0,
-                }}
+                fontFamily="mono"
+                fontSize={0}
+                whiteSpace="pre-wrap"
+                overflowX="auto"
+                bg="canvas.subtle"
+                borderRadius={2}
+                p={2}
+                m={0}
               >
                 {JSON.stringify(approval.argumentsRedacted, null, 2)}
               </Box>
@@ -248,7 +246,7 @@ export const ApprovalQueue = ({
                       }))
                     }
                   />
-                  <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box display="flex" gap={2}>
                     <Button
                       variant="primary"
                       disabled={decide.isPending}

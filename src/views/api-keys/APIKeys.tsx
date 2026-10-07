@@ -57,12 +57,10 @@ const APIKeysTable = ({
   const [deleteNameConfirm, setDeleteNameConfirm] = useState('');
   const returnFocusRef = useRef(null);
   const showInitialSpinner =
-    apiKeys.length === 0
-    && (
-      getAPIKeysQuery.isLoading
-      || getAPIKeysQuery.isFetching
-      || !Array.isArray(getAPIKeysQuery.data)
-    );
+    apiKeys.length === 0 &&
+    (getAPIKeysQuery.isLoading ||
+      getAPIKeysQuery.isFetching ||
+      !Array.isArray(getAPIKeysQuery.data));
   useEffect(() => {
     if (getAPIKeysQuery.data) {
       const normalized = getAPIKeysQuery.data.filter(
@@ -134,12 +132,10 @@ const APIKeysTable = ({
     <Blankslate border spacious>
       {showInitialSpinner ? (
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '40px',
-          }}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          minHeight="40px"
         >
           <Spinner />
         </Box>
@@ -206,7 +202,7 @@ const APIKeysTable = ({
               header: '',
               field: 'id',
               renderCell: apiKey => (
-                <Box display="flex" sx={{ gap: 1 }}>
+                <Box display="flex" gap={1}>
                   <IconButton
                     icon={EditIcon}
                     aria-label="Edit"

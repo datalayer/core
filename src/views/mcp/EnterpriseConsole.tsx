@@ -214,13 +214,11 @@ const Metric = ({
   tone?: 'neutral' | 'danger';
 }): JSX.Element => (
   <Box
-    sx={{
-      p: 3,
-      border: '1px solid',
-      borderColor: 'border.default',
-      borderRadius: 2,
-      minWidth: 0,
-    }}
+    p={3}
+    border="1px solid"
+    borderColor="border.default"
+    borderRadius={2}
+    minWidth={0}
   >
     <Text
       sx={{
@@ -366,7 +364,7 @@ export const EnterpriseConsole = ({
       width: '200px',
       align: 'end',
       renderCell: row => (
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+        <Box display="flex" gap={2} justifyContent="flex-end">
           <Button
             size="small"
             onClick={() =>
@@ -407,7 +405,7 @@ export const EnterpriseConsole = ({
   ];
 
   return (
-    <Box sx={{ display: 'grid', gap: 4, minWidth: 0 }}>
+    <Box display="grid" gap={4} minWidth={0}>
       <Box>
         <Heading as="h3" sx={{ fontSize: 2, mb: 1 }}>
           MCP — {organization.name || organization.handle}
@@ -439,21 +437,19 @@ export const EnterpriseConsole = ({
             onRetry={() => overview.refetch()}
           />
         ) : overview.isPending && !overview.data ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <Box display="flex" justifyContent="center" py={6}>
             <Spinner />
           </Box>
         ) : (
-          <Box sx={{ display: 'grid', gap: 4 }}>
+          <Box display="grid" gap={4}>
             <Box
-              sx={{
-                display: 'grid',
-                gap: 3,
-                gridTemplateColumns: [
-                  'repeat(2, 1fr)',
-                  'repeat(3, 1fr)',
-                  'repeat(5, 1fr)',
-                ],
-              }}
+              display="grid"
+              gap={3}
+              gridTemplateColumns={[
+                'repeat(2, 1fr)',
+                'repeat(3, 1fr)',
+                'repeat(5, 1fr)',
+              ]}
             >
               <Metric
                 label="Agents active today"
@@ -500,11 +496,11 @@ export const EnterpriseConsole = ({
             </Box>
 
             {(overview.data?.refusals ?? []).length > 0 && (
-              <Box sx={{ display: 'grid', gap: 2 }}>
+              <Box display="grid" gap={2}>
                 <Heading as="h4" sx={{ fontSize: 1 }}>
                   Why calls were refused
                 </Heading>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box display="flex" gap={2} flexWrap="wrap">
                   {(overview.data?.refusals ?? []).map(row => (
                     <Label key={row.reason} size="small" variant="danger">
                       {row.reason} · {row.count}
@@ -515,7 +511,7 @@ export const EnterpriseConsole = ({
             )}
 
             {/* The compliance strip: each line green, or naming what is missing. */}
-            <Box sx={{ display: 'grid', gap: 2 }}>
+            <Box display="grid" gap={2}>
               <Heading as="h4" sx={{ fontSize: 1 }}>
                 Compliance
               </Heading>
@@ -525,17 +521,17 @@ export const EnterpriseConsole = ({
                   sign-in, admitted clients and audit export are configured.
                 </Text>
               ) : (
-                <Box sx={{ display: 'grid', gap: 1 }}>
+                <Box display="grid" gap={1}>
                   {(overview.data?.compliance ?? []).map(check => (
                     <Box
                       key={check.name}
-                      sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+                      display="flex"
+                      alignItems="center"
+                      gap={2}
                     >
                       <Box
-                        sx={{
-                          color: check.ok ? 'success.fg' : 'attention.fg',
-                          display: 'flex',
-                        }}
+                        color={check.ok ? 'success.fg' : 'attention.fg'}
+                        display="flex"
                       >
                         {check.ok ? (
                           <CheckCircleIcon size={14} />
@@ -555,7 +551,7 @@ export const EnterpriseConsole = ({
               )}
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+            <Box display="flex" gap={3} flexWrap="wrap">
               <Metric
                 label="Approvals waiting"
                 value={overview.data?.approvalsWaiting ?? '—'}
@@ -587,7 +583,7 @@ export const EnterpriseConsole = ({
       )}
 
       {current === 'identity-providers' && (
-        <Box sx={{ display: 'grid', gap: 5, minWidth: 0 }}>
+        <Box display="grid" gap={5} minWidth={0}>
           <IdentityProviders
             errorState={errorState}
             orgUid={organization.uid}
@@ -643,7 +639,7 @@ export const EnterpriseConsole = ({
             onRetry={() => activity.refetch()}
           />
         ) : activity.isPending && !activity.data ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <Box display="flex" justifyContent="center" py={6}>
             <Spinner />
           </Box>
         ) : agentRows.length === 0 ? (

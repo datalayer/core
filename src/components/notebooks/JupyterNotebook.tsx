@@ -20,8 +20,8 @@ export const JupyterNotebook = ({
     <div style={{ position: 'relative' }}>
       <Box
         className="jp-LabShell"
+        position="relative"
         sx={{
-          position: 'relative',
           '& .dla-Jupyter-Notebook': {
             height,
             maxHeight: 1000,

@@ -151,7 +151,7 @@ export function ConsumptionBar(props: IConsumptionBarProps): JSX.Element {
             ...(paddingBottom !== undefined ? { paddingBottom } : {}),
           }}
         >
-          <Box sx={{ width: '70px' }}>
+          <Box width="70px">
             <ProgressBar
               style={style}
               animated={expiredAt ? false : true}

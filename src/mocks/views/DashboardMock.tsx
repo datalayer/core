@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { Box } from '@datalayer/primer-addons';
 import {
-  Box,
   Link,
   Text,
   LabelGroup,
@@ -40,26 +40,13 @@ export const DashboardMock = () => {
       <Box mb={3}>
         <FlashMock />
       </Box>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: 4,
-        }}
-      >
-        <Box
-          sx={{
-            gridColumn: '1 / 3',
-            minHeight: '200px',
-          }}
-        >
+      <Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={4}>
+        <Box gridColumn="1 / 3" minHeight="200px">
           <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingRight: 4,
-            }}
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            paddingRight={4}
           >
             <Text
               as="h2"
@@ -72,21 +59,13 @@ export const DashboardMock = () => {
               <ArrowRightIcon />
             </Link>
           </Box>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 4,
-            }}
-          >
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={4}>
             <Box
-              sx={{
-                borderColor: 'border.default',
-                borderStyle: 'solid',
-                borderWidth: '1',
-                borderRadius: '2',
-                padding: 4,
-              }}
+              borderColor="border.default"
+              borderStyle="solid"
+              borderWidth="1"
+              borderRadius="2"
+              padding={4}
             >
               <Text as="h3" sx={{ paddingBottom: 2 }}>
                 clouder <Label>Public</Label>
@@ -135,13 +114,11 @@ export const DashboardMock = () => {
               </Text>
             </Box>
             <Box
-              sx={{
-                borderColor: 'border.default',
-                borderStyle: 'solid',
-                borderWidth: '1',
-                borderRadius: '2',
-                padding: 4,
-              }}
+              borderColor="border.default"
+              borderStyle="solid"
+              borderWidth="1"
+              borderRadius="2"
+              padding={4}
             >
               <Text as="h3" sx={{ paddingBottom: 2 }}>
                 jupyter-ui <Label>Public</Label>
@@ -195,20 +172,12 @@ export const DashboardMock = () => {
             </Box>
           </Box>
         </Box>
-        <Box
-          sx={{
-            gridColumn: '3 / 4',
-            gridRow: '1 / 3',
-            minHeight: '200px',
-          }}
-        >
+        <Box gridColumn="3 / 4" gridRow="1 / 3" minHeight="200px">
           <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingRight: 4,
-            }}
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            paddingRight={4}
           >
             <Text
               as="h2"
@@ -222,27 +191,19 @@ export const DashboardMock = () => {
             </Link>
           </Box>
           <Box
-            sx={{
-              borderColor: 'border.default',
-              borderStyle: 'solid',
-              borderWidth: '1',
-              borderRadius: '2',
-              padding: 4,
-            }}
+            borderColor="border.default"
+            borderStyle="solid"
+            borderWidth="1"
+            borderRadius="2"
+            padding={4}
           >
-            <Box
-              sx={{
-                display: 'inline-flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-            >
+            <Box display="inline-flex" flexDirection="row" alignItems="center">
               <Text as="h3" sx={{ marginRight: '20px' }}>
                 Kernels Activity
               </Text>
               <ActionMenu>
                 <ActionMenu.Button>
-                  <Box sx={{ color: 'fg.muted', display: 'inline-block' }}>
+                  <Box color="fg.muted" display="inline-block">
                     View:
                   </Box>{' '}
                   {'All kernels'}
@@ -270,19 +231,12 @@ export const DashboardMock = () => {
             </Text>
           </Box>
         </Box>
-        <Box
-          sx={{
-            gridColumn: '1 / 3',
-            minHeight: '200px',
-          }}
-        >
+        <Box gridColumn="1 / 3" minHeight="200px">
           <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingRight: 4,
-            }}
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            paddingRight={4}
           >
             <Text
               as="h2"
@@ -296,14 +250,13 @@ export const DashboardMock = () => {
             </Link>
           </Box>
           <Box
+            borderColor="border.default"
+            borderStyle="solid"
+            borderWidth="1"
+            borderRadius="2"
+            display="grid"
+            gridTemplateColumns="1fr 1fr"
             sx={{
-              borderColor: 'border.default',
-              borderStyle: 'solid',
-              borderWidth: '1',
-              borderRadius: '2',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-
               '> :not(:last-child)': {
                 borderRightColor: 'border.default',
                 borderRightStyle: 'solid',
@@ -311,14 +264,10 @@ export const DashboardMock = () => {
               },
             }}
           >
-            <Box
-              sx={{
-                padding: 4,
-              }}
-            >
+            <Box padding={4}>
               <Text as="h3">Notebook name abc</Text>
               <Text sx={{ color: 'fg.subtle' }}>Subtitle comes here</Text>
-              <Box sx={{ height: '300px', maxWidth: '380px' }}>
+              <Box height="300px" maxWidth="380px">
                 <ReactECharts option={ECHART_MOCK_1} />;
               </Box>
               <Text
@@ -331,14 +280,10 @@ export const DashboardMock = () => {
                 </Link>
               </Text>
             </Box>
-            <Box
-              sx={{
-                padding: 4,
-              }}
-            >
+            <Box padding={4}>
               <Text as="h3">Notebook name abc</Text>
               <Text sx={{ color: 'fg.subtle' }}>Subtitle comes here</Text>
-              <Box sx={{ height: '300px', maxWidth: '380px' }}>
+              <Box height="300px" maxWidth="380px">
                 <ReactECharts option={ECHART_MOCK_3} />;
               </Box>
               <Text
@@ -351,14 +296,10 @@ export const DashboardMock = () => {
                 </Link>
               </Text>
             </Box>
-            <Box
-              sx={{
-                padding: 4,
-              }}
-            >
+            <Box padding={4}>
               <Text as="h3">Notebook name abc</Text>
               <Text sx={{ color: 'fg.subtle' }}>Subtitle comes here</Text>
-              <Box sx={{ height: '300px', maxWidth: '380px' }}>
+              <Box height="300px" maxWidth="380px">
                 <ReactECharts option={ECHART_MOCK_2} />;
               </Box>
               <Text

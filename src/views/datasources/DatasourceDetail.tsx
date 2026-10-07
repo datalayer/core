@@ -41,11 +41,17 @@ export type DatasourceDetailProps = {
   sourceUid?: string;
 };
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', '200px 1fr'], gap: 1 }}>
+    <Box display="grid" gridTemplateColumns={['1fr', '200px 1fr']} gap={1}>
       <Text sx={{ color: 'fg.muted', fontSize: 1 }}>{label}</Text>
-      <Box sx={{ fontSize: 1 }}>{children}</Box>
+      <Box fontSize={1}>{children}</Box>
     </Box>
   );
 }
@@ -57,7 +63,9 @@ const frame = (children: React.ReactNode) => (
     style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
   >
     <PageLayout.Content>
-      <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>{children}</Box>
+      <Box maxWidth={960} mx="auto" width="100%">
+        {children}
+      </Box>
     </PageLayout.Content>
   </PageLayout>
 );
@@ -71,7 +79,9 @@ const frame = (children: React.ReactNode) => (
  * two people editing the same record do not overwrite each other. Running
  * queries is the Contents detail's job, not this page's.
  */
-export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps = {}) => {
+export const DatasourceDetail = ({
+  sourceUid: givenUid,
+}: DatasourceDetailProps = {}) => {
   const params = useParams<{ sourceUid?: string; datasourceId?: string }>();
   const sourceUid = givenUid ?? params.sourceUid ?? params.datasourceId;
   const { enqueueToast } = useToast();
@@ -79,7 +89,8 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
   const update = useUpdateContentSource();
   const test = useTestDatasource();
   const source = sourceQuery.data?.value.source;
-  const configuration = source?.configuration as DatasourceConfiguration | undefined;
+  const configuration = source?.configuration as
+    DatasourceConfiguration | undefined;
   const diagnostics = useCredentialDiagnostics(
     configuration?.networkRoute === 'dataserver' ? undefined : sourceUid,
   );
@@ -93,8 +104,14 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
     if (source && configuration) {
       setName(source.name);
       setDescription(source.description ?? '');
-      setRowLimit(configuration.defaultRowLimit ? String(configuration.defaultRowLimit) : '');
-      setMaxSeconds(configuration.maxSeconds ? String(configuration.maxSeconds) : '');
+      setRowLimit(
+        configuration.defaultRowLimit
+          ? String(configuration.defaultRowLimit)
+          : '',
+      );
+      setMaxSeconds(
+        configuration.maxSeconds ? String(configuration.maxSeconds) : '',
+      );
     }
   }, [source, configuration]);
 
@@ -103,14 +120,19 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
   }
   if (sourceQuery.isPending) {
     return frame(
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 6 }}>
+      <Box display="flex" justifyContent="center" alignItems="center" py={6}>
         <Spinner size="large" />
       </Box>,
     );
   }
-  if (sourceQuery.isError || !source || !configuration || source.kind !== 'datasource') {
+  if (
+    sourceQuery.isError ||
+    !source ||
+    !configuration ||
+    source.kind !== 'datasource'
+  ) {
     return frame(
-      <Box sx={{ p: 4 }}>
+      <Box p={4}>
         <Text sx={{ color: 'danger.fg' }}>
           {sourceQuery.isError
             ? sourceQuery.error.message
@@ -145,16 +167,19 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
         },
       },
       {
-        onSuccess: () => enqueueToast('The Datasource is updated.', { variant: 'success' }),
+        onSuccess: () =>
+          enqueueToast('The Datasource is updated.', { variant: 'success' }),
       },
     );
   };
-  const connector = DATASOURCE_CONNECTOR_LABELS[configuration.connectorType as DatasourceConnectorType]
-    ?? configuration.connectorType;
+  const connector =
+    DATASOURCE_CONNECTOR_LABELS[
+      configuration.connectorType as DatasourceConnectorType
+    ] ?? configuration.connectorType;
 
   return frame(
     <>
-      <Box sx={{ mb: 4 }}>
+      <Box mb={4}>
         <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
           Datasource
         </Heading>
@@ -164,61 +189,99 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
         </Text>
       </Box>
       <Box
-        sx={{
-          border: '1px solid',
-          borderColor: 'border.default',
-          borderRadius: 2,
-          bg: 'canvas.default',
-          p: 3,
-        }}
+        border="1px solid"
+        borderColor="border.default"
+        borderRadius={2}
+        bg="canvas.default"
+        p={3}
       >
-        <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', '180px 1fr'], gap: 4 }}>
+        <Box display="grid" gridTemplateColumns={['1fr', '180px 1fr']} gap={4}>
           <Box>
-            <BoringAvatar displayName={source.name} size={100} style={{ paddingRight: 10 }} />
+            <BoringAvatar
+              displayName={source.name}
+              size={100}
+              style={{ paddingRight: 10 }}
+            />
             <Box mt={3}>
               <Label size="large">{connector}</Label>
             </Box>
           </Box>
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            <Box sx={{ display: 'grid', gap: 2 }}>
+          <Box display="grid" gap={3}>
+            <Box display="grid" gap={2}>
               <Row label="Connector">
                 <Text>{connector}</Text>
               </Row>
               <Row label="Route">
-                <Label variant={configuration.networkRoute === 'dataserver' ? 'accent' : 'secondary'}>
-                  {configuration.networkRoute === 'dataserver' ? 'Through a Dataserver' : 'Direct'}
+                <Label
+                  variant={
+                    configuration.networkRoute === 'dataserver'
+                      ? 'accent'
+                      : 'secondary'
+                  }
+                >
+                  {configuration.networkRoute === 'dataserver'
+                    ? 'Through a Dataserver'
+                    : 'Direct'}
                 </Label>
                 {configuration.dataServerUid && (
-                  <Text sx={{ fontFamily: 'mono', fontSize: 0, ml: 2 }}>{configuration.dataServerUid}</Text>
+                  <Text sx={{ fontFamily: 'mono', fontSize: 0, ml: 2 }}>
+                    {configuration.dataServerUid}
+                  </Text>
                 )}
               </Row>
               {configuration.endpoint && (
                 <Row label="Endpoint">
-                  <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>{configuration.endpoint}</Text>
+                  <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>
+                    {configuration.endpoint}
+                  </Text>
                 </Row>
               )}
               {configuration.databaseOrProject && (
-                <Row label={configuration.connectorType === 'bigquery' ? 'Project' : 'Database'}>
-                  <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>{configuration.databaseOrProject}</Text>
+                <Row
+                  label={
+                    configuration.connectorType === 'bigquery'
+                      ? 'Project'
+                      : 'Database'
+                  }
+                >
+                  <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>
+                    {configuration.databaseOrProject}
+                  </Text>
                 </Row>
               )}
               <Row label="Allowed operations">
-                <Text>{(configuration.allowedOperations ?? []).join(', ') || '—'}</Text>
+                <Text>
+                  {(configuration.allowedOperations ?? []).join(', ') || '—'}
+                </Text>
               </Row>
               <Row label="Credential">
                 {configuration.networkRoute === 'dataserver' ? (
-                  <Text sx={{ color: 'fg.muted' }}>Held by the Dataserver, in your network.</Text>
+                  <Text sx={{ color: 'fg.muted' }}>
+                    Held by the Dataserver, in your network.
+                  </Text>
                 ) : configuration.credentialUid ? (
-                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <Box
+                    display="flex"
+                    gap={2}
+                    alignItems="center"
+                    flexWrap="wrap"
+                  >
                     {diagnostics.data ? (
-                      <Label variant={diagnostics.data.resolvable ? 'success' : 'danger'}>
-                        {diagnostics.data.resolvable ? 'Resolvable' : 'Not resolvable'}
+                      <Label
+                        variant={
+                          diagnostics.data.resolvable ? 'success' : 'danger'
+                        }
+                      >
+                        {diagnostics.data.resolvable
+                          ? 'Resolvable'
+                          : 'Not resolvable'}
                       </Label>
                     ) : (
                       <Label variant="success">Attached</Label>
                     )}
                     <Text sx={{ color: 'fg.muted', fontSize: 0 }}>
-                      {diagnostics.data?.credentialName ?? 'Held in Vault and resolved server-side.'}
+                      {diagnostics.data?.credentialName ??
+                        'Held in Vault and resolved server-side.'}
                     </Text>
                   </Box>
                 ) : (
@@ -226,7 +289,7 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
                 )}
               </Row>
               <Row label="Connection">
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
                   <Button
                     size="small"
                     disabled={test.isPending || !permissions.execute}
@@ -239,11 +302,15 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
                       <Label variant={test.data.ok ? 'success' : 'danger'}>
                         {test.data.ok ? 'Reachable' : 'Not reachable'}
                       </Label>
-                      <Text sx={{ color: 'fg.muted', fontSize: 0 }}>{test.data.detail}</Text>
+                      <Text sx={{ color: 'fg.muted', fontSize: 0 }}>
+                        {test.data.detail}
+                      </Text>
                     </>
                   )}
                   {test.isError && (
-                    <Text sx={{ color: 'danger.fg', fontSize: 0 }}>{test.error.message}</Text>
+                    <Text sx={{ color: 'danger.fg', fontSize: 0 }}>
+                      {test.error.message}
+                    </Text>
                   )}
                 </Box>
               </Row>
@@ -251,7 +318,12 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
             <Box sx={{ label: { marginTop: 2 } }}>
               <FormControl>
                 <FormControl.Label>Name</FormControl.Label>
-                <TextInput block value={name} disabled={!permissions.update} onChange={event => setName(event.target.value)} />
+                <TextInput
+                  block
+                  value={name}
+                  disabled={!permissions.update}
+                  onChange={event => setName(event.target.value)}
+                />
                 {!nameValid && (
                   <FormControl.Validation variant="error">
                     Name must have more than 2 characters.
@@ -260,24 +332,56 @@ export const DatasourceDetail = ({ sourceUid: givenUid }: DatasourceDetailProps 
               </FormControl>
               <FormControl>
                 <FormControl.Label>Description</FormControl.Label>
-                <Textarea block rows={3} value={description} disabled={!permissions.update} onChange={event => setDescription(event.target.value)} />
+                <Textarea
+                  block
+                  rows={3}
+                  value={description}
+                  disabled={!permissions.update}
+                  onChange={event => setDescription(event.target.value)}
+                />
               </FormControl>
-              <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', '1fr 1fr'], gap: 3 }}>
+              <Box
+                display="grid"
+                gridTemplateColumns={['1fr', '1fr 1fr']}
+                gap={3}
+              >
                 <FormControl>
                   <FormControl.Label>Default row limit</FormControl.Label>
-                  <TextInput block type="number" min={1} value={rowLimit} placeholder="Service default" disabled={!permissions.update} onChange={event => setRowLimit(event.target.value)} />
+                  <TextInput
+                    block
+                    type="number"
+                    min={1}
+                    value={rowLimit}
+                    placeholder="Service default"
+                    disabled={!permissions.update}
+                    onChange={event => setRowLimit(event.target.value)}
+                  />
                 </FormControl>
                 <FormControl>
                   <FormControl.Label>Max seconds</FormControl.Label>
-                  <TextInput block type="number" min={1} value={maxSeconds} placeholder="Service default" disabled={!permissions.update} onChange={event => setMaxSeconds(event.target.value)} />
+                  <TextInput
+                    block
+                    type="number"
+                    min={1}
+                    value={maxSeconds}
+                    placeholder="Service default"
+                    disabled={!permissions.update}
+                    onChange={event => setMaxSeconds(event.target.value)}
+                  />
                 </FormControl>
               </Box>
               {update.isError && (
-                <Text as="p" sx={{ color: 'danger.fg' }}>{update.error.message}</Text>
+                <Text as="p" sx={{ color: 'danger.fg' }}>
+                  {update.error.message}
+                </Text>
               )}
               {permissions.update && (
-                <Box sx={{ marginTop: 3 }}>
-                  <Button variant="primary" disabled={!nameValid || update.isPending} onClick={save}>
+                <Box marginTop={3}>
+                  <Button
+                    variant="primary"
+                    disabled={!nameValid || update.isPending}
+                    onClick={save}
+                  >
                     {update.isPending ? 'Saving…' : 'Update Datasource'}
                   </Button>
                 </Box>

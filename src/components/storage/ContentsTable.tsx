@@ -177,7 +177,7 @@ function ParentRow(props: IParentRowProps): JSX.Element {
       }}
     >
       <Table.Cell scope="row">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box display="flex" alignItems="center" gap={2}>
           <FileDirectoryIcon />
           <span>..</span>
         </Box>
@@ -248,10 +248,7 @@ function ContentsRow(props: IContentsRowProps): JSX.Element {
       }}
     >
       <Table.Cell scope="row">
-        <Box
-          ref={ref}
-          sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}
-        >
+        <Box ref={ref} display="flex" alignItems="center" gap={2} minWidth={0}>
           {isDirectory ? (
             <FileDirectoryFillIcon />
           ) : icon ? (
@@ -301,27 +298,23 @@ export function ContentsTable(props: IContentsTableProps): JSX.Element {
   const segments = pathSegments(path);
   const label = path ? `Contents of ${path}` : 'Contents of the root folder';
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box display="flex" flexDirection="column" gap={2}>
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          minWidth: 0,
-          overflow: 'hidden',
-        }}
+        display="flex"
+        alignItems="center"
+        gap={2}
+        minWidth={0}
+        overflow="hidden"
       >
         <Box
           role="navigation"
           aria-label="Folder path"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 1,
-            minWidth: 0,
-            fontSize: 1,
-          }}
+          display="flex"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={1}
+          minWidth={0}
+          fontSize={1}
         >
           <PathSegment
             name="/"
@@ -350,13 +343,11 @@ export function ContentsTable(props: IContentsTableProps): JSX.Element {
       </Box>
       {loading ? (
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '40px',
-            padding: 3,
-          }}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          minHeight="40px"
+          padding={3}
         >
           <Spinner aria-label="Loading folder…" />
         </Box>

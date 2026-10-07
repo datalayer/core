@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { Box } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { OtelSqlView } from '../../otel';
 
 export interface SqlViewProps {
@@ -17,7 +17,7 @@ export interface SqlViewProps {
 }
 
 export const SqlView: React.FC<SqlViewProps> = ({ baseUrl = '', token }) => (
-  <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+  <Box display="flex" flex={1} minHeight={0} overflow="hidden">
     <OtelSqlView baseUrl={baseUrl} token={token} />
   </Box>
 );

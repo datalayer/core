@@ -3,7 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Box, PageHeader, Flash, PageLayout } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { PageHeader, Flash, PageLayout } from '@primer/react';
 import { ConstructionIcon } from '@datalayer/icons-react';
 
 type Props = {

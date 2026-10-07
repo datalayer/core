@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { Box } from '@datalayer/primer-addons';
 import {
-  Box,
   LabelGroup,
   ActionMenu,
   ActionList,
@@ -129,7 +129,7 @@ type Props = {
 export const TableMock = (props: Props) => {
   const { title } = props;
   return (
-    <Box display="grid" sx={{ gap: 3 }}>
+    <Box display="grid" gap={3}>
       <Table.Container>
         <Table.Title as="h2" id="repositories">
           {title}

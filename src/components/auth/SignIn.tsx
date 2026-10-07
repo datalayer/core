@@ -307,7 +307,7 @@ export const SignIn = (props: ISigninProps): JSX.Element => {
           <>
             <Box display="flex">
               {showEmailLogin && (
-                <Box sx={{ label: { marginTop: 2 }, paddingRight: '10%' }}>
+                <Box paddingRight="10%" sx={{ label: { marginTop: 2 } }}>
                   <Box mt={5}>
                     <FormControl required>
                       <FormControl.Label>Your username</FormControl.Label>
@@ -434,11 +434,7 @@ export const SignIn = (props: ISigninProps): JSX.Element => {
                 </Box>
               )}
               <Box>
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  sx={{ margin: 'auto' }}
-                >
+                <Box display="flex" flexDirection="column" margin="auto">
                   {showGitHubLogin &&
                     iamProvidersAuthorizationURL[
                       IAMProvidersSpecs.GitHub.name

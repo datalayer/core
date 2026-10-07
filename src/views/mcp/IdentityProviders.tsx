@@ -316,7 +316,7 @@ export const IdentityProviders = ({
       rowHeader: true,
       width: 'growCollapse',
       renderCell: row => (
-        <Box sx={{ display: 'grid' }}>
+        <Box display="grid">
           <Text sx={{ fontSize: 1, fontWeight: 'bold' }}>{row.name}</Text>
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{row.issuer}</Text>
         </Box>
@@ -327,7 +327,7 @@ export const IdentityProviders = ({
       id: 'domains',
       width: 'growCollapse',
       renderCell: row => (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Box display="flex" flexWrap="wrap" gap={1}>
           {row.domains.length === 0 && (
             <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>none</Text>
           )}
@@ -419,15 +419,13 @@ export const IdentityProviders = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       {showTitle && (
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'start',
-            justifyContent: 'space-between',
-            gap: 3,
-          }}
+          display="flex"
+          alignItems="start"
+          justifyContent="space-between"
+          gap={3}
         >
           <Box>
             <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -448,7 +446,7 @@ export const IdentityProviders = ({
       )}
 
       {providers.isPending && !providers.data ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+        <Box display="flex" justifyContent="center" py={5}>
           <Spinner />
         </Box>
       ) : rows.length > 0 ? (
@@ -502,7 +500,7 @@ export const IdentityProviders = ({
             },
           ]}
         >
-          <Box sx={{ display: 'grid', gap: 3 }}>
+          <Box display="grid" gap={3}>
             {refusal && (
               <Flash variant="danger">
                 <Text sx={{ fontSize: 1 }}>{refusal}</Text>
@@ -536,9 +534,7 @@ export const IdentityProviders = ({
               </FormControl.Caption>
             </FormControl>
 
-            <Box
-              sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}
-            >
+            <Box display="grid" gap={2} gridTemplateColumns="1fr 1fr">
               <FormControl required>
                 <FormControl.Label>Client ID</FormControl.Label>
                 <TextInput
@@ -593,7 +589,7 @@ export const IdentityProviders = ({
             </FormControl>
 
             <FormControl>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box display="flex" alignItems="center" gap={2}>
                 <ToggleSwitch
                   size="small"
                   checked={draft.allowEmailLinking}
@@ -618,12 +614,10 @@ export const IdentityProviders = ({
 
             <Box>
               <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  mb: 2,
-                }}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                mb={2}
               >
                 <FormControl.Label>Group → role mapping</FormControl.Label>
                 <Button size="small" onClick={addMapping}>
@@ -645,18 +639,18 @@ export const IdentityProviders = ({
                   becomes an organization member and nothing more.
                 </Text>
               )}
-              <Box sx={{ display: 'grid', gap: 2 }}>
+              <Box display="grid" gap={2}>
                 {draft.roleMappings.map((mapping, index) => (
                   <Box
                     key={index}
-                    sx={{
-                      display: 'grid',
-                      gap: 2,
-                      gridTemplateColumns: isTeamRole(mapping.role)
+                    display="grid"
+                    gap={2}
+                    gridTemplateColumns={
+                      isTeamRole(mapping.role)
                         ? '1fr 1fr 1fr auto'
-                        : '1fr 1fr auto',
-                      alignItems: 'end',
-                    }}
+                        : '1fr 1fr auto'
+                    }
+                    alignItems="end"
                   >
                     <FormControl>
                       <FormControl.Label>Group</FormControl.Label>
@@ -847,7 +841,7 @@ const DomainVerificationDialog = ({
         { buttonType: 'default', content: 'Close', onClick: onClose },
       ]}
     >
-      <Box sx={{ display: 'grid', gap: 3 }}>
+      <Box display="grid" gap={3}>
         <Text as="p" sx={{ fontSize: 1, color: 'fg.muted', m: 0 }}>
           Publish the record below at your DNS provider, then check it here.
           Until it checks out, this domain routes no sign-in — a claim is not
@@ -876,16 +870,14 @@ const DomainVerificationDialog = ({
           <Spinner size="small" />
         ) : record ? (
           <Box
-            sx={{
-              display: 'grid',
-              gap: 1,
-              p: 2,
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 2,
-              fontFamily: 'mono',
-              fontSize: 0,
-            }}
+            display="grid"
+            gap={1}
+            p={2}
+            border="1px solid"
+            borderColor="border.default"
+            borderRadius={2}
+            fontFamily="mono"
+            fontSize={0}
           >
             <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
               Type: {record.type}
@@ -903,7 +895,7 @@ const DomainVerificationDialog = ({
           </Button>
         )}
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box display="flex" alignItems="center" gap={2}>
           <Label variant={verified ? 'success' : 'secondary'}>
             {verified ? 'Verified — routes sign-in' : 'Not yet verified'}
           </Label>

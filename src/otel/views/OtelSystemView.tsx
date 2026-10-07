@@ -14,7 +14,8 @@
  */
 
 import React from 'react';
-import { Box, Button, Spinner, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Button, Spinner, Text } from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
 import { useOtelSystem } from '../hooks';
 import type { OtelSystemData } from '../hooks';
@@ -133,12 +134,10 @@ const SystemViewContent: React.FC<SystemViewContentProps> = ({ data }) => {
           </Text>
           <Box
             as="table"
-            sx={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: 0,
-              fontFamily: 'mono',
-            }}
+            width="100%"
+            borderCollapse="collapse"
+            fontSize={0}
+            fontFamily="mono"
           >
             <Box as="thead">
               <Box as="tr">
@@ -146,14 +145,12 @@ const SystemViewContent: React.FC<SystemViewContentProps> = ({ data }) => {
                   <Box
                     key={h}
                     as="th"
-                    sx={{
-                      textAlign: h === 'Table' ? 'left' : 'right',
-                      pb: 1,
-                      color: 'fg.muted',
-                      fontWeight: 'bold',
-                      borderBottom: '1px solid',
-                      borderColor: 'border.default',
-                    }}
+                    textAlign={h === 'Table' ? 'left' : 'right'}
+                    pb={1}
+                    color="fg.muted"
+                    fontWeight="bold"
+                    borderBottom="1px solid"
+                    borderColor="border.default"
                   >
                     {h}
                   </Box>
@@ -163,22 +160,22 @@ const SystemViewContent: React.FC<SystemViewContentProps> = ({ data }) => {
             <Box as="tbody">
               {Object.entries(tables).map(([tbl, info]) => (
                 <Box as="tr" key={tbl}>
-                  <Box as="td" sx={{ py: 1, pr: 3, color: 'accent.fg' }}>
+                  <Box as="td" py={1} pr={3} color="accent.fg">
                     {tbl}
                   </Box>
                   {info?.error ? (
-                    <Box as="td" colSpan={3} sx={{ color: 'danger.fg', py: 1 }}>
+                    <Box as="td" colSpan={3} color="danger.fg" py={1}>
                       {info.error}
                     </Box>
                   ) : (
                     <>
-                      <Box as="td" sx={{ textAlign: 'right', py: 1, pr: 3 }}>
+                      <Box as="td" textAlign="right" py={1} pr={3}>
                         {(info.row_count ?? 0).toLocaleString()}
                       </Box>
-                      <Box as="td" sx={{ textAlign: 'right', py: 1, pr: 3 }}>
+                      <Box as="td" textAlign="right" py={1} pr={3}>
                         {info.distinct_users ?? 0}
                       </Box>
-                      <Box as="td" sx={{ textAlign: 'right', py: 1 }}>
+                      <Box as="td" textAlign="right" py={1}>
                         {fmtBytes(info.disk_bytes ?? 0)}
                       </Box>
                     </>
@@ -216,24 +213,20 @@ export const OtelSystemView: React.FC<OtelSystemViewProps> = ({
 
   return (
     <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minHeight: 0,
-        overflow: 'auto',
-        p: 3,
-      }}
+      display="flex"
+      flexDirection="column"
+      flex={1}
+      minHeight={0}
+      overflow="auto"
+      p={3}
     >
       {/* Header */}
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 3,
-          flexShrink: 0,
-        }}
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={3}
+        flexShrink={0}
       >
         <Text sx={{ fontSize: 2, fontWeight: 'bold' }}>System Statistics</Text>
         <Button
@@ -249,7 +242,7 @@ export const OtelSystemView: React.FC<OtelSystemViewProps> = ({
 
       {/* States */}
       {loading && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box display="flex" alignItems="center" gap={2}>
           <Spinner size="small" />
           <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Loading…</Text>
         </Box>
@@ -257,13 +250,11 @@ export const OtelSystemView: React.FC<OtelSystemViewProps> = ({
 
       {!loading && error && (
         <Box
-          sx={{
-            bg: 'danger.subtle',
-            border: '1px solid',
-            borderColor: 'danger.muted',
-            borderRadius: 2,
-            p: 3,
-          }}
+          bg="danger.subtle"
+          border="1px solid"
+          borderColor="danger.muted"
+          borderRadius={2}
+          p={3}
         >
           <Text sx={{ color: 'danger.fg', fontSize: 1 }}>{error}</Text>
         </Box>

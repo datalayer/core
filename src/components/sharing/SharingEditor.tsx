@@ -113,7 +113,7 @@ export function SharingEditor({
       />
       <FormControl.Caption>{caption}</FormControl.Caption>
       {error && (
-        <Box sx={{ mt: 1 }}>
+        <Box mt={1}>
           <Text sx={{ color: 'danger.fg', fontSize: 1 }}>{error}</Text>
         </Box>
       )}

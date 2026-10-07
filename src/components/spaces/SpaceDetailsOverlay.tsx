@@ -15,14 +15,8 @@
  */
 
 import type { JSX } from 'react';
-import {
-  ActionMenu,
-  Box,
-  Button,
-  Label,
-  Text,
-  ThemeProvider,
-} from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { ActionMenu, Button, Label, Text, ThemeProvider } from '@primer/react';
 import { SpaceIcon } from '@primer/octicons-react';
 import { useNavigate } from '../../hooks';
 import { buildSpaceDetailsPath } from './spaceDisplayModel';
@@ -87,25 +81,23 @@ export function SpaceDetailsCard({
       : normalizedHandle;
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, p: 4, minWidth: 360 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Box display="grid" gap={3} p={4} minWidth={360}>
+      <Box display="flex" alignItems="center" gap={2}>
         <Box
           aria-hidden="true"
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 40,
-            height: 40,
-            flexShrink: 0,
-            borderRadius: 2,
-            bg: 'accent.subtle',
-            color: 'accent.fg',
-          }}
+          display="inline-flex"
+          alignItems="center"
+          justifyContent="center"
+          width={40}
+          height={40}
+          flexShrink={0}
+          borderRadius={2}
+          bg="accent.subtle"
+          color="accent.fg"
         >
           <SpaceIcon size={20} />
         </Box>
-        <Box sx={{ display: 'grid', gap: 0.5, minWidth: 0 }}>
+        <Box display="grid" gap={0.5} minWidth={0}>
           <Text sx={{ fontWeight: 'semibold' }}>{normalizedDisplayName}</Text>
           {address ? (
             <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{address}</Text>
@@ -113,12 +105,10 @@ export function SpaceDetailsCard({
         </Box>
       </Box>
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '110px 1fr',
-          gap: 1,
-          alignItems: 'baseline',
-        }}
+        display="grid"
+        gridTemplateColumns="110px 1fr"
+        gap={1}
+        alignItems="baseline"
       >
         <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Kind</Text>
         <Text sx={{ fontSize: 1 }}>space</Text>
@@ -161,7 +151,7 @@ export function SpaceDetailsCard({
           </>
         ) : null}
       </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+      <Box display="flex" justifyContent="flex-end" gap={2}>
         <Button size="small" onClick={go} disabled={!targetPath}>
           View Space
         </Button>
@@ -191,24 +181,20 @@ export function SpaceDetailsOverlay(
             as="button"
             type="button"
             title={normalizedDisplayName}
-            sx={{
-              fontWeight: 'semibold',
-              color: 'accent.fg',
-              textDecoration: 'underline',
-              background: 'transparent',
-              border: 0,
-              padding: 0,
-              margin: 0,
-              cursor: 'pointer',
-              maxWidth: '100%',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              textAlign: 'left',
-              ':hover': {
-                textDecoration: 'underline',
-              },
-            }}
+            fontWeight="semibold"
+            color="accent.fg"
+            textDecoration="underline"
+            background="transparent"
+            border={0}
+            padding={0}
+            margin={0}
+            cursor="pointer"
+            maxWidth="100%"
+            overflow="hidden"
+            textOverflow="ellipsis"
+            whiteSpace="nowrap"
+            textAlign="left"
+            hover={{ textDecoration: 'underline' }}
           >
             {normalizedDisplayName}
           </Box>

@@ -79,29 +79,21 @@ export const FlashClosable = ({
       }}
     >
       <Box
-        sx={{
-          display: 'grid',
-          paddingBlock: 'var(--base-size-8)',
-          alignSelf: 'center',
-          gridArea: 'visual',
-        }}
+        display="grid"
+        paddingBlock="var(--base-size-8)"
+        alignSelf="center"
+        gridArea="visual"
       >
         {visual}
       </Box>
-      <Box
-        sx={{
-          alignSelf: 'center',
-          display: 'grid',
-          gridArea: 'message',
-        }}
-      >
+      <Box alignSelf="center" display="grid" gridArea="message">
         {children}
       </Box>
       <Box
+        display="grid"
+        gap="var(--stack-gap-condensed)"
+        marginLeft="actions"
         sx={{
-          display: 'grid',
-          gap: 'var(--stack-gap-condensed)',
-          marginLeft: 'actions',
           '@media screen and (max-width: 544px)': {
             alignSelf: 'start',
             margin: 'var(--base-size-8) 0 0 var(--base-size-8)',
@@ -111,12 +103,7 @@ export const FlashClosable = ({
         {actions}
       </Box>
       {closable && (
-        <Box
-          sx={{
-            alignSelf: 'start',
-            marginLeft: 'close',
-          }}
-        >
+        <Box alignSelf="start" marginLeft="close">
           <IconButton
             aria-label="Dismiss flash message"
             title="Dismiss"

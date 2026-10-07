@@ -13,7 +13,8 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Box, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text } from '@primer/react';
 import { ChevronDownIcon, ChevronRightIcon } from '@primer/octicons-react';
 import type { OtelSpanTreeProps, OtelSpan } from '../types';
 import { formatDuration, serviceColor, toMs } from '../utils';
@@ -56,32 +57,26 @@ const SpanNode: React.FC<SpanNodeProps> = ({
   return (
     <>
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          height: 28,
-          pl: `${depth * INDENT_PX}px`,
-          pr: 2,
-          cursor: 'pointer',
-          bg: isSelected ? 'accent.subtle' : 'canvas.default',
-          borderBottom: '1px solid',
-          borderColor: 'border.muted',
-          ':hover': {
-            bg: isSelected ? 'accent.subtle' : 'canvas.subtle',
-          },
-        }}
+        display="flex"
+        alignItems="center"
+        height={28}
+        pl={`${depth * INDENT_PX}px`}
+        pr={2}
+        cursor="pointer"
+        bg={isSelected ? 'accent.subtle' : 'canvas.default'}
+        borderBottom="1px solid"
+        borderColor="border.muted"
+        hover={{ bg: isSelected ? 'accent.subtle' : 'canvas.subtle' }}
         onClick={() => onSelectSpan?.(span)}
       >
         {/* Expand/collapse toggle */}
         <Box
-          sx={{
-            width: 20,
-            textAlign: 'center',
-            color: 'fg.muted',
-            userSelect: 'none',
-            flexShrink: 0,
-            cursor: hasChildren ? 'pointer' : 'default',
-          }}
+          width={20}
+          textAlign="center"
+          color="fg.muted"
+          userSelect="none"
+          flexShrink={0}
+          cursor={hasChildren ? 'pointer' : 'default'}
           onClick={e => {
             e.stopPropagation();
             if (hasChildren) toggleExpanded(span.span_id);
@@ -100,14 +95,12 @@ const SpanNode: React.FC<SpanNodeProps> = ({
 
         {/* Service color dot */}
         <Box
-          sx={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            bg: color,
-            flexShrink: 0,
-            mr: 1,
-          }}
+          width={8}
+          height={8}
+          borderRadius="50%"
+          bg={color}
+          flexShrink={0}
+          mr={1}
         />
 
         {/* Name */}
@@ -127,26 +120,22 @@ const SpanNode: React.FC<SpanNodeProps> = ({
 
         {/* Mini duration bar */}
         <Box
-          sx={{
-            flex: 1,
-            position: 'relative',
-            height: 12,
-            bg: 'canvas.subtle',
-            borderRadius: 1,
-            mx: 2,
-            overflow: 'hidden',
-          }}
+          flex={1}
+          position="relative"
+          height={12}
+          bg="canvas.subtle"
+          borderRadius={1}
+          mx={2}
+          overflow="hidden"
         >
           <Box
-            sx={{
-              position: 'absolute',
-              left: `${startPct}%`,
-              width: `${widthPct}%`,
-              height: '100%',
-              bg: color,
-              borderRadius: 1,
-              opacity: isSelected ? 1 : 0.7,
-            }}
+            position="absolute"
+            left={`${startPct}%`}
+            width={`${widthPct}%`}
+            height="100%"
+            bg={color}
+            borderRadius={1}
+            opacity={isSelected ? 1 : 0.7}
           />
         </Box>
 
@@ -240,28 +229,26 @@ export const OtelSpanTree: React.FC<OtelSpanTreeProps> = ({
 
   if (spans.length === 0) {
     return (
-      <Box sx={{ p: 3, color: 'fg.muted', textAlign: 'center' }}>
+      <Box p={3} color="fg.muted" textAlign="center">
         <Text>No span tree to display.</Text>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ width: '100%', overflow: 'auto' }}>
+    <Box width="100%" overflow="auto">
       {/* Header */}
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          height: 28,
-          px: 2,
-          borderBottom: '2px solid',
-          borderColor: 'border.default',
-          bg: 'canvas.subtle',
-        }}
+        display="flex"
+        alignItems="center"
+        height={28}
+        px={2}
+        borderBottom="2px solid"
+        borderColor="border.default"
+        bg="canvas.subtle"
       >
-        <Box sx={{ width: 20 }} />
-        <Box sx={{ width: 8, mr: 1 }} />
+        <Box width={20} />
+        <Box width={8} mr={1} />
         <Text
           sx={{
             flex: '0 0 200px',

@@ -221,7 +221,7 @@ export const ScimProvisioning = ({
       field: 'name',
       rowHeader: true,
       renderCell: row => (
-        <Box sx={{ display: 'grid', gap: 1 }}>
+        <Box display="grid" gap={1}>
           <Text sx={{ fontWeight: 'semibold' }}>{row.name || 'SCIM'}</Text>
           {row.revoked && (
             <Label variant="danger" size="small">
@@ -309,15 +309,13 @@ export const ScimProvisioning = ({
   const shown = SCIM_STATUS_MESSAGES[status.state];
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       {showTitle && (
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'start',
-            justifyContent: 'space-between',
-            gap: 3,
-          }}
+          display="flex"
+          alignItems="start"
+          justifyContent="space-between"
+          gap={3}
         >
           <Box>
             <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -341,7 +339,7 @@ export const ScimProvisioning = ({
       )}
 
       {tokens.isPending && !tokens.data ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+        <Box display="flex" justifyContent="center" py={5}>
           <Spinner />
         </Box>
       ) : (
@@ -382,14 +380,12 @@ export const ScimProvisioning = ({
               </Table.Container>
 
               <Box
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  borderRadius: 2,
-                  p: 3,
-                  display: 'grid',
-                  gap: 2,
-                }}
+                border="1px solid"
+                borderColor="border.default"
+                borderRadius={2}
+                p={3}
+                display="grid"
+                gap={2}
               >
                 <Text sx={{ fontWeight: 'semibold', fontSize: 1 }}>
                   What to give the directory
@@ -485,7 +481,7 @@ export const ScimProvisioning = ({
             { buttonType: 'primary', content: 'Done', onClick: closeSecret },
           ]}
         >
-          <Box sx={{ display: 'grid', gap: 2 }}>
+          <Box display="grid" gap={2}>
             {/* Before the value, not after it. Somebody who reads this
                 afterwards has already closed the dialog. */}
             <Flash variant="warning">

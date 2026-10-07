@@ -150,7 +150,7 @@ export const AlertDestinations = ({
 
   if (settings.isPending && settings.data === undefined) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+      <Box display="flex" justifyContent="center" py={4}>
         <Spinner />
       </Box>
     );
@@ -158,15 +158,13 @@ export const AlertDestinations = ({
 
   return (
     <Box
-      sx={{
-        display: 'grid',
-        gap: 3,
-        maxWidth: '42rem',
-        p: 3,
-        border: '1px solid',
-        borderColor: 'border.default',
-        borderRadius: 2,
-      }}
+      display="grid"
+      gap={3}
+      maxWidth="42rem"
+      p={3}
+      border="1px solid"
+      borderColor="border.default"
+      borderRadius={2}
     >
       <Box>
         <Heading as="h3" sx={{ fontSize: 2, mb: 1 }}>
@@ -236,7 +234,7 @@ export const AlertDestinations = ({
       </FormControl>
 
       {!readOnly && (
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box display="flex" gap={2}>
           <Button
             variant="primary"
             onClick={apply}

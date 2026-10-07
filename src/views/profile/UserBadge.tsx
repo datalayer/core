@@ -16,7 +16,8 @@
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Box, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text } from '@primer/react';
 import {
   parseJwtPayload,
   getDatalayerJwtUser,
@@ -115,7 +116,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
 
   return (
     <Box
-      sx={{ position: 'relative' }}
+      position="relative"
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
@@ -137,33 +138,29 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
       {/* Popover */}
       {open && claims && (
         <Box
-          sx={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            right: 0,
-            zIndex: 100,
-            width: '400px',
-            bg: 'canvas.overlay',
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 2,
-            boxShadow: 'shadow.large',
-            overflow: 'hidden',
-          }}
+          position="absolute"
+          top="calc(100% + 4px)"
+          right={0}
+          zIndex={100}
+          width="400px"
+          bg="canvas.overlay"
+          border="1px solid"
+          borderColor="border.default"
+          borderRadius={2}
+          boxShadow="shadow.large"
+          overflow="hidden"
         >
           {/* Header row */}
           <Box
-            sx={{
-              px: 3,
-              py: 2,
-              bg: 'canvas.inset',
-              borderBottom: '1px solid',
-              borderColor: 'border.default',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 2,
-            }}
+            px={3}
+            py={2}
+            bg="canvas.inset"
+            borderBottom="1px solid"
+            borderColor="border.default"
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            gap={2}
           >
             <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>
               {popoverDisplayName || 'User'}
@@ -180,26 +177,22 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
                 title={
                   expanded ? 'Hide full JWT claims' : 'Show full JWT claims'
                 }
-                sx={{
-                  appearance: 'none',
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  borderRadius: 1,
-                  bg: 'canvas.default',
-                  color: 'fg.default',
-                  fontSize: 1,
-                  lineHeight: 1,
-                  width: '20px',
-                  height: '20px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  p: 0,
-                  '&:hover': {
-                    bg: 'canvas.subtle',
-                  },
-                }}
+                appearance="none"
+                border="1px solid"
+                borderColor="border.default"
+                borderRadius={1}
+                bg="canvas.default"
+                color="fg.default"
+                fontSize={1}
+                lineHeight={1}
+                width="20px"
+                height="20px"
+                display="inline-flex"
+                alignItems="center"
+                justifyContent="center"
+                cursor="pointer"
+                p={0}
+                hover={{ bg: 'canvas.subtle' }}
               >
                 {expanded ? '−' : '+'}
               </Box>
@@ -209,20 +202,16 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
           {/* User summary */}
           {claims.user && (
             <Box
-              sx={{
-                px: 3,
-                py: 2,
-                borderBottom: '1px solid',
-                borderColor: 'border.muted',
-              }}
+              px={3}
+              py={2}
+              borderBottom="1px solid"
+              borderColor="border.muted"
             >
               <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '90px 1fr',
-                  gap: 1,
-                  fontSize: 0,
-                }}
+                display="grid"
+                gridTemplateColumns="90px 1fr"
+                gap={1}
+                fontSize={0}
               >
                 <Text sx={{ color: 'fg.muted' }}>First name</Text>
                 <Text sx={{ fontFamily: 'mono' }}>{claims.user.firstName}</Text>
@@ -249,14 +238,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
                   {new Date(claims.iat * 1000).toISOString()}
                 </Text>
                 <Text sx={{ color: 'fg.muted' }}>Expires</Text>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    minWidth: 0,
-                  }}
-                >
+                <Box display="flex" alignItems="center" gap={2} minWidth={0}>
                   <Text
                     sx={{
                       fontFamily: 'mono',
@@ -290,18 +272,16 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
                         : 'success.muted';
                     return (
                       <Box
-                        sx={{
-                          flexShrink: 0,
-                          fontSize: 0,
-                          px: 1,
-                          py: '1px',
-                          bg,
-                          color: fg,
-                          borderRadius: 1,
-                          border: '1px solid',
-                          borderColor: border,
-                          whiteSpace: 'nowrap',
-                        }}
+                        flexShrink={0}
+                        fontSize={0}
+                        px={1}
+                        py="1px"
+                        bg={bg}
+                        color={fg}
+                        borderRadius={1}
+                        border="1px solid"
+                        borderColor={border}
+                        whiteSpace="nowrap"
                       >
                         {getRelativeTime(expDate)}
                       </Box>
@@ -315,33 +295,29 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
           {/* Roles */}
           {(claims.user?.roles ?? claims.roles ?? []).length > 0 && (
             <Box
-              sx={{
-                px: 3,
-                py: 2,
-                borderBottom: '1px solid',
-                borderColor: 'border.muted',
-              }}
+              px={3}
+              py={2}
+              borderBottom="1px solid"
+              borderColor="border.muted"
             >
               <Text
                 sx={{ fontSize: 0, color: 'fg.muted', display: 'block', mb: 1 }}
               >
                 Roles
               </Text>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              <Box display="flex" flexWrap="wrap" gap={1}>
                 {(claims.user?.roles ?? claims.roles ?? []).map(r => (
                   <Box
                     key={r}
-                    sx={{
-                      fontSize: 0,
-                      fontFamily: 'mono',
-                      px: 1,
-                      py: '1px',
-                      bg: 'accent.subtle',
-                      color: 'accent.fg',
-                      borderRadius: 1,
-                      border: '1px solid',
-                      borderColor: 'accent.muted',
-                    }}
+                    fontSize={0}
+                    fontFamily="mono"
+                    px={1}
+                    py="1px"
+                    bg="accent.subtle"
+                    color="accent.fg"
+                    borderRadius={1}
+                    border="1px solid"
+                    borderColor="accent.muted"
                   >
                     {r}
                   </Box>
@@ -354,18 +330,16 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
           {(variant === 'full' || expanded) && (
             <Box
               as="pre"
-              sx={{
-                m: 0,
-                px: 3,
-                py: 2,
-                fontFamily: 'mono',
-                fontSize: 0,
-                color: 'fg.default',
-                bg: 'canvas.inset',
-                overflow: 'auto',
-                maxHeight: '220px',
-                whiteSpace: 'pre',
-              }}
+              m={0}
+              px={3}
+              py={2}
+              fontFamily="mono"
+              fontSize={0}
+              color="fg.default"
+              bg="canvas.inset"
+              overflow="auto"
+              maxHeight="220px"
+              whiteSpace="pre"
             >
               {JSON.stringify(claims, null, 2)}
             </Box>

@@ -209,7 +209,7 @@ export const ServiceAgents = ({
       field: 'name',
       rowHeader: true,
       renderCell: row => (
-        <Box sx={{ display: 'grid' }}>
+        <Box display="grid">
           <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>
             {row.name || row.uid}
           </Text>
@@ -313,15 +313,13 @@ export const ServiceAgents = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       {showTitle && (
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'start',
-            justifyContent: 'space-between',
-            gap: 3,
-          }}
+          display="flex"
+          alignItems="start"
+          justifyContent="space-between"
+          gap={3}
         >
           <Box>
             <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -342,7 +340,7 @@ export const ServiceAgents = ({
       )}
 
       {agents.isPending && !agents.data ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+        <Box display="flex" justifyContent="center" py={5}>
           <Spinner />
         </Box>
       ) : rows.length > 0 ? (
@@ -401,7 +399,7 @@ export const ServiceAgents = ({
             },
           ]}
         >
-          <Box sx={{ display: 'grid', gap: 3 }}>
+          <Box display="grid" gap={3}>
             <FormControl required>
               <FormControl.Label>Name</FormControl.Label>
               <TextInput
@@ -420,7 +418,7 @@ export const ServiceAgents = ({
               <Text as="p" sx={{ fontSize: 1, fontWeight: 'semibold', mb: 1 }}>
                 Allowed to
               </Text>
-              <Box sx={{ display: 'grid', gap: 1 }}>
+              <Box display="grid" gap={1}>
                 {SERVICE_AGENT_SCOPES.map(scope => (
                   <FormControl key={scope}>
                     <Checkbox
@@ -456,7 +454,7 @@ export const ServiceAgents = ({
             },
           ]}
         >
-          <Box sx={{ display: 'grid', gap: 2 }}>
+          <Box display="grid" gap={2}>
             {/* First, before the key itself: somebody who copies the key and
                 closes the dialog without reading this stores nothing. */}
             <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>
@@ -469,15 +467,13 @@ export const ServiceAgents = ({
             </Text>
             <Box
               as="pre"
-              sx={{
-                fontFamily: 'mono',
-                fontSize: 1,
-                p: 2,
-                m: 0,
-                bg: 'canvas.subtle',
-                borderRadius: 2,
-                overflowX: 'auto',
-              }}
+              fontFamily="mono"
+              fontSize={1}
+              p={2}
+              m={0}
+              bg="canvas.subtle"
+              borderRadius={2}
+              overflowX="auto"
             >
               {keyShown.key}
             </Box>

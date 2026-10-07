@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { Box } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { OtelSystemView } from '../../otel';
 
 export interface SystemViewProps {
@@ -20,7 +20,7 @@ export const SystemView: React.FC<SystemViewProps> = ({
   baseUrl = '',
   token,
 }) => (
-  <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+  <Box display="flex" flex={1} minHeight={0} overflow="hidden">
     <OtelSystemView baseUrl={baseUrl} token={token} />
   </Box>
 );

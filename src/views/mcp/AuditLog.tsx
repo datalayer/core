@@ -201,7 +201,7 @@ export const AuditLog = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       {showTitle && (
         <Box>
           <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -262,12 +262,10 @@ export const AuditLog = ({
       {/* What is being looked at. Every one of these is in the address, so a
           filtered log is a link somebody else can open. */}
       <Box
-        sx={{
-          display: 'grid',
-          gap: 2,
-          gridTemplateColumns: ['1fr', 'repeat(2, 1fr)', 'repeat(5, 1fr)'],
-          alignItems: 'end',
-        }}
+        display="grid"
+        gap={2}
+        gridTemplateColumns={['1fr', 'repeat(2, 1fr)', 'repeat(5, 1fr)']}
+        alignItems="end"
       >
         <TextInput
           size="small"
@@ -318,7 +316,7 @@ export const AuditLog = ({
           <Select.Option value="error">Failed</Select.Option>
           <Select.Option value="is_error">Tool error</Select.Option>
         </Select>
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+        <Box display="flex" gap={2} justifyContent="flex-end">
           <ActionMenu>
             <ActionMenu.Button
               size="small"
@@ -354,7 +352,7 @@ export const AuditLog = ({
       </Text>
 
       {page.isPending && !page.data ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+        <Box display="flex" justifyContent="center" py={6}>
           <Spinner />
         </Box>
       ) : rows.length === 0 ? (
@@ -377,48 +375,31 @@ export const AuditLog = ({
       ) : (
         /* The rail of the activity view: each mark on a tinted disc, the discs
            linked by a line, so the rows carry no border of their own. */
-        <Box sx={{ display: 'grid' }}>
+        <Box display="grid">
           {rows.map((event, index) => {
             const look = decisionLook(event);
             const isLast = index === rows.length - 1;
             return (
-              <Box key={event.uid} sx={{ display: 'flex', gap: 3 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                  }}
-                >
+              <Box key={event.uid} display="flex" gap={3}>
+                <Box display="flex" flexDirection="column" alignItems="center">
                   <Box
-                    sx={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: '50%',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: look.fg,
-                      bg: look.bg,
-                      flexShrink: 0,
-                    }}
+                    width={26}
+                    height={26}
+                    borderRadius="50%"
+                    display="inline-flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    color={look.fg}
+                    bg={look.bg}
+                    flexShrink={0}
                   >
                     <look.Icon size={13} />
                   </Box>
                   {!isLast && (
-                    <Box
-                      sx={{ width: '2px', flex: 1, bg: 'border.muted', my: 1 }}
-                    />
+                    <Box width="2px" flex={1} bg="border.muted" my={1} />
                   )}
                 </Box>
-                <Box
-                  sx={{
-                    flexGrow: 1,
-                    minWidth: 0,
-                    pb: isLast ? 0 : 3,
-                    pt: '3px',
-                  }}
-                >
+                <Box flexGrow={1} minWidth={0} pb={isLast ? 0 : 3} pt="3px">
                   <Link
                     as="button"
                     sx={{
@@ -432,13 +413,11 @@ export const AuditLog = ({
                     {event.tool || event.method}
                   </Link>
                   <Box
-                    sx={{
-                      display: 'flex',
-                      gap: 2,
-                      alignItems: 'center',
-                      mt: 1,
-                      flexWrap: 'wrap',
-                    }}
+                    display="flex"
+                    gap={2}
+                    alignItems="center"
+                    mt={1}
+                    flexWrap="wrap"
                   >
                     <Label
                       size="small"
@@ -482,7 +461,7 @@ export const AuditLog = ({
 
       {/* A cursor walk, not a page number: the collection only grows. */}
       {(walked.length > 0 || nextCursor) && (
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+        <Box display="flex" gap={2} justifyContent="center">
           <Button
             size="small"
             leadingVisual={ChevronLeftIcon}
@@ -510,14 +489,14 @@ export const AuditLog = ({
           returnFocusRef={returnFocusRef}
           width="large"
         >
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            <Box sx={{ display: 'grid', gap: 1 }}>
+          <Box display="grid" gap={3}>
+            <Box display="grid" gap={1}>
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>When</Text>
               <Text sx={{ fontSize: 1 }}>
                 <RelativeTime datetime={open.at} /> — {open.at}
               </Text>
             </Box>
-            <Box sx={{ display: 'grid', gap: 1 }}>
+            <Box display="grid" gap={1}>
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Who</Text>
               <Text sx={{ fontSize: 1 }}>
                 {open.clientId || 'unknown client'}
@@ -527,7 +506,7 @@ export const AuditLog = ({
               </Text>
             </Box>
             {open.refusalReason && (
-              <Box sx={{ display: 'grid', gap: 1 }}>
+              <Box display="grid" gap={1}>
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                   Why it was refused
                 </Text>
@@ -536,20 +515,18 @@ export const AuditLog = ({
                 </Text>
               </Box>
             )}
-            <Box sx={{ display: 'grid', gap: 1 }}>
+            <Box display="grid" gap={1}>
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                 Arguments, redacted before they were written
               </Text>
               <Box
                 as="pre"
-                sx={{
-                  m: 0,
-                  p: 2,
-                  fontSize: 0,
-                  bg: 'canvas.inset',
-                  borderRadius: 2,
-                  overflowX: 'auto',
-                }}
+                m={0}
+                p={2}
+                fontSize={0}
+                bg="canvas.inset"
+                borderRadius={2}
+                overflowX="auto"
               >
                 {JSON.stringify(open.redactedArguments ?? {}, null, 2)}
               </Box>
@@ -561,7 +538,7 @@ export const AuditLog = ({
                 </Text>
               )}
             </Box>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box display="flex" gap={2} flexWrap="wrap">
               {open.taskId && (
                 <Button
                   size="small"

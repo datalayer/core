@@ -13,7 +13,8 @@ import {
   type ComponentType,
   type SVGProps,
 } from 'react';
-import { Box, Button, Text, Tooltip } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Button, Text, Tooltip } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
 
 /**
@@ -825,13 +826,13 @@ export function PrincipalBannerImage({
   return (
     <Box
       key={banner}
+      overflow="hidden"
+      borderRadius={2}
+      bg="canvas.subtle"
       sx={{
         position: 'relative',
         width: '100%',
         height,
-        overflow: 'hidden',
-        borderRadius: 2,
-        bg: 'canvas.subtle',
         '& > svg': {
           position: 'absolute',
           inset: 0,
@@ -890,17 +891,15 @@ export function PrincipalAvatarPicker({
           }}
         >
           <Box
-            sx={{
-              display: 'grid',
-              // Twelve to a line, whatever the dialog is wide: the columns
-              // share it evenly and `minmax(0, …)` lets them shrink under
-              // their content, which a long name would otherwise widen.
-              gridTemplateColumns: [
-                'repeat(6, minmax(0, 1fr))',
-                'repeat(12, minmax(0, 1fr))',
-              ],
-              gap: 2,
-            }}
+            display="grid"
+            // Twelve to a line, whatever the dialog is wide: the columns
+            // share it evenly and `minmax(0, …)` lets them shrink under
+            // their content, which a long name would otherwise widen.
+            gridTemplateColumns={[
+              'repeat(6, minmax(0, 1fr))',
+              'repeat(12, minmax(0, 1fr))',
+            ]}
+            gap={2}
           >
             {PRINCIPAL_AVATAR_ICONS.map(
               ({ name, label, description, Icon }) => (
@@ -925,29 +924,26 @@ export function PrincipalAvatarPicker({
                       onChange(name);
                       setOpen(false);
                     }}
-                    sx={{
-                      display: 'block',
-                      width: '100%',
-                      p: 0,
-                      overflow: 'hidden',
-                      appearance: 'none',
-                      color: 'fg.default',
-                      cursor: 'pointer',
-                      border: '1px solid',
-                      borderRadius: 2,
-                      borderColor:
-                        value === name ? 'accent.emphasis' : 'border.default',
-                      bg: value === name ? 'accent.subtle' : 'canvas.default',
-                      ':hover': { borderColor: 'accent.emphasis' },
-                    }}
+                    display="block"
+                    width="100%"
+                    p={0}
+                    overflow="hidden"
+                    appearance="none"
+                    color="fg.default"
+                    cursor="pointer"
+                    border="1px solid"
+                    borderRadius={2}
+                    borderColor={
+                      value === name ? 'accent.emphasis' : 'border.default'
+                    }
+                    bg={value === name ? 'accent.subtle' : 'canvas.default'}
+                    hover={{ borderColor: 'accent.emphasis' }}
                   >
                     <Box
-                      sx={{
-                        height: 72,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      height={72}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
                     >
                       {/*
                     The plain icon, coloured by the theme — never the `colored`
@@ -1007,7 +1003,7 @@ export function PrincipalBannerPicker({
           older picker, or a value that never persisted — would render as an
           empty box where the banner should be. */}
       {showPreview && selected ? (
-        <Box sx={{ mb: 2 }}>
+        <Box mb={2}>
           <PrincipalBannerImage banner={selected.name} height={120} />
         </Box>
       ) : null}
@@ -1029,14 +1025,12 @@ export function PrincipalBannerPicker({
           }}
         >
           <Box
-            sx={{
-              display: 'grid',
-              // Four to a row, so a banner is seen against its neighbours
-              // rather than one at a time; one column on a narrow overlay,
-              // where four would be four slivers.
-              gridTemplateColumns: ['1fr', 'repeat(4, minmax(0, 1fr))'],
-              gap: 3,
-            }}
+            display="grid"
+            // Four to a row, so a banner is seen against its neighbours
+            // rather than one at a time; one column on a narrow overlay,
+            // where four would be four slivers.
+            gridTemplateColumns={['1fr', 'repeat(4, minmax(0, 1fr))']}
+            gap={3}
           >
             {PRINCIPAL_BANNERS.map(({ name, label, Component }) => (
               <Box
@@ -1050,32 +1044,28 @@ export function PrincipalBannerPicker({
                   onChange(name);
                   setOpen(false);
                 }}
-                sx={{
-                  display: 'block',
-                  width: '100%',
-                  p: 0,
-                  overflow: 'hidden',
-                  appearance: 'none',
-                  color: 'fg.default',
-                  cursor: 'pointer',
-                  border: '1px solid',
-                  borderRadius: 2,
-                  borderColor:
-                    selectedName === name
-                      ? 'accent.emphasis'
-                      : 'border.default',
-                  bg:
-                    selectedName === name ? 'accent.subtle' : 'canvas.default',
-                  textAlign: 'left',
-                  ':hover': { borderColor: 'accent.emphasis' },
-                }}
+                display="block"
+                width="100%"
+                p={0}
+                overflow="hidden"
+                appearance="none"
+                color="fg.default"
+                cursor="pointer"
+                border="1px solid"
+                borderRadius={2}
+                borderColor={
+                  selectedName === name ? 'accent.emphasis' : 'border.default'
+                }
+                bg={selectedName === name ? 'accent.subtle' : 'canvas.default'}
+                textAlign="left"
+                hover={{ borderColor: 'accent.emphasis' }}
               >
                 <Box
+                  aspectRatio="3 / 1"
+                  overflow="hidden"
                   sx={{
                     position: 'relative',
                     width: '100%',
-                    aspectRatio: '3 / 1',
-                    overflow: 'hidden',
                     '& > svg': {
                       position: 'absolute',
                       inset: 0,

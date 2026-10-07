@@ -21,17 +21,17 @@ export const ContentSourceCard = ({ item, onOpen }: ContentSourceCardProps) => (
   <Box
     as="li"
     onClick={() => onOpen?.(item.source.uid)}
+    p={3}
+    borderColor="border.muted"
+    cursor={onOpen ? 'pointer' : 'default'}
     sx={{
-      p: 3,
       borderBottom: '1px solid',
-      borderColor: 'border.muted',
-      cursor: onOpen ? 'pointer' : 'default',
       ':last-child': { borderBottom: 0 },
       ':hover': onOpen ? { bg: 'canvas.subtle' } : undefined,
     }}
   >
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 3 }}>
-      <Box sx={{ minWidth: 0 }}>
+    <Box display="flex" justifyContent="space-between" gap={3}>
+      <Box minWidth={0}>
         <Text sx={{ fontWeight: 600 }}>{item.source.name}</Text>
         <Text as="p" sx={{ color: 'fg.muted', fontSize: 0, m: 0, mt: 1 }}>
           {item.source.description || contentSourceLabel(item.source.kind)}
@@ -40,16 +40,11 @@ export const ContentSourceCard = ({ item, onOpen }: ContentSourceCardProps) => (
           {item.source.uid}
         </Text>
       </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          flexShrink: 0,
-        }}
-      >
+      <Box display="flex" alignItems="center" gap={2} flexShrink={0}>
         <Label>{contentSourceLabel(item.source.kind)}</Label>
-        <Label variant={item.source.status === 'ready' ? 'success' : 'secondary'}>
+        <Label
+          variant={item.source.status === 'ready' ? 'success' : 'secondary'}
+        >
           {item.source.status}
         </Label>
         <Label variant="accent">{contentSourceEffectiveRole(item)}</Label>

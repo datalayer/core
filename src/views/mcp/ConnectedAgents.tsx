@@ -265,15 +265,13 @@ export const ConnectedAgents = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+    <Box display="grid" gap={3} minWidth={0}>
       {showTitle && (
         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'start',
-            justifyContent: 'space-between',
-            gap: 3,
-          }}
+          display="flex"
+          alignItems="start"
+          justifyContent="space-between"
+          gap={3}
         >
           <Box>
             <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -297,7 +295,7 @@ export const ConnectedAgents = ({
       )}
 
       {agents.isPending && !agents.data ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+        <Box display="flex" justifyContent="center" py={5}>
           <Spinner />
         </Box>
       ) : rows.length > 0 ? (

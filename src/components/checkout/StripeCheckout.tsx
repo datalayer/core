@@ -298,7 +298,7 @@ function StripePaymentForm({
   );
 
   return (
-    <Box as="form" onSubmit={handleSubmit} sx={{ display: 'grid', gap: 3 }}>
+    <Box as="form" onSubmit={handleSubmit} display="grid" gap={3}>
       <CardElement
         options={cardOptions as any}
         onReady={element => {
@@ -1149,12 +1149,7 @@ export function StripeCheckout({
     !isPaidSubscription || isIncompleteSubscription;
 
   const monthlySubscriptionSection = shouldShowMonthlySubscriptionSection ? (
-    <Box
-      sx={{
-        borderTop: 'none',
-        paddingTop: 0,
-      }}
-    >
+    <Box borderTop="none" paddingTop={0}>
       <Text as="h3" sx={sectionTitleSx}>
         Choose a monthly plan
       </Text>
@@ -1165,12 +1160,10 @@ export function StripeCheckout({
             from the billing portal before creating a new one.
           </Text>
           <Box
-            sx={{
-              display: 'flex',
-              gap: 'var(--stack-gap-condensed)',
-              flexWrap: 'wrap',
-              marginTop: 'var(--stack-gap-normal)',
-            }}
+            display="flex"
+            gap="var(--stack-gap-condensed)"
+            flexWrap="wrap"
+            marginTop="var(--stack-gap-normal)"
           >
             <Button
               variant="primary"
@@ -1191,16 +1184,14 @@ export function StripeCheckout({
           </Box>
           {cancelViewOpen && (
             <Box
-              sx={{
-                marginTop: 'var(--stack-gap-normal)',
-                border: '1px solid',
-                borderColor: 'border.default',
-                borderRadius: 'var(--borderRadius-medium)',
-                backgroundColor: 'canvas.subtle',
-                padding: 'var(--stack-padding-normal)',
-                display: 'grid',
-                gap: 'var(--stack-gap-condensed)',
-              }}
+              marginTop="var(--stack-gap-normal)"
+              border="1px solid"
+              borderColor="border.default"
+              borderRadius="medium"
+              backgroundColor="canvas.subtle"
+              padding="var(--stack-padding-normal)"
+              display="grid"
+              gap="var(--stack-gap-condensed)"
             >
               <Text as="h4" sx={{ fontWeight: 'bold' }}>
                 Cancel pending plan change
@@ -1209,11 +1200,9 @@ export function StripeCheckout({
                 This pending plan change will be canceled immediately.
               </Text>
               <Box
-                sx={{
-                  display: 'flex',
-                  gap: 'var(--stack-gap-condensed)',
-                  flexWrap: 'wrap',
-                }}
+                display="flex"
+                gap="var(--stack-gap-condensed)"
+                flexWrap="wrap"
               >
                 <Button
                   variant="danger"
@@ -1242,13 +1231,11 @@ export function StripeCheckout({
         <>
           <Box
             role="radiogroup"
-            sx={{
-              display: 'grid',
-              gap: 'var(--stack-gap-condensed)',
-              maxHeight: '260px',
-              overflowY: 'auto',
-              marginBottom: 'var(--stack-gap-normal)',
-            }}
+            display="grid"
+            gap="var(--stack-gap-condensed)"
+            maxHeight="260px"
+            overflowY="auto"
+            marginBottom="var(--stack-gap-normal)"
           >
             {plans.map(plan => (
               <Box
@@ -1257,17 +1244,16 @@ export function StripeCheckout({
                 aria-labelledby={`subscription-plan-${plan.id}`}
                 aria-checked={subscriptionPlan?.id === plan.id}
                 onClick={() => setSubscriptionPlan(plan)}
-                sx={{
-                  borderStyle: 'solid',
-                  borderRadius: 'var(--borderRadius-medium)',
-                  borderWidth: 'var(--borderWidth-thick)',
-                  borderColor:
-                    subscriptionPlan?.id === plan.id
-                      ? 'var(--borderColor-accent-emphasis)'
-                      : 'var(--borderColor-default)',
-                  padding: 'var(--stack-padding-condensed)',
-                  cursor: 'pointer',
-                }}
+                borderStyle="solid"
+                borderRadius="medium"
+                borderWidth="var(--borderWidth-thick)"
+                borderColor={
+                  subscriptionPlan?.id === plan.id
+                    ? 'var(--borderColor-accent-emphasis)'
+                    : 'border.default'
+                }
+                padding="var(--stack-padding-condensed)"
+                cursor="pointer"
               >
                 <FormControl sx={{ alignItems: 'center' }}>
                   <FormControl.Label
@@ -1320,15 +1306,13 @@ export function StripeCheckout({
       </Text>
       <Box
         role="radiogroup"
-        sx={{
-          display: 'grid',
-          gap: 'var(--stack-gap-normal)',
-          gridTemplateColumns: Array(sortedTopUpItems.length)
-            .fill('1fr')
-            .join(' '),
-          padding: 0,
-          marginBottom: 'var(--stack-gap-normal)',
-        }}
+        display="grid"
+        gap="var(--stack-gap-normal)"
+        gridTemplateColumns={Array(sortedTopUpItems.length)
+          .fill('1fr')
+          .join(' ')}
+        padding={0}
+        marginBottom="var(--stack-gap-normal)"
       >
         {sortedTopUpItems.map(item => (
           <Box
@@ -1339,17 +1323,16 @@ export function StripeCheckout({
             onClick={() => {
               setProduct(item);
             }}
-            sx={{
-              borderStyle: 'solid',
-              borderRadius: 'var(--borderRadius-medium)',
-              borderWidth: 'var(--borderWidth-thick)',
-              borderColor:
-                product?.id === item.id
-                  ? 'var(--borderColor-accent-emphasis)'
-                  : 'var(--borderColor-default)',
-              padding: 'var(--stack-padding-condensed)',
-              cursor: 'pointer',
-            }}
+            borderStyle="solid"
+            borderRadius="medium"
+            borderWidth="var(--borderWidth-thick)"
+            borderColor={
+              product?.id === item.id
+                ? 'var(--borderColor-accent-emphasis)'
+                : 'border.default'
+            }
+            padding="var(--stack-padding-condensed)"
+            cursor="pointer"
           >
             <FormControl
               sx={{
@@ -1407,24 +1390,20 @@ export function StripeCheckout({
   const topCards =
     showStatusUsageSummary && !isPaidSubscription ? (
       <Box
-        sx={{
-          marginBottom: 'var(--stack-gap-normal)',
-          border: '1px solid',
-          borderColor: 'border.default',
-          borderRadius: 'var(--borderRadius-medium)',
-          backgroundColor: 'canvas.default',
-          padding: 'var(--stack-padding-normal)',
-          display: 'grid',
-          gap: 'var(--stack-gap-normal)',
-        }}
+        marginBottom="var(--stack-gap-normal)"
+        border="1px solid"
+        borderColor="border.default"
+        borderRadius="medium"
+        backgroundColor="canvas.default"
+        padding="var(--stack-padding-normal)"
+        display="grid"
+        gap="var(--stack-gap-normal)"
       >
         <Box
-          sx={{
-            display: 'grid',
-            gap: 'var(--stack-gap-normal)',
-            gridTemplateColumns: ['1fr'],
-            alignItems: 'start',
-          }}
+          display="grid"
+          gap="var(--stack-gap-normal)"
+          gridTemplateColumns={['1fr']}
+          alignItems="start"
         >
           <Box>
             <Text
@@ -1455,24 +1434,20 @@ export function StripeCheckout({
               </Text>
             )}
             <Box
-              sx={{
-                marginBottom: 'var(--stack-gap-normal)',
-                border: '1px solid',
-                borderColor: 'border.muted',
-                borderRadius: 'var(--borderRadius-medium)',
-                backgroundColor: 'canvas.subtle',
-                padding: 'var(--stack-padding-condensed)',
-                display: 'grid',
-                gap: 'var(--stack-gap-condensed)',
-              }}
+              marginBottom="var(--stack-gap-normal)"
+              border="1px solid"
+              borderColor="border.muted"
+              borderRadius="medium"
+              backgroundColor="canvas.subtle"
+              padding="var(--stack-padding-condensed)"
+              display="grid"
+              gap="var(--stack-gap-condensed)"
             >
               <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 2,
-                }}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                gap={2}
               >
                 <Text as="h4" sx={{ fontWeight: 'bold' }}>
                   Current usage
@@ -1520,41 +1495,21 @@ export function StripeCheckout({
                   />
                 </ProgressBar>
                 <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 3,
-                    mt: 1,
-                    flexWrap: 'wrap',
-                  }}
+                  display="flex"
+                  alignItems="center"
+                  gap={3}
+                  mt={1}
+                  flexWrap="wrap"
                 >
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
+                  <Box display="inline-flex" alignItems="center" gap={1}>
                     <DotFillIcon fill="var(--bgColor-success-emphasis)" />
                     <Text sx={{ fontSize: 0 }}>Used in quota</Text>
                   </Box>
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
+                  <Box display="inline-flex" alignItems="center" gap={1}>
                     <DotFillIcon fill="var(--bgColor-accent-emphasis)" />
                     <Text sx={{ fontSize: 0 }}>Remaining</Text>
                   </Box>
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
+                  <Box display="inline-flex" alignItems="center" gap={1}>
                     <DotFillIcon fill="var(--bgColor-danger-emphasis)" />
                     <Text sx={{ fontSize: 0 }}>Over quota</Text>
                   </Box>
@@ -1633,11 +1588,9 @@ export function StripeCheckout({
               </Flash>
             )}
             <Box
-              sx={{
-                display: 'flex',
-                gap: 'var(--stack-gap-condensed)',
-                flexWrap: 'wrap',
-              }}
+              display="flex"
+              gap="var(--stack-gap-condensed)"
+              flexWrap="wrap"
             >
               {subscriptionPortalUrl && (
                 <Button
@@ -1709,16 +1662,14 @@ export function StripeCheckout({
             </Text>
             {cancelViewOpen && (
               <Box
-                sx={{
-                  marginTop: 'var(--stack-gap-normal)',
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  borderRadius: 'var(--borderRadius-medium)',
-                  backgroundColor: 'canvas.subtle',
-                  padding: 'var(--stack-padding-normal)',
-                  display: 'grid',
-                  gap: 'var(--stack-gap-condensed)',
-                }}
+                marginTop="var(--stack-gap-normal)"
+                border="1px solid"
+                borderColor="border.default"
+                borderRadius="medium"
+                backgroundColor="canvas.subtle"
+                padding="var(--stack-padding-normal)"
+                display="grid"
+                gap="var(--stack-gap-condensed)"
               >
                 <Text as="h4" sx={{ fontWeight: 'bold' }}>
                   {isIncompleteSubscription
@@ -1731,11 +1682,9 @@ export function StripeCheckout({
                     : 'Your plan will switch at the end of the current usage period.'}
                 </Text>
                 <Box
-                  sx={{
-                    display: 'flex',
-                    gap: 'var(--stack-gap-condensed)',
-                    flexWrap: 'wrap',
-                  }}
+                  display="flex"
+                  gap="var(--stack-gap-condensed)"
+                  flexWrap="wrap"
                 >
                   <Button
                     variant="danger"
@@ -1774,20 +1723,16 @@ export function StripeCheckout({
 
   const currentPlanSection = isPaidSubscription ? (
     <Box
-      sx={{
-        borderRight: ['none', '1px solid'],
-        borderColor: 'border.muted',
-        paddingRight: ['0', 'var(--stack-gap-normal)'],
-        alignSelf: 'stretch',
-      }}
+      borderRight={['none', '1px solid']}
+      borderColor="border.muted"
+      paddingRight={['0', 'var(--stack-gap-normal)']}
+      alignSelf="stretch"
     >
       <Box
-        sx={{
-          borderTop: 'none',
-          paddingTop: 0,
-          display: 'grid',
-          gap: 'var(--stack-gap-condensed)',
-        }}
+        borderTop="none"
+        paddingTop={0}
+        display="grid"
+        gap="var(--stack-gap-condensed)"
       >
         <Text as="h3" sx={sectionTitleSx}>
           Current plan
@@ -1804,7 +1749,7 @@ export function StripeCheckout({
           </Text>
         )}
         {displaySubscriptionStatus && (
-          <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+          <Box display="inline-flex" alignItems="center">
             <Label variant="success">{displaySubscriptionStatus}</Label>
           </Box>
         )}
@@ -1830,13 +1775,7 @@ export function StripeCheckout({
           </Text>
         ) : null}
 
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 'var(--stack-gap-condensed)',
-            flexWrap: 'wrap',
-          }}
-        >
+        <Box display="flex" gap="var(--stack-gap-condensed)" flexWrap="wrap">
           {canCancelSubscription && !cancelViewOpen && (
             <Button variant="danger" onClick={onCancelSubscription}>
               Downgrade to Free Plan
@@ -1858,16 +1797,14 @@ export function StripeCheckout({
 
         {cancelViewOpen && (
           <Box
-            sx={{
-              marginTop: 'var(--stack-gap-normal)',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 'var(--borderRadius-medium)',
-              backgroundColor: 'canvas.subtle',
-              padding: 'var(--stack-padding-normal)',
-              display: 'grid',
-              gap: 'var(--stack-gap-condensed)',
-            }}
+            marginTop="var(--stack-gap-normal)"
+            border="1px solid"
+            borderColor="border.default"
+            borderRadius="medium"
+            backgroundColor="canvas.subtle"
+            padding="var(--stack-padding-normal)"
+            display="grid"
+            gap="var(--stack-gap-condensed)"
           >
             <Text as="h4" sx={{ fontWeight: 'bold' }}>
               Downgrade to Free Plan
@@ -1876,11 +1813,9 @@ export function StripeCheckout({
               Your plan will switch at the end of the current usage period.
             </Text>
             <Box
-              sx={{
-                display: 'flex',
-                gap: 'var(--stack-gap-condensed)',
-                flexWrap: 'wrap',
-              }}
+              display="flex"
+              gap="var(--stack-gap-condensed)"
+              flexWrap="wrap"
             >
               <Button
                 variant="danger"
@@ -1915,11 +1850,9 @@ export function StripeCheckout({
   const disabledTopCards = topCards ? (
     <Box
       aria-disabled="true"
-      sx={{
-        pointerEvents: 'none',
-        opacity: 0.5,
-        userSelect: 'none',
-      }}
+      pointerEvents="none"
+      opacity={0.5}
+      userSelect="none"
     >
       {topCards}
     </Box>
@@ -2005,20 +1938,18 @@ export function StripeCheckout({
       );
     } else {
       view = (
-        <Box sx={{ flex: '1 1 auto', display: 'grid', gap: 3 }}>
+        <Box flex="1 1 auto" display="grid" gap={3}>
           <Box
-            sx={{
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 'var(--borderRadius-medium)',
-              backgroundColor: 'canvas.default',
-              padding: 'var(--stack-padding-normal)',
-              display: 'flex',
-              gap: 'var(--stack-gap-normal)',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-            }}
+            border="1px solid"
+            borderColor="border.default"
+            borderRadius="medium"
+            backgroundColor="canvas.default"
+            padding="var(--stack-padding-normal)"
+            display="flex"
+            gap="var(--stack-gap-normal)"
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
           >
             <Text as="p">Preparing Stripe checkout…</Text>
             <Button variant="default" onClick={cancelStripeCheckout}>
@@ -2031,20 +1962,18 @@ export function StripeCheckout({
     }
   } else if (isReturningFromCheckout) {
     view = (
-      <Box sx={{ flex: '1 1 auto', display: 'grid', gap: 3 }}>
+      <Box flex="1 1 auto" display="grid" gap={3}>
         <Box
-          sx={{
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 'var(--borderRadius-medium)',
-            backgroundColor: 'canvas.default',
-            padding: 'var(--stack-padding-normal)',
-            display: 'flex',
-            gap: 'var(--stack-gap-normal)',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-          }}
+          border="1px solid"
+          borderColor="border.default"
+          borderRadius="medium"
+          backgroundColor="canvas.default"
+          padding="var(--stack-padding-normal)"
+          display="flex"
+          gap="var(--stack-gap-normal)"
+          alignItems="center"
+          justifyContent="center"
+          flexWrap="wrap"
         >
           <Spinner size="small" />
           <Text as="p">Refreshing plan status…</Text>
@@ -2054,7 +1983,7 @@ export function StripeCheckout({
     );
   } else if (isTopUpPricesPending) {
     view = (
-      <Box sx={{ minHeight: '40px', display: 'grid', placeItems: 'center' }}>
+      <Box minHeight="40px" display="grid" placeItems="center">
         <Spinner />
       </Box>
     );
@@ -2072,7 +2001,7 @@ export function StripeCheckout({
   } else {
     view = items.length ? (
       <Box
-        sx={{ flex: '1 1 auto' }}
+        flex="1 1 auto"
         onKeyDown={event => {
           if (product && event.key === 'Enter') {
             void startCheckout();
@@ -2080,53 +2009,47 @@ export function StripeCheckout({
         }}
       >
         <Box
-          sx={{
-            marginTop: 'var(--stack-gap-normal)',
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 'var(--borderRadius-medium)',
-            backgroundColor: 'canvas.default',
-            padding: 'var(--stack-padding-normal)',
-            display: 'grid',
-            gap: 'var(--stack-gap-normal)',
-            gridTemplateColumns:
-              shouldShowMonthlySubscriptionSection || currentPlanSection
-                ? ['1fr', 'minmax(0, 1fr) minmax(0, 1fr)']
-                : ['1fr'],
-            alignItems: 'stretch',
-          }}
+          marginTop="var(--stack-gap-normal)"
+          border="1px solid"
+          borderColor="border.default"
+          borderRadius="medium"
+          backgroundColor="canvas.default"
+          padding="var(--stack-padding-normal)"
+          display="grid"
+          gap="var(--stack-gap-normal)"
+          gridTemplateColumns={
+            shouldShowMonthlySubscriptionSection || currentPlanSection
+              ? ['1fr', 'minmax(0, 1fr) minmax(0, 1fr)']
+              : ['1fr']
+          }
+          alignItems="stretch"
         >
           {shouldShowMonthlySubscriptionSection ? (
             <Box
-              sx={{
-                borderRight: ['none', '1px solid'],
-                borderColor: 'border.muted',
-                paddingRight: ['0', 'var(--stack-gap-normal)'],
-                alignSelf: 'stretch',
-              }}
+              borderRight={['none', '1px solid']}
+              borderColor="border.muted"
+              paddingRight={['0', 'var(--stack-gap-normal)']}
+              alignSelf="stretch"
             >
               {monthlySubscriptionSection}
             </Box>
           ) : null}
           {currentPlanSection}
           <Box
-            sx={{
-              paddingLeft:
-                shouldShowMonthlySubscriptionSection || currentPlanSection
-                  ? ['0', 'var(--stack-gap-normal)']
-                  : 0,
-            }}
+            paddingLeft={
+              shouldShowMonthlySubscriptionSection || currentPlanSection
+                ? ['0', 'var(--stack-gap-normal)']
+                : 0
+            }
           >
             {topUpSection}
           </Box>
           {isStripeTestConfiguration ? (
             <Box
-              sx={{
-                gridColumn: ['1', '1 / -1'],
-                borderTop: '1px solid',
-                borderColor: 'border.muted',
-                paddingTop: 'var(--stack-gap-normal)',
-              }}
+              gridColumn={['1', '1 / -1']}
+              borderTop="1px solid"
+              borderColor="border.muted"
+              paddingTop="var(--stack-gap-normal)"
             >
               <Label variant="attention">Stripe test configuration</Label>
             </Box>

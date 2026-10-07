@@ -154,7 +154,9 @@ export const SpaceDisplay: React.FC<SpaceDisplayProps> = ({
         <Box
           as="span"
           aria-hidden="true"
-          sx={{ display: 'inline-flex', color: 'fg.muted', flexShrink: 0 }}
+          display="inline-flex"
+          color="fg.muted"
+          flexShrink={0}
         >
           <SpaceIcon size={iconSize} />
         </Box>

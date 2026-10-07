@@ -211,7 +211,7 @@ export const PolicyForm = ({
   notes = {},
   belowAllowedClients,
 }: PolicyFormProps): JSX.Element => (
-  <Box sx={{ display: 'grid', gap: 3 }}>
+  <Box display="grid" gap={3}>
     <FormControl>
       <FormControl.Label>Denied tools</FormControl.Label>
       <Textarea
@@ -265,16 +265,10 @@ export const PolicyForm = ({
         allowlist, for the same reason as above.
       </FormControl.Caption>
       <Note>{notes.allowedClients}</Note>
-      {belowAllowedClients && <Box sx={{ mt: 2 }}>{belowAllowedClients}</Box>}
+      {belowAllowedClients && <Box mt={2}>{belowAllowedClients}</Box>}
     </FormControl>
 
-    <Box
-      sx={{
-        display: 'grid',
-        gap: 3,
-        gridTemplateColumns: ['1fr', '1fr 1fr 1fr'],
-      }}
-    >
+    <Box display="grid" gap={3} gridTemplateColumns={['1fr', '1fr 1fr 1fr']}>
       <FormControl>
         <FormControl.Label>Calls per minute</FormControl.Label>
         <TextInput
@@ -390,13 +384,7 @@ export const PolicyForm = ({
         tool call: a session's age and how it began are facts about the grant,
         and the grant is IAM's. Drawn apart from the caps above for that
         reason — they are the same page, not the same enforcement point. */}
-    <Box
-      sx={{
-        display: 'grid',
-        gap: 3,
-        gridTemplateColumns: ['1fr', '1fr 1fr'],
-      }}
-    >
+    <Box display="grid" gap={3} gridTemplateColumns={['1fr', '1fr 1fr']}>
       <FormControl>
         <FormControl.Label>Session at most</FormControl.Label>
         <TextInput
@@ -420,7 +408,7 @@ export const PolicyForm = ({
         <FormControl.Label>
           Your directory may stand in for the consent screen
         </FormControl.Label>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+        <Box display="flex" alignItems="center" gap={2} mt={1}>
           <ToggleSwitch
             size="small"
             checked={draft.ssoAdmitsWithoutConsent === 'true'}

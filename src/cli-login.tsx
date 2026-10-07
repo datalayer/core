@@ -5,9 +5,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Box, Button, Spinner, Text } from '@primer/react';
+import { Button, Spinner, Text } from '@primer/react';
 import { ShieldLockIcon } from '@primer/octicons-react';
 import {
+  Box,
   DatalayerThemeProvider,
   themeConfigs,
   createThemeStore,
@@ -119,23 +120,19 @@ function SignInCLIApp() {
       themeStyles={cfg.themeStyles}
     >
       <Box
-        sx={{
-          minHeight: '100vh',
-          bg: 'canvas.default',
-          color: 'fg.default',
-          position: 'relative',
-        }}
+        minHeight="100vh"
+        bg="canvas.default"
+        color="fg.default"
+        position="relative"
       >
         <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            right: 0,
-            zIndex: 20,
-            p: 3,
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
+          position="fixed"
+          top={0}
+          right={0}
+          zIndex={20}
+          p={3}
+          display="flex"
+          justifyContent="flex-end"
         >
           <AppearanceControlsWithStore useStore={useCliThemeStore} />
         </Box>
@@ -147,12 +144,10 @@ function SignInCLIApp() {
   if (state === 'checking') {
     return renderLayout(
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-        }}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        minHeight="100vh"
       >
         <Spinner />
       </Box>,
@@ -162,51 +157,33 @@ function SignInCLIApp() {
   if (state === 'success') {
     return renderLayout(
       <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: 3,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
+        minHeight="100vh"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        px={3}
+        position="relative"
+        overflow="hidden"
       >
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            opacity: 0.45,
-            pointerEvents: 'none',
-          }}
-        >
+        <Box position="absolute" inset={0} opacity={0.45} pointerEvents="none">
           <SvgUsecasesHero />
         </Box>
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            zIndex: 2,
-          }}
-        >
+        <Box position="absolute" inset={0} pointerEvents="none" zIndex={2}>
           <ConfettiSuccess />
         </Box>
         <Box
-          sx={{
-            position: 'relative',
-            zIndex: 3,
-            textAlign: 'center',
-            maxWidth: 560,
-            p: 4,
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'border.default',
-            bg: 'canvas.default',
-          }}
+          position="relative"
+          zIndex={3}
+          textAlign="center"
+          maxWidth={560}
+          p={4}
+          borderRadius={2}
+          border="1px solid"
+          borderColor="border.default"
+          bg="canvas.default"
         >
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <Box sx={{ width: 210 }}>
+          <Box display="flex" justifyContent="center" mb={3}>
+            <Box width={210}>
               <SvgLinesLogo height={32} />
             </Box>
           </Box>
@@ -224,7 +201,7 @@ function SignInCLIApp() {
               {closeHelp}
             </Text>
           )}
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Box display="flex" justifyContent="center">
             <Button onClick={handleCloseWindow}>Close this window</Button>
           </Box>
         </Box>

@@ -20,7 +20,8 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { Box, Text, Button, Label } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { Text, Button, Label } from '@primer/react';
 import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
 import { getOtelConsumeUrl } from '../../state/substates/CoreState';
 import type {
@@ -383,23 +384,21 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
 
   return (
     <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minHeight: 0,
-        height: '100%',
-        color: 'fg.default',
-        bg: 'canvas.default',
-        border: '1px solid',
-        borderColor: 'border.default',
-        borderRadius: 2,
-        overflow: 'hidden',
-      }}
+      display="flex"
+      flexDirection="column"
+      flex={1}
+      minHeight={0}
+      height="100%"
+      color="fg.default"
+      bg="canvas.default"
+      border="1px solid"
+      borderColor="border.default"
+      borderRadius={2}
+      overflow="hidden"
     >
       {/* ─── Search Bar ─── */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-        <Box sx={{ flex: 1 }}>
+      <Box display="flex" alignItems="center" gap={0}>
+        <Box flex={1}>
           <OtelSearchBar
             signal={signal}
             onSignalChange={setSignal}
@@ -419,7 +418,7 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
           />
         </Box>
         {/* WebSocket status indicator */}
-        <Box sx={{ pr: 2, flexShrink: 0 }}>
+        <Box pr={2} flexShrink={0}>
           <Label variant={wsConnected ? 'success' : 'secondary'} size="small">
             {wsConnected ? '● Live' : '○ Polling'}
           </Label>
@@ -429,17 +428,15 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
       {/* ─── Timeline Range Slider ─── */}
       {timelineBounds && rangeStart && rangeEnd && (
         <Box
-          sx={{
-            px: 3,
-            pt: 2,
-            pb: 1,
-            borderBottom: '1px solid',
-            borderColor: 'border.default',
-            bg: 'canvas.subtle',
-            flexShrink: 0,
-            position: 'relative',
-            zIndex: 0,
-          }}
+          px={3}
+          pt={2}
+          pb={1}
+          borderBottom="1px solid"
+          borderColor="border.default"
+          bg="canvas.subtle"
+          flexShrink={0}
+          position="relative"
+          zIndex={0}
         >
           <OtelTimelineRangeSlider
             timelineStart={timelineBounds.start}
@@ -455,16 +452,14 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
       )}
 
       {/* ─── Main area (list + detail) ─── */}
-      <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <Box display="flex" flex={1} minHeight={0} overflow="hidden">
         {/* Left: signal list */}
         <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            flex: hasDetail ? '0 0 55%' : '1 1 100%',
-            minHeight: 0,
-            overflow: 'hidden',
-          }}
+          display="flex"
+          flexDirection="column"
+          flex={hasDetail ? '0 0 55%' : '1 1 100%'}
+          minHeight={0}
+          overflow="hidden"
         >
           {signal === 'traces' && (
             <OtelTracesList
@@ -493,13 +488,11 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
         {/* Right: detail panel */}
         {hasDetail && (
           <Box
-            sx={{
-              flex: '0 0 45%',
-              minHeight: 0,
-              overflow: 'auto',
-              borderLeft: '1px solid',
-              borderColor: 'border.default',
-            }}
+            flex="0 0 45%"
+            minHeight={0}
+            overflow="auto"
+            borderLeft="1px solid"
+            borderColor="border.default"
           >
             {signal === 'traces' && selectedSpan && (
               <OtelSpanDetail
@@ -509,14 +502,8 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
               />
             )}
             {signal === 'logs' && selectedLogIdx !== null && logs && (
-              <Box sx={{ p: 3 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    mb: 3,
-                  }}
-                >
+              <Box p={3}>
+                <Box display="flex" justifyContent="space-between" mb={3}>
                   <Text sx={{ fontWeight: 'bold', fontSize: 2 }}>
                     Log Detail
                   </Text>
@@ -530,13 +517,11 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
                 </Box>
                 <Box
                   as="pre"
-                  sx={{
-                    m: 0,
-                    fontSize: 1,
-                    fontFamily: 'mono',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                  }}
+                  m={0}
+                  fontSize={1}
+                  fontFamily="mono"
+                  whiteSpace="pre-wrap"
+                  wordBreak="break-word"
                 >
                   {JSON.stringify(logs[selectedLogIdx], null, 2)}
                 </Box>
@@ -550,16 +535,14 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
       {signal === 'traces' && selectedSpan && spanTree.length > 0 && (
         <>
           <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              px: 3,
-              py: 1,
-              bg: 'canvas.subtle',
-              borderTop: '1px solid',
-              borderColor: 'border.default',
-              flexShrink: 0,
-            }}
+            display="flex"
+            gap={1}
+            px={3}
+            py={1}
+            bg="canvas.subtle"
+            borderTop="1px solid"
+            borderColor="border.default"
+            flexShrink={0}
           >
             <Button
               size="small"
@@ -582,13 +565,11 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
           {/* Bottom pane content */}
           {bottomPane && (
             <Box
-              sx={{
-                height: 260,
-                overflow: 'auto',
-                borderTop: '1px solid',
-                borderColor: 'border.default',
-                flexShrink: 0,
-              }}
+              height={260}
+              overflow="auto"
+              borderTop="1px solid"
+              borderColor="border.default"
+              flexShrink={0}
             >
               {bottomPane === 'timeline' && (
                 <OtelTimeline

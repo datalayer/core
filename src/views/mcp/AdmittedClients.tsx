@@ -79,26 +79,19 @@ const Row = ({ client }: { client: AdmittedClient }): JSX.Element => {
 
   return (
     <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: 'auto 1fr',
-        gap: 2,
-        alignItems: 'start',
-        py: 2,
-        borderTop: '1px solid',
-        borderColor: 'border.muted',
-      }}
+      display="grid"
+      gridTemplateColumns="auto 1fr"
+      gap={2}
+      alignItems="start"
+      py={2}
+      borderTop="1px solid"
+      borderColor="border.muted"
     >
-      <Box sx={{ color: tone, pt: '2px' }}>{icon}</Box>
-      <Box sx={{ display: 'grid', gap: 1, minWidth: 0 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
+      <Box color={tone} pt="2px">
+        {icon}
+      </Box>
+      <Box display="grid" gap={1} minWidth={0}>
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
           {client.clientName && (
             <Text sx={{ fontWeight: 'semibold' }}>{client.clientName}</Text>
           )}
@@ -163,7 +156,7 @@ export const AdmittedClients = ({
 
   if (described.isPending && !described.data) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+      <Box display="flex" justifyContent="center" py={3}>
         <Spinner size="small" />
       </Box>
     );
@@ -199,7 +192,7 @@ export const AdmittedClients = ({
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 1 }}>
+    <Box display="grid" gap={1}>
       {edited && (
         <Text as="p" sx={{ fontSize: 0, color: 'attention.fg', m: 0 }}>
           Describing the <strong>saved</strong> list. Save to check what you

@@ -177,14 +177,12 @@ const Count = ({
   onOpen?: (to: string) => void;
 }): JSX.Element => (
   <Box
-    sx={{
-      p: 3,
-      border: '1px solid',
-      borderColor: 'border.default',
-      borderRadius: 2,
-      bg: 'canvas.default',
-      minWidth: 0,
-    }}
+    p={3}
+    border="1px solid"
+    borderColor="border.default"
+    borderRadius={2}
+    bg="canvas.default"
+    minWidth={0}
   >
     <Text
       sx={{
@@ -479,7 +477,7 @@ export const McpDashboard = ({
       id: 'last-tool',
       renderCell: row =>
         row.lastCall ? (
-          <Box sx={{ display: 'grid', gap: '2px', minWidth: 0 }}>
+          <Box display="grid" gap="2px" minWidth={0}>
             <Text sx={{ fontSize: 0 }}>
               {row.lastCall.tool || row.lastCall.method}
             </Text>
@@ -620,7 +618,7 @@ export const McpDashboard = ({
       id: 'capabilities',
       width: 'growCollapse',
       renderCell: row => (
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Box display="flex" gap={1} flexWrap="wrap">
           {(row.capabilities ?? []).map(capability => (
             <Label key={capability} size="small" variant="secondary">
               {capability}
@@ -668,7 +666,7 @@ export const McpDashboard = ({
       width: '190px',
       align: 'end',
       renderCell: row => (
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+        <Box display="flex" gap={2} justifyContent="flex-end">
           {/* Only what Runtimes can be asked about: a sandbox is shared by
               its runtime's name, and a binding still reserving has none. */}
           {sandboxSharingUrl(runtimesUrl, row.runtimeName) && (
@@ -699,7 +697,7 @@ export const McpDashboard = ({
       field: 'tool',
       rowHeader: true,
       renderCell: row => (
-        <Box sx={{ display: 'grid', gap: '2px', minWidth: 0 }}>
+        <Box display="grid" gap="2px" minWidth={0}>
           <Text sx={{ fontSize: 1 }}>{row.tool || row.method}</Text>
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{timeAgo(row.at)}</Text>
         </Box>
@@ -770,7 +768,7 @@ export const McpDashboard = ({
       renderCell: row => {
         const trace = traceFor(row);
         return (
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Box display="flex" gap={2} justifyContent="flex-end">
             <Link
               as="button"
               sx={{ fontSize: 0, cursor: 'pointer' }}
@@ -795,7 +793,7 @@ export const McpDashboard = ({
 
   if (activity.isError) {
     return (
-      <Box sx={{ display: 'grid', gap: 3 }}>
+      <Box display="grid" gap={3}>
         <McpErrorBlankslate
           state={errorState(activity.error, 'MCP activity')}
           onRetry={() => activity.refetch()}
@@ -807,7 +805,7 @@ export const McpDashboard = ({
   const loading = activity.isPending && !data;
 
   return (
-    <Box sx={{ display: 'grid', gap: 4, minWidth: 0 }}>
+    <Box display="grid" gap={4} minWidth={0}>
       {showTitle && (
         <Box>
           <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -822,20 +820,18 @@ export const McpDashboard = ({
       {/* Is anything happening: the counts, before the detail of it. */}
       {draws('overview') &&
         (loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+          <Box display="flex" justifyContent="center" py={5}>
             <Spinner />
           </Box>
         ) : (
           <Box
-            sx={{
-              display: 'grid',
-              gap: 3,
-              gridTemplateColumns: [
-                'repeat(2, 1fr)',
-                'repeat(3, 1fr)',
-                'repeat(6, 1fr)',
-              ],
-            }}
+            display="grid"
+            gap={3}
+            gridTemplateColumns={[
+              'repeat(2, 1fr)',
+              'repeat(3, 1fr)',
+              'repeat(6, 1fr)',
+            ]}
           >
             <Count
               label="Clients connected"
@@ -990,7 +986,7 @@ export const McpDashboard = ({
               that outlives this page.
             </Table.Subtitle>
             <Table.Actions>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Box display="flex" gap={2} alignItems="center">
                 <Select
                   size="small"
                   aria-label="Filter by client"
@@ -1041,14 +1037,7 @@ export const McpDashboard = ({
                 columns={callColumns}
               />
             ) : (
-              <Box
-                sx={{
-                  p: 4,
-                  textAlign: 'center',
-                  color: 'fg.muted',
-                  fontSize: 1,
-                }}
-              >
+              <Box p={4} textAlign="center" color="fg.muted" fontSize={1}>
                 No call matches these filters.
               </Box>
             )}

@@ -171,14 +171,14 @@ export const OrganizationPolicy = ({
 
   if (layer.isPending && layer.data === undefined) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+      <Box display="flex" justifyContent="center" py={5}>
         <Spinner />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: 3, minWidth: 0, maxWidth: '52rem' }}>
+    <Box display="grid" gap={3} minWidth={0} maxWidth="52rem">
       {showTitle && (
         <Box>
           <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
@@ -195,7 +195,7 @@ export const OrganizationPolicy = ({
       {conflict && (
         <Flash variant="warning">
           <Text sx={{ fontSize: 1 }}>{conflict}</Text>
-          <Box sx={{ mt: 2 }}>
+          <Box mt={2}>
             <Button
               size="small"
               onClick={() => {
@@ -229,7 +229,7 @@ export const OrganizationPolicy = ({
       />
 
       {!readOnly && (
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box display="flex" gap={2} alignItems="center">
           <Button
             variant="primary"
             onClick={apply}
@@ -243,7 +243,7 @@ export const OrganizationPolicy = ({
             </Button>
           )}
           {layer.data && (
-            <Box sx={{ marginLeft: 'auto' }}>
+            <Box marginLeft="auto">
               <Button variant="danger" onClick={() => setRemoving(true)}>
                 Remove policy
               </Button>
@@ -253,13 +253,11 @@ export const OrganizationPolicy = ({
       )}
 
       <Box
-        sx={{
-          borderTop: '1px solid',
-          borderColor: 'border.muted',
-          pt: 3,
-          display: 'grid',
-          gap: 2,
-        }}
+        borderTop="1px solid"
+        borderColor="border.muted"
+        pt={3}
+        display="grid"
+        gap={2}
       >
         <Text as="h3" sx={{ fontSize: 1, fontWeight: 'semibold', m: 0 }}>
           History

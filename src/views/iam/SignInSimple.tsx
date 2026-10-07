@@ -22,8 +22,8 @@ import React, {
 } from 'react';
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { createGlobalStyle } from 'styled-components';
+import { Box } from '@datalayer/primer-addons';
 import {
-  Box,
   Button,
   FormControl,
   Heading,
@@ -572,36 +572,27 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   return (
     <Box
       className="signin-input-theme-scope"
-      sx={{
-        display: 'flex',
-        alignItems:
-          hideHero || compactDocMode || !fillHeight ? 'flex-start' : 'center',
-        justifyContent: 'center',
-        minHeight: hideHero || compactDocMode || !fillHeight ? 'auto' : '100vh',
-        bg: hideHero ? 'transparent' : 'canvas.default',
-        color: 'fg.default',
-        py: hideHero ? 0 : compactDocMode ? 2 : 4,
-      }}
+      display="flex"
+      alignItems={
+        hideHero || compactDocMode || !fillHeight ? 'flex-start' : 'center'
+      }
+      justifyContent="center"
+      minHeight={hideHero || compactDocMode || !fillHeight ? 'auto' : '100vh'}
+      bg={hideHero ? 'transparent' : 'canvas.default'}
+      color="fg.default"
+      py={hideHero ? 0 : compactDocMode ? 2 : 4}
     >
       <SignInInputGlobalStyle />
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: 440,
-          p: 0,
-        }}
-      >
+      <Box width="100%" maxWidth={440} p={0}>
         {/* Header / Branding */}
         {!hideHero && (
           <>
             <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                mb: compactDocMode ? 2 : 3,
-                justifyContent: 'center',
-              }}
+              display="flex"
+              alignItems="center"
+              gap={2}
+              mb={compactDocMode ? 2 : 3}
+              justifyContent="center"
             >
               {headingIcon}
               <Heading sx={{ fontSize: 3 }}>{headingText}</Heading>
@@ -622,7 +613,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         )}
 
         {(calloutTitle || calloutDescription) && (
-          <Box sx={{ mb: 3, textAlign: 'center' }}>
+          <Box mb={3} textAlign="center">
             {calloutTitle && (
               <Heading as="h3" sx={{ fontSize: 2, mb: 1 }}>
                 {calloutTitle}
@@ -704,7 +695,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
 
         {/* ---- Password toggle ---- */}
         {!mfaUserUid && !showPasswordForm && (
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+          <Box mt={3} display="flex" justifyContent="center">
             <Button
               leadingVisual={KeyIcon}
               size="large"
@@ -720,7 +711,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
 
         {/* ---- Password form ---- */}
         {!mfaUserUid && showPasswordForm && (
-          <Box sx={{ mt: 4 }}>
+          <Box mt={4}>
             <FormControl required sx={{ mb: 3 }}>
               <FormControl.Label>Username</FormControl.Label>
               <TextInput
@@ -759,12 +750,10 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
             </FormControl>
 
             <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                mt: 3,
-              }}
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              mt={3}
             >
               <Button
                 variant="primary"
@@ -836,13 +825,11 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         {/* ---- Sign up with email ---- */}
         {signUp && (
           <Box
-            sx={{
-              mt: 4,
-              pt: 4,
-              textAlign: 'center',
-              borderTop: '1px solid',
-              borderColor: 'border.muted',
-            }}
+            mt={4}
+            pt={4}
+            textAlign="center"
+            borderTop="1px solid"
+            borderColor="border.muted"
           >
             <Heading as="h3" sx={{ fontSize: 2, mb: 2 }}>
               {signUpTitle}
@@ -850,7 +837,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
             <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, mb: 3 }}>
               {signUpDescription}
             </Text>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Box display="flex" justifyContent="center">
               <Button
                 variant="primary"
                 size="large"
@@ -867,17 +854,10 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         {/* API Key */}
         {apiKey && onApiKeySignIn && (
           <>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                my: 3,
-              }}
-            >
-              <Box sx={{ flex: 1, height: '1px', bg: 'border.default' }} />
+            <Box display="flex" alignItems="center" gap={2} my={3}>
+              <Box flex={1} height="1px" bg="border.default" />
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>or</Text>
-              <Box sx={{ flex: 1, height: '1px', bg: 'border.default' }} />
+              <Box flex={1} height="1px" bg="border.default" />
             </Box>
             <Button
               block
@@ -899,16 +879,14 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                   }
                 }}
                 onClick={closeApiKeyDialog}
-                sx={{
-                  position: 'fixed',
-                  inset: 0,
-                  zIndex: 200,
-                  p: 3,
-                  bg: 'canvas.backdrop',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                position="fixed"
+                inset={0}
+                zIndex={200}
+                p={3}
+                bg="canvas.backdrop"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
               >
                 <Box
                   as="form"
@@ -917,16 +895,14 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                     event.preventDefault();
                     handleApiKeyAuthenticate();
                   }}
-                  sx={{
-                    width: 'min(560px, 100%)',
-                    p: 3,
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'border.default',
-                    bg: 'canvas.overlay',
-                    color: 'fg.default',
-                    boxShadow: 'shadow.large',
-                  }}
+                  width="min(560px, 100%)"
+                  p={3}
+                  borderRadius={2}
+                  border="1px solid"
+                  borderColor="border.default"
+                  bg="canvas.overlay"
+                  color="fg.default"
+                  boxShadow="shadow.large"
                 >
                   <Heading
                     id="signin-api-key-title"
@@ -946,14 +922,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                       ref={apiKeyRef}
                     />
                   </FormControl>
-                  <Box
-                    sx={{
-                      mt: 3,
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      gap: 2,
-                    }}
-                  >
+                  <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
                     <Button type="button" onClick={closeApiKeyDialog}>
                       Cancel
                     </Button>

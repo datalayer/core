@@ -146,17 +146,15 @@ const QuotaCard = ({
   const fraction = quota?.fraction;
   return (
     <Box
-      sx={{
-        border: '1px solid',
-        borderColor: 'border.default',
-        borderRadius: 2,
-        p: 3,
-        flex: '1 1 220px',
-        minWidth: 0,
-      }}
+      border="1px solid"
+      borderColor="border.default"
+      borderRadius={2}
+      p={3}
+      flex="1 1 220px"
+      minWidth={0}
     >
       <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>{label}</Text>
-      <Box sx={{ mt: 2, display: 'flex', alignItems: 'baseline', gap: 2 }}>
+      <Box mt={2} display="flex" alignItems="baseline" gap={2}>
         {quota?.unknown ? (
           <Text sx={{ fontSize: 2, color: 'fg.muted' }}>Not available</Text>
         ) : (
@@ -173,7 +171,7 @@ const QuotaCard = ({
         )}
       </Box>
       {typeof fraction === 'number' && (
-        <Box sx={{ mt: 2 }}>
+        <Box mt={2}>
           <ProgressBar
             progress={Math.min(100, fraction * 100)}
             barSize="small"
@@ -204,7 +202,7 @@ export const OrganizationUsage = ({
 
   if (usage.isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
+      <Box display="flex" justifyContent="center" p={6}>
         <Spinner />
       </Box>
     );
@@ -234,7 +232,7 @@ export const OrganizationUsage = ({
         not here.
       </Text>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+      <Box display="flex" flexWrap="wrap" gap={3}>
         {QUOTAS.map(quota => (
           <QuotaCard
             key={quota.key}

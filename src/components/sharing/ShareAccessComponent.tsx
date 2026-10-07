@@ -615,14 +615,13 @@ export function hydrateAccessFromSharing(
 function AvatarShimmer({ size = 20 }: { size?: number }): JSX.Element {
   return (
     <Box
+      width={size}
+      height={size}
+      borderRadius="50%"
+      backgroundImage="linear-gradient(90deg, var(--bgColor-muted, #d0d7de) 25%, var(--bgColor-default, #ffffff) 50%, var(--bgColor-muted, #d0d7de) 75%)"
+      backgroundSize="220% 100%"
+      animation="avatarShimmerAcl 1.2s ease-in-out infinite"
       sx={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        backgroundImage:
-          'linear-gradient(90deg, var(--bgColor-muted, #d0d7de) 25%, var(--bgColor-default, #ffffff) 50%, var(--bgColor-muted, #d0d7de) 75%)',
-        backgroundSize: '220% 100%',
-        animation: 'avatarShimmerAcl 1.2s ease-in-out infinite',
         '@keyframes avatarShimmerAcl': {
           '0%': { backgroundPosition: '100% 0' },
           '100%': { backgroundPosition: '-100% 0' },
@@ -644,17 +643,15 @@ function AvatarShimmer({ size = 20 }: { size?: number }): JSX.Element {
 function AgentAvatar({ size = 20 }: { size?: number }): JSX.Element {
   return (
     <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: size,
-        height: size,
-        borderRadius: 2,
-        bg: 'canvas.subtle',
-        color: 'fg.muted',
-        flexShrink: 0,
-      }}
+      display="inline-flex"
+      alignItems="center"
+      justifyContent="center"
+      width={size}
+      height={size}
+      borderRadius={2}
+      bg="canvas.subtle"
+      color="fg.muted"
+      flexShrink={0}
       aria-label="Agent"
     >
       <KeyIcon size={Math.max(12, Math.round(size * 0.6))} />
@@ -673,13 +670,11 @@ function AgentPrincipalChip({
 }): JSX.Element {
   return (
     <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1,
-        minWidth: 0,
-        flexWrap: 'wrap',
-      }}
+      display="inline-flex"
+      alignItems="center"
+      gap={1}
+      minWidth={0}
+      flexWrap="wrap"
     >
       <AgentAvatar size={size} />
       <Text sx={{ minWidth: 0 }}>{displayName}</Text>
@@ -735,14 +730,7 @@ function OwnerPrincipalRow({
     (ownerPrincipal.kind === 'personal' ? 'Datalayer' : undefined);
 
   return (
-    <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1,
-        flexWrap: 'wrap',
-      }}
-    >
+    <Box display="inline-flex" alignItems="center" gap={1} flexWrap="wrap">
       {showAvatarSkeleton ? (
         <>
           <AvatarShimmer size={20} />
@@ -797,14 +785,7 @@ function AccessPrincipalRow({
   );
 
   return (
-    <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1,
-        flexWrap: 'wrap',
-      }}
-    >
+    <Box display="inline-flex" alignItems="center" gap={1} flexWrap="wrap">
       {showAvatarSkeleton ? (
         <>
           <AvatarShimmer size={20} />
@@ -1860,38 +1841,32 @@ export function ShareAccessComponent({
           }
         }}
         disabled={alreadyAdded || isSaving || isReadOnly}
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        gap={2}
+        px={2}
+        py={2}
+        cursor={
+          alreadyAdded || isSaving || isReadOnly ? 'not-allowed' : 'pointer'
+        }
+        opacity={alreadyAdded ? 0.55 : 1}
+        borderRadius={2}
+        borderWidth={1}
+        borderStyle="solid"
+        borderColor="border.default"
+        bg="canvas.default"
+        hover={{
+          bg:
+            alreadyAdded || isSaving || isReadOnly
+              ? 'canvas.default'
+              : 'canvas.subtle',
+        }}
         sx={{
           all: 'unset',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 2,
-          px: 2,
-          py: 2,
-          cursor:
-            alreadyAdded || isSaving || isReadOnly ? 'not-allowed' : 'pointer',
-          opacity: alreadyAdded ? 0.55 : 1,
-          borderRadius: 2,
-          borderWidth: 1,
-          borderStyle: 'solid',
-          borderColor: 'border.default',
-          bg: 'canvas.default',
-          ':hover': {
-            bg:
-              alreadyAdded || isSaving || isReadOnly
-                ? 'canvas.default'
-                : 'canvas.subtle',
-          },
         }}
       >
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 2,
-            minWidth: 0,
-          }}
-        >
+        <Box display="inline-flex" alignItems="center" gap={2} minWidth={0}>
           {principal.kind === 'agent' ? (
             <AgentAvatar size={22} />
           ) : (
@@ -1902,14 +1877,12 @@ export function ShareAccessComponent({
               size={22}
             />
           )}
-          <Box sx={{ display: 'grid', minWidth: 0 }}>
+          <Box display="grid" minWidth={0}>
             <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 1,
-                flexWrap: 'wrap',
-              }}
+              display="inline-flex"
+              alignItems="center"
+              gap={1}
+              flexWrap="wrap"
             >
               <Text sx={{ fontWeight: 'semibold' }}>{displayName}</Text>
               {principal.kind === 'personal' &&
@@ -1930,7 +1903,7 @@ export function ShareAccessComponent({
             </Text>
           </Box>
         </Box>
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+        <Box display="inline-flex" alignItems="center" gap={1}>
           <Icon size={14} />
           {alreadyAdded ? (
             <Label size="small" variant="success">
@@ -1952,7 +1925,7 @@ export function ShareAccessComponent({
       return null;
     }
     return (
-      <Box sx={{ display: 'grid', gap: 1 }}>
+      <Box display="grid" gap={1}>
         <Text
           sx={{
             fontSize: 0,
@@ -1963,7 +1936,7 @@ export function ShareAccessComponent({
         >
           {label}
         </Text>
-        <Box sx={{ display: 'grid', gap: 1 }}>
+        <Box display="grid" gap={1}>
           {items.map(renderShareablePrincipalRow)}
         </Box>
       </Box>
@@ -1971,20 +1944,18 @@ export function ShareAccessComponent({
   };
 
   const content = (
-    <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box p={3} display="flex" flexDirection="column" gap={3}>
       {sharingAccessMessage && (
         <Box
-          sx={{
-            px: 3,
-            py: 3,
-            borderRadius: 2,
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'attention.muted',
-            bg: 'attention.subtle',
-            display: 'grid',
-            gap: 1,
-          }}
+          px={3}
+          py={3}
+          borderRadius={2}
+          borderWidth={1}
+          borderStyle="solid"
+          borderColor="attention.muted"
+          bg="attention.subtle"
+          display="grid"
+          gap={1}
         >
           <Text sx={{ fontWeight: 600 }}>Sharing access is restricted</Text>
           <Text sx={{ color: 'fg.muted' }}>{sharingAccessMessage}</Text>
@@ -1992,32 +1963,28 @@ export function ShareAccessComponent({
       )}
 
       <Box
-        sx={{
-          opacity: isReadOnly ? 0.6 : 1,
-          pointerEvents: isReadOnly ? 'none' : 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 3,
-        }}
+        opacity={isReadOnly ? 0.6 : 1}
+        pointerEvents={isReadOnly ? 'none' : 'auto'}
+        display="flex"
+        flexDirection="column"
+        gap={3}
         aria-disabled={isReadOnly}
       >
         {/* Header: resource info + level selector */}
         <Box
-          sx={{
-            px: 3,
-            py: 2,
-            borderRadius: 2,
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'border.default',
-            bg: 'canvas.subtle',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
+          px={3}
+          py={2}
+          borderRadius={2}
+          borderWidth={1}
+          borderStyle="solid"
+          borderColor="border.default"
+          bg="canvas.subtle"
+          display="flex"
+          alignItems="flex-start"
+          justifyContent="space-between"
+          gap={2}
         >
-          <Box sx={{ display: 'grid', gap: 1 }}>
+          <Box display="grid" gap={1}>
             <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
               Share {resourceName || `this ${resourceLabel.toLowerCase()}`}.
               Pick a principal below — they will be granted the selected access
@@ -2025,7 +1992,7 @@ export function ShareAccessComponent({
             </Text>
           </Box>
           <ActionMenu>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+            <Box display="inline-flex" alignItems="center" gap={1}>
               <ActionMenu.Anchor>
                 <Button
                   variant="default"
@@ -2069,17 +2036,15 @@ export function ShareAccessComponent({
 
         {!isExpanded && (
           <Box
-            sx={{
-              px: 3,
-              py: 2,
-              borderRadius: 2,
-              borderWidth: 1,
-              borderStyle: 'solid',
-              borderColor: 'border.default',
-              bg: 'canvas.default',
-              display: 'grid',
-              gap: 1,
-            }}
+            px={3}
+            py={2}
+            borderRadius={2}
+            borderWidth={1}
+            borderStyle="solid"
+            borderColor="border.default"
+            bg="canvas.default"
+            display="grid"
+            gap={1}
           >
             <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
               Sharing details are collapsed.
@@ -2095,33 +2060,29 @@ export function ShareAccessComponent({
           <>
             {/* Owner */}
             <Box
-              sx={{
-                px: 3,
-                py: 2,
-                borderRadius: 2,
-                borderWidth: 1,
-                borderStyle: 'solid',
-                borderColor: 'border.default',
-                bg: 'canvas.default',
-                display: 'grid',
-                gap: 1,
-              }}
+              px={3}
+              py={2}
+              borderRadius={2}
+              borderWidth={1}
+              borderStyle="solid"
+              borderColor="border.default"
+              bg="canvas.default"
+              display="grid"
+              gap={1}
             >
               <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Owner</Text>
               {ownerPrincipals.length > 0 ? (
-                <Box sx={{ display: 'grid' }}>
+                <Box display="grid">
                   {ownerPrincipals.map((ownerPrincipal, index) => (
                     <Box
                       key={principalKey(
                         ownerPrincipal.kind,
                         ownerPrincipal.uid,
                       )}
-                      sx={{
-                        py: 1,
-                        borderTopWidth: index === 0 ? 0 : 1,
-                        borderTopStyle: 'solid',
-                        borderColor: 'border.subtle',
-                      }}
+                      py={1}
+                      borderTopWidth={index === 0 ? 0 : 1}
+                      borderTopStyle="solid"
+                      borderColor="border.subtle"
                     >
                       <OwnerPrincipalRow
                         ownerPrincipal={ownerPrincipal}
@@ -2144,35 +2105,25 @@ export function ShareAccessComponent({
 
             {/* Share with… (shareable principals picker — PROMINENT) */}
             <Box
-              sx={{
-                px: 3,
-                py: 2,
-                borderRadius: 2,
-                borderWidth: 1,
-                borderStyle: 'solid',
-                borderColor: 'border.default',
-                bg: 'canvas.default',
-                display: 'grid',
-                gap: 2,
-              }}
+              px={3}
+              py={2}
+              borderRadius={2}
+              borderWidth={1}
+              borderStyle="solid"
+              borderColor="border.default"
+              bg="canvas.default"
+              display="grid"
+              gap={2}
             >
               <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 2,
-                }}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                gap={2}
               >
                 <Text sx={{ fontSize: 1, fontWeight: 600 }}>Share with…</Text>
                 {isLoadingShareable && (
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
+                  <Box display="inline-flex" alignItems="center" gap={1}>
                     <Spinner size="small" />
                     <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                       Loading…
@@ -2190,7 +2141,7 @@ export function ShareAccessComponent({
                   No principals available to share with.
                 </Text>
               ) : (
-                <Box sx={{ display: 'grid', gap: 2 }}>
+                <Box display="grid" gap={2}>
                   {renderShareableGroup('You', groupedShareable.self)}
                   {renderShareableGroup(
                     'Other users',
@@ -2208,22 +2159,20 @@ export function ShareAccessComponent({
 
             {/* Secondary advanced search */}
             <Box
-              sx={{
-                px: 3,
-                py: 2,
-                borderRadius: 2,
-                borderWidth: 1,
-                borderStyle: 'solid',
-                borderColor: 'border.subtle',
-                bg: 'canvas.subtle',
-                display: 'grid',
-                gap: 1,
-              }}
+              px={3}
+              py={2}
+              borderRadius={2}
+              borderWidth={1}
+              borderStyle="solid"
+              borderColor="border.subtle"
+              bg="canvas.subtle"
+              display="grid"
+              gap={1}
             >
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                 Or search for any user, team, or organization
               </Text>
-              <Box sx={{ position: 'relative' }} ref={searchContainerRef}>
+              <Box position="relative" ref={searchContainerRef}>
                 <TextInput
                   ref={searchInputRef}
                   block
@@ -2250,31 +2199,27 @@ export function ShareAccessComponent({
                 />
                 {canShowSearchResults && (
                   <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 'calc(100% + 8px)',
-                      left: 0,
-                      right: 0,
-                      zIndex: 100,
-                      borderWidth: 1,
-                      borderStyle: 'solid',
-                      borderColor: 'border.default',
-                      borderRadius: 2,
-                      maxHeight: '220px',
-                      overflowY: 'auto',
-                      bg: 'canvas.overlay',
-                      boxShadow: 'shadow.medium',
-                    }}
+                    position="absolute"
+                    top="calc(100% + 8px)"
+                    left={0}
+                    right={0}
+                    zIndex={100}
+                    borderWidth={1}
+                    borderStyle="solid"
+                    borderColor="border.default"
+                    borderRadius={2}
+                    maxHeight="220px"
+                    overflowY="auto"
+                    bg="canvas.overlay"
+                    boxShadow="shadow.medium"
                   >
                     {isSearching ? (
                       <Box
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 2,
-                        }}
+                        px={3}
+                        py={2}
+                        display="inline-flex"
+                        alignItems="center"
+                        gap={2}
                       >
                         <Spinner size="small" />
                         <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
@@ -2282,7 +2227,7 @@ export function ShareAccessComponent({
                         </Text>
                       </Box>
                     ) : searchResults.length === 0 ? (
-                      <Box sx={{ px: 3, py: 2 }}>
+                      <Box px={3} py={2}>
                         <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
                           No principals found.
                         </Text>
@@ -2307,12 +2252,10 @@ export function ShareAccessComponent({
                               )}
                             </ActionList.LeadingVisual>
                             <Box
-                              sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                flexWrap: 'wrap',
-                              }}
+                              display="inline-flex"
+                              alignItems="center"
+                              gap={1}
+                              flexWrap="wrap"
                             >
                               <Text>{result.displayName}</Text>
                               {result.kind === 'personal' && (
@@ -2339,53 +2282,49 @@ export function ShareAccessComponent({
 
             {/* ACL list */}
             <Box
-              sx={{
-                px: 3,
-                py: 2,
-                borderRadius: 2,
-                borderWidth: 1,
-                borderStyle: 'solid',
-                borderColor: 'border.default',
-                bg: 'canvas.default',
-                display: 'grid',
-                gap: 1,
-              }}
+              px={3}
+              py={2}
+              borderRadius={2}
+              borderWidth={1}
+              borderStyle="solid"
+              borderColor="border.default"
+              bg="canvas.default"
+              display="grid"
+              gap={1}
             >
               <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
                 Access Control List (ACL)
               </Text>
               <Box
-                sx={{
-                  borderWidth: 1,
-                  borderStyle: 'solid',
-                  borderColor: 'border.default',
-                  borderRadius: 2,
-                  maxHeight: '220px',
-                  overflowY: 'auto',
-                  bg: 'canvas.subtle',
-                }}
+                borderWidth={1}
+                borderStyle="solid"
+                borderColor="border.default"
+                borderRadius={2}
+                maxHeight="220px"
+                overflowY="auto"
+                bg="canvas.subtle"
               >
                 {aclEntries.length === 0 ? (
-                  <Box sx={{ px: 3, py: 2 }}>
+                  <Box px={3} py={2}>
                     <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
                       No principals shared yet.
                     </Text>
                   </Box>
                 ) : (
-                  <Box sx={{ display: 'grid' }}>
+                  <Box display="grid">
                     {aclEntries.map(entry => (
                       <Box
                         key={principalKey(entry.kind, entry.uid)}
+                        px={3}
+                        py={2}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        gap={2}
+                        borderTopWidth={1}
+                        borderTopStyle="solid"
+                        borderColor="border.subtle"
                         sx={{
-                          px: 3,
-                          py: 2,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 2,
-                          borderTopWidth: 1,
-                          borderTopStyle: 'solid',
-                          borderColor: 'border.subtle',
                           '&:first-of-type': { borderTop: 'none' },
                         }}
                       >
@@ -2399,12 +2338,10 @@ export function ShareAccessComponent({
                           isPlatformAdmin={isPlatformAdmin}
                         />
                         <Box
-                          sx={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 1,
-                            justifyContent: 'flex-end',
-                          }}
+                          display="flex"
+                          flexWrap="wrap"
+                          gap={1}
+                          justifyContent="flex-end"
                         >
                           {entry.levels.map(level => (
                             <Label key={level} size="small" variant="secondary">
@@ -2430,16 +2367,9 @@ export function ShareAccessComponent({
         )}
       </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          gap: 2,
-        }}
-      >
+      <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
         {isSaving && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box display="flex" alignItems="center" gap={1}>
             <Spinner size="small" />
             <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Saving…</Text>
           </Box>
@@ -2462,13 +2392,11 @@ export function ShareAccessComponent({
   if (displayMode === 'inline') {
     return (
       <Box
-        sx={{
-          borderWidth: 1,
-          borderStyle: 'solid',
-          borderColor: 'border.default',
-          borderRadius: 2,
-          bg: 'canvas.default',
-        }}
+        borderWidth={1}
+        borderStyle="solid"
+        borderColor="border.default"
+        borderRadius={2}
+        bg="canvas.default"
       >
         {content}
       </Box>

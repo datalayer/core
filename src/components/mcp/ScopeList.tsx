@@ -48,9 +48,7 @@ export const ScopeList = ({ scopes, max = 3 }: ScopeListProps): JSX.Element => {
   const shown = scopes.slice(0, max);
   const rest = scopes.length - shown.length;
   return (
-    <Box
-      sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}
-    >
+    <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
       {shown.map(scope => (
         <Label key={scope} size="small" variant="secondary">
           {scope}

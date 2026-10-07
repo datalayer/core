@@ -153,14 +153,12 @@ export const APIKeyNew = ({
           </PageHeader>
 
           <Box
-            sx={{
-              border: '1px solid',
-              borderColor: 'accent.muted',
-              borderRadius: 2,
-              p: 3,
-              bg: 'canvas.subtle',
-              mb: 3,
-            }}
+            border="1px solid"
+            borderColor="accent.muted"
+            borderRadius={2}
+            p={3}
+            bg="canvas.subtle"
+            mb={3}
           >
             <Text sx={{ fontWeight: 600, color: 'accent.fg' }}>Important</Text>
             <Text as="p" sx={{ mt: 1, color: 'fg.muted' }}>
@@ -170,18 +168,18 @@ export const APIKeyNew = ({
           </Box>
 
           <Box
-            sx={{
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 2,
-              p: 3,
-              bg: 'canvas.default',
-            }}
+            border="1px solid"
+            borderColor="border.default"
+            borderRadius={2}
+            p={3}
+            bg="canvas.default"
           >
             <Box
               display="grid"
               gridTemplateColumns="minmax(120px, 180px) 1fr"
-              sx={{ rowGap: 2, columnGap: 3, mb: 3 }}
+              rowGap={2}
+              columnGap={3}
+              mb={3}
             >
               <Text sx={{ color: 'fg.muted' }}>Name</Text>
               <Text sx={{ fontWeight: 600 }}>{apiKey?.name || '-'}</Text>
@@ -198,13 +196,7 @@ export const APIKeyNew = ({
             </Box>
 
             <Text sx={{ color: 'fg.muted', mb: 2 }}>API key value</Text>
-            <Box
-              display="flex"
-              sx={{
-                alignItems: 'flex-start',
-                gap: 2,
-              }}
-            >
+            <Box display="flex" alignItems="flex-start" gap={2}>
               <Text
                 as="code"
                 sx={{
@@ -255,7 +247,7 @@ export const APIKeyNew = ({
               </PageHeader.TitleArea>
             </PageHeader>
           ) : null}
-          <Box display="grid" gridTemplateColumns="1fr 1fr" sx={{ gap: 3 }}>
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
             <Box>
               <Box sx={{ label: { marginTop: 2 } }}>
                 <FormControl required>
@@ -277,7 +269,8 @@ export const APIKeyNew = ({
                     </Select.Option>
                   </Select>
                   <FormControl.Caption>
-                    Secret is currently available. Additional API key types are coming soon.
+                    Secret is currently available. Additional API key types are
+                    coming soon.
                   </FormControl.Caption>
                 </FormControl>
                 <FormControl required>

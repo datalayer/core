@@ -137,7 +137,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
     props.contents ?? (mock ? CONTENTS_BROWSER_MOCK_MANAGER : undefined);
   if (!contents) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box p={3}>
         {title}
         <Text sx={{ display: 'block', color: 'fg.muted', fontSize: 1, mt: 2 }}>
           No filesystem is connected.
@@ -451,32 +451,26 @@ const ConnectedContentsBrowser = (
   );
   return (
     <Box
-      sx={{
-        display: 'grid',
-        gridTemplateAreas: `"header" "content"`,
-        overflow: 'hidden',
-      }}
+      display="grid"
+      gridTemplateAreas={'"header" "content"'}
+      overflow="hidden"
     >
       <Box
-        sx={{
-          gridArea: 'header',
-          display: 'flex',
-          alignItems: 'center',
-          minWidth: 0,
-          overflow: 'hidden',
-        }}
+        gridArea="header"
+        display="flex"
+        alignItems="center"
+        minWidth={0}
+        overflow="hidden"
       >
-        <Box sx={{ flex: '1 1 auto', minWidth: 0, overflow: 'hidden' }}>
+        <Box flex="1 1 auto" minWidth={0} overflow="hidden">
           {title}
         </Box>
         <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            flexWrap: 'nowrap',
-            flexShrink: 0,
-          }}
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          flexWrap="nowrap"
+          flexShrink={0}
         >
           <SegmentedControl
             aria-label="Contents view"
@@ -524,19 +518,17 @@ const ConnectedContentsBrowser = (
       </Box>
       {isLoading ? (
         <Box
-          sx={{
-            gridArea: 'content',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '40px',
-            height: '100vh',
-          }}
+          gridArea="content"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          minHeight="40px"
+          height="100vh"
         >
           <Spinner />
         </Box>
       ) : (
-        <Box sx={{ gridArea: 'content' }}>
+        <Box gridArea="content">
           {view === 'table' ? (
             folderItems === null && !isFolderLoading ? (
               <Blankslate>

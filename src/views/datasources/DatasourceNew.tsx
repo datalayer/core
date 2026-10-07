@@ -206,8 +206,8 @@ export const DatasourceNew = ({
       style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
     >
       <PageLayout.Content>
-        <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
-          <Box sx={{ mb: 4 }}>
+        <Box maxWidth={960} mx="auto" width="100%">
+          <Box mb={4}>
             <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
               Connect a Datasource
             </Heading>
@@ -216,9 +216,9 @@ export const DatasourceNew = ({
               query through Datalayer. The credential stays in Vault; a query
               receives a short-lived, scoped connection.
             </Text>
-            {accountPrincipal && <Box sx={{ mt: 2 }}>{accountPrincipal}</Box>}
+            {accountPrincipal && <Box mt={2}>{accountPrincipal}</Box>}
           </Box>
-          <Box as="form" onSubmit={submit} sx={{ display: 'grid', gap: 3 }}>
+          <Box as="form" onSubmit={submit} display="grid" gap={3}>
             <FormControl required>
               <FormControl.Label>Connector</FormControl.Label>
               <Select
@@ -375,11 +375,9 @@ export const DatasourceNew = ({
               </CheckboxGroup.Caption>
             </CheckboxGroup>
             <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: ['1fr', 'repeat(3, minmax(0, 1fr))'],
-                gap: 3,
-              }}
+              display="grid"
+              gridTemplateColumns={['1fr', 'repeat(3, minmax(0, 1fr))']}
+              gap={3}
             >
               <FormControl>
                 <FormControl.Label>Default row limit</FormControl.Label>
@@ -416,7 +414,7 @@ export const DatasourceNew = ({
             {createSource.isError && (
               <Flash variant="danger">{createSource.error.message}</Flash>
             )}
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box display="flex" gap={2}>
               <Button
                 type="button"
                 onClick={event => navigate(datasourcesListRoute, event)}
