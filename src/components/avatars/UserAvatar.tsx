@@ -92,16 +92,14 @@ export const UserAvatar = ({
         role="img"
         aria-label={avatarEmoji}
         className={className}
-        sx={{
-          width: size,
-          height: size,
-          borderRadius: square ? 2 : '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bg: fallbackBackground || 'canvas.default',
-          ...ringSx,
-        }}
+        width={size}
+        height={size}
+        borderRadius={square ? 2 : '50%'}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg={fallbackBackground || 'canvas.default'}
+        sx={ringSx}
       >
         {/* Named by the disc it sits on, so the drawing is decoration. */}
         <FluentEmoji
@@ -117,15 +115,15 @@ export const UserAvatar = ({
     return (
       <Box
         className={className}
+        width={size}
+        height={size}
+        borderRadius={square ? 2 : '50%'}
+        overflow="hidden"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg={fallbackBackground || 'accent.subtle'}
         sx={{
-          width: size,
-          height: size,
-          borderRadius: square ? 2 : '50%',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bg: fallbackBackground || 'accent.subtle',
           '--datalayer-icon-fg': fallbackForeground || palette.primary,
           ...ringSx,
         }}
@@ -158,14 +156,14 @@ export const UserAvatar = ({
   return (
     <Box
       className={className}
+      width={size}
+      height={size}
+      borderRadius={square ? 2 : '50%'}
+      bg={fallbackBackground || 'accent.subtle'}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
       sx={{
-        width: size,
-        height: size,
-        borderRadius: square ? 2 : '50%',
-        bg: fallbackBackground || 'accent.subtle',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         '--datalayer-icon-fg': fallbackForeground || palette.primary,
         ...ringSx,
       }}

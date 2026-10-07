@@ -354,9 +354,7 @@ export const Principal: React.FC<PrincipalProps> = ({
       cachedPrincipal?.avatarUrl ||
       undefined,
     avatarIcon:
-      principal.avatarIcon ||
-      (hydratedEntity as any)?.avatarIcon ||
-      undefined,
+      principal.avatarIcon || (hydratedEntity as any)?.avatarIcon || undefined,
     banner: principal.banner || (hydratedEntity as any)?.banner || undefined,
     firstName:
       principal.firstName ||
@@ -427,13 +425,11 @@ export const Principal: React.FC<PrincipalProps> = ({
 
   return (
     <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap,
-        minWidth: 0,
-        ...sx,
-      }}
+      display="inline-flex"
+      alignItems="center"
+      gap={gap}
+      minWidth={0}
+      sx={sx}
     >
       <PrincipalAvatar
         kind={resolvedPrincipal.kind}

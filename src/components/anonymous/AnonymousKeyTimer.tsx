@@ -174,20 +174,20 @@ export function AnonymousKeyTimer({
 
   return (
     <Box
+      display="inline-flex"
+      alignItems="center"
+      gap={1}
+      px={2}
+      py="2px"
+      borderRadius="999px"
+      border="1px solid"
+      borderColor="border.muted"
+      bg="canvas.subtle"
+      color={tone}
+      // The clock is the point; the row it sits in must not resize as the
+      // digits change width.
+      fontVariantNumeric="tabular-nums"
       sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1,
-        px: 2,
-        py: '2px',
-        borderRadius: '999px',
-        border: '1px solid',
-        borderColor: 'border.muted',
-        bg: 'canvas.subtle',
-        color: tone,
-        // The clock is the point; the row it sits in must not resize as the
-        // digits change width.
-        fontVariantNumeric: 'tabular-nums',
         /*
           The last few percent, breathing.
 

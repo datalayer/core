@@ -275,18 +275,16 @@ export const PrincipalBadge = ({
 
   return (
     <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 2,
-        px: 2,
-        py: 1,
-        border: '1px solid',
-        borderColor: 'border.default',
-        borderRadius: 2,
-        bg: 'canvas.subtle',
-        ...sx,
-      }}
+      display="inline-flex"
+      alignItems="center"
+      gap={2}
+      px={2}
+      py={1}
+      border="1px solid"
+      borderColor="border.default"
+      borderRadius={2}
+      bg="canvas.subtle"
+      sx={sx}
     >
       {showPrincipalLabel && (
         <Label size="small" variant="accent">

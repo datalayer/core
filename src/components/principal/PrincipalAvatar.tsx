@@ -89,19 +89,17 @@ export function PrincipalAvatar({
     return (
       <Box
         className={className}
-        sx={{
-          width: size,
-          height: size,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          borderRadius: square ? 2 : '50%',
-          // The disc of `UserAvatar`, for the same reason: the shape is what
-          // says "avatar", and an icon drawn on nothing shows none of it.
-          bg: 'accent.subtle',
-          ...ringSx,
-        }}
+        width={size}
+        height={size}
+        display="inline-flex"
+        alignItems="center"
+        justifyContent="center"
+        overflow="hidden"
+        borderRadius={square ? 2 : '50%'}
+        // The disc of `UserAvatar`, for the same reason: the shape is what
+        // says "avatar", and an icon drawn on nothing shows none of it.
+        bg="accent.subtle"
+        sx={ringSx}
         aria-label={alt || `${kind} avatar`}
       >
         {/* The plain icon, coloured by the theme — see UserAvatar. */}
@@ -118,18 +116,16 @@ export function PrincipalAvatar({
   return (
     <Box
       className={className}
-      sx={{
-        width: size,
-        height: size,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bg: 'canvas.subtle',
-        borderRadius,
-        border: '1px solid',
-        borderColor: 'border.default',
-        ...ringSx,
-      }}
+      width={size}
+      height={size}
+      display="inline-flex"
+      alignItems="center"
+      justifyContent="center"
+      bg="canvas.subtle"
+      borderRadius={borderRadius}
+      border="1px solid"
+      borderColor="border.default"
+      sx={ringSx}
       aria-label={alt || (kind === 'team' ? 'Team' : 'Organization')}
     >
       <Icon size={iconSize} />

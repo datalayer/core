@@ -24,10 +24,10 @@ export const ContentSourceCard = ({ item, onOpen }: ContentSourceCardProps) => (
     p={3}
     borderColor="border.muted"
     cursor={onOpen ? 'pointer' : 'default'}
+    hover={onOpen ? { bg: 'canvas.subtle' } : undefined}
     sx={{
       borderBottom: '1px solid',
       ':last-child': { borderBottom: 0 },
-      ':hover': onOpen ? { bg: 'canvas.subtle' } : undefined,
     }}
   >
     <Box display="flex" justifyContent="space-between" gap={3}>

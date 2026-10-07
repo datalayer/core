@@ -141,14 +141,12 @@ export const SpaceDisplay: React.FC<SpaceDisplayProps> = ({
 
   return (
     <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap,
-        minWidth: 0,
-        maxWidth: '100%',
-        ...sx,
-      }}
+      display="inline-flex"
+      alignItems="center"
+      gap={gap}
+      minWidth={0}
+      maxWidth="100%"
+      sx={sx}
     >
       {showIcon ? (
         <Box
