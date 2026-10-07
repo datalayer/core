@@ -1862,9 +1862,7 @@ export function ShareAccessComponent({
               ? 'canvas.default'
               : 'canvas.subtle',
         }}
-        sx={{
-          all: 'unset',
-        }}
+        all="unset"
       >
         <Box display="inline-flex" alignItems="center" gap={2} minWidth={0}>
           {principal.kind === 'agent' ? (
