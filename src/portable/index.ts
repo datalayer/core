@@ -4,11 +4,11 @@
  */
 
 /**
- * What any JavaScript runtime can import from Core: plain functions and
- * types, no React, DOM, Jupyter or Node built-in. The mobile app reaches
- * Core only through `@datalayer/core/lib/portable`.
+ * What any JavaScript runtime can import from Core: no React, DOM, Jupyter or
+ * Node built-in. Re-exports only; the mobile app reaches Core through this
+ * entry alone.
  *
  * @module portable
  */
 
-export { personOf, type Person } from './person';
+export { personOf, type Person } from '../models/Person';
