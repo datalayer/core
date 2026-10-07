@@ -92,7 +92,8 @@ export function PrincipalHoverCard({
       }}
       renderAnchor={anchorProps => (
         <Box
-          {...anchorProps}
+          // Primer's anchor props, as the record of props Box takes.
+          {...(anchorProps as Record<string, unknown>)}
           className={[className, anchorProps.className]
             .filter(Boolean)
             .join(' ')}

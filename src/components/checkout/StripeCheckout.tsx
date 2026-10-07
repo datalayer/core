@@ -238,7 +238,8 @@ function StripePaymentForm({
   }, [themeIsDark]);
 
   const handleSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
+    // A Box drawn as a form hands an HTMLElement's submit event.
+    async (event: FormEvent<HTMLElement>) => {
       event.preventDefault();
 
       if (!stripe || !elements) {
