@@ -77,10 +77,10 @@ def list_api_keys_verbose(
 def create_api_key(
     name: str = typer.Argument(..., help="Name of the API key"),
     description: str = typer.Argument(..., help="Description of the API key"),
-    expiration_date: Optional[int] = typer.Option(
-        0,
+    expiration_date: int = typer.Option(
+        ...,
         "--expiration-date",
-        help="Expiration date in seconds since epoch (0 for no expiration)",
+        help="Required expiration date in Unix epoch seconds",
     ),
     api_key_type: str = typer.Option(
         ApiKeyType.SECRET.value,
@@ -100,16 +100,28 @@ def create_api_key(
         result = client.create_api_key(
             name=name,
             description=description,
-            expiration_date=expiration_date or 0,
+            expiration_date=expiration_date,
             api_key_type=api_key_type,
         )
 
         if result.get("success", False):
-            api_key_data = result.get("api_key", {})
-            console.print(f"[green]API key '{name}' created successfully![/green]")
-            console.print(
-                f"[yellow]API key value: {result.get('access_token', 'N/A')}[/yellow]"
+            api_key_data = result.get("apiKey", result.get("api_key", {}))
+            access_token = (
+                result.get("accessToken")
+                or result.get("access_token")
+                or api_key_data.get("value_s")
             )
+            if not access_token:
+                created_uid = api_key_data.get("uid")
+                if created_uid:
+                    client.delete_api_key(created_uid)
+                console.print(
+                    "[red]IAM created the API-key metadata but did not return "
+                    "the one-time key value; the unusable key was removed.[/red]"
+                )
+                raise typer.Exit(1)
+            console.print(f"[green]API key '{name}' created successfully![/green]")
+            console.print(f"[yellow]API key value: {access_token}[/yellow]")
             console.print(
                 "[dim]Please save this API key value securely - it won't be shown again![/dim]"
             )

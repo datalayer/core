@@ -9,7 +9,6 @@ Runtime creation and code execution live in ``agent_runtimes`` (RuntimeClient).
 """
 
 import logging
-import os
 from typing import Any, Optional, Union
 
 from datalayer_core.mixins.api_keys import ApiKeysMixin
@@ -307,7 +306,8 @@ class DatalayerClient(
         description : str
             Description of the API key.
         expiration_date : int, default 0
-            Expiration date of the API key in seconds since epoch.
+            Expiration date of the API key in Unix epoch seconds. A positive
+            value is required by the IAM API.
         api_key_type : Union[str, ApiKeyType], default ApiKeyType.SECRET
             Type of the API key (secret, publishable, restricted, temporary).
 

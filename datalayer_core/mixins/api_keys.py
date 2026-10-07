@@ -4,7 +4,6 @@
 from typing import Any, Union
 
 from datalayer_core.models.api_key import ApiKeyType
-from datalayer_core.utils import btoa
 
 
 class ApiKeysCreateMixin:
@@ -26,8 +25,9 @@ class ApiKeysCreateMixin:
             Name of the secret.
         description : str
             Description of the secret.
-        expiration_date : float
-            Expiration date of the API key.
+        expiration_date : int
+            Expiration date as Unix epoch seconds. The IAM HTTP contract uses
+            epoch milliseconds, so the client converts it at the boundary.
         api_key_type : str, ApiKeyType
             Variant or type of the API key. Defaults to "secret".
             Type of the API key (secret, publishable, restricted, temporary).
@@ -37,13 +37,16 @@ class ApiKeysCreateMixin:
         dict
             A dictionary containing the created secret and its details.
         """
+        if expiration_date <= 0:
+            raise ValueError("expiration_date must be a positive Unix timestamp")
+
         body = {
             "name": name,
-            "description": btoa(description),
+            "description": description,
             "variant": api_key_type.value
             if isinstance(api_key_type, ApiKeyType)
             else api_key_type,
-            "expiration_date": expiration_date,
+            "expirationDate": expiration_date * 1000,
         }
         try:
             response = self._fetch(  # type: ignore
