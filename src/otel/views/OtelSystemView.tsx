@@ -76,14 +76,14 @@ const SystemViewContent: React.FC<SystemViewContentProps> = ({ data }) => {
   return (
     <Box>
       {/* Process */}
-      <Box sx={CARD_SX}>
+      <Box {...CARD_SX}>
         <Text sx={{ fontSize: 1, fontWeight: 'bold', mb: 2, display: 'block' }}>
           Process
         </Text>
         {proc?.error ? (
           <Text sx={{ color: 'attention.fg', fontSize: 0 }}>{proc.error}</Text>
         ) : (
-          <Box sx={GRID_SX}>
+          <Box {...GRID_SX}>
             <StatCell
               label="RSS Memory"
               value={fmtBytes(proc?.memory_rss_bytes ?? 0)}
@@ -105,14 +105,14 @@ const SystemViewContent: React.FC<SystemViewContentProps> = ({ data }) => {
       </Box>
 
       {/* Disk */}
-      <Box sx={CARD_SX}>
+      <Box {...CARD_SX}>
         <Text sx={{ fontSize: 1, fontWeight: 'bold', mb: 2, display: 'block' }}>
           Disk
         </Text>
         {disk?.error ? (
           <Text sx={{ color: 'attention.fg', fontSize: 0 }}>{disk.error}</Text>
         ) : (
-          <Box sx={GRID_SX}>
+          <Box {...GRID_SX}>
             <StatCell label="Data Dir" value={disk?.data_dir ?? '?'} />
             <StatCell label="Total" value={fmtBytes(disk?.total_bytes ?? 0)} />
             <StatCell
@@ -126,7 +126,7 @@ const SystemViewContent: React.FC<SystemViewContentProps> = ({ data }) => {
 
       {/* Tables */}
       {tables && Object.keys(tables).length > 0 && (
-        <Box sx={CARD_SX}>
+        <Box {...CARD_SX}>
           <Text
             sx={{ fontSize: 1, fontWeight: 'bold', mb: 2, display: 'block' }}
           >
