@@ -43,11 +43,13 @@ import { registerSessionState } from '../sessionEnd';
  * shows. `home` is the whole platform, shown as *Power*, at `/power`: the key
  * is kept so a cookie written before the Studio existed still names the
  * shell it meant. `agentify` is the business cases; `admin` is the
- * platform's administration. `loop` is LOOP: AI applications built by spec,
- * by drag and drop or in Python — the Studio's app pages under a sidebar of
- * their own, and the LOOP workspace at `/loop`.
+ * platform's administration. `apps` is the applications: AI applications
+ * built by spec, by drag and drop or in Python — the Studio's app pages under
+ * a sidebar of their own, every address under `/apps`, and the workspace at
+ * `/apps` itself. It was `loop`, at `/loop`: a cookie still saying `loop`
+ * names no shell and is ignored, the reader opening on the Studio.
  */
-export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin' | 'loop';
+export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin' | 'apps';
 
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
@@ -57,8 +59,8 @@ export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
   home: '/power',
   agentify: '/agentify',
   admin: '/admin',
-  // The applications: what a builder opens LOOP for.
-  loop: '/loop/apps',
+  // The applications: what a builder opens the Apps shell for.
+  apps: '/apps/apps',
 };
 
 /** Well-known view identifiers for {@link NavigationState.tabsByView}. */
@@ -127,7 +129,7 @@ const isView = (value: unknown): value is NavigationView =>
   value === 'home' ||
   value === 'agentify' ||
   value === 'admin' ||
-  value === 'loop';
+  value === 'apps';
 
 function readCookie(name: string): string | undefined {
   if (typeof document === 'undefined') {
@@ -334,8 +336,9 @@ export function viewForRoute(
   if (path === '/admin' || path.startsWith('/admin/')) {
     return 'admin';
   }
-  if (path === '/loop' || path.startsWith('/loop/')) {
-    return 'loop';
+  // The Apps shell, and the hosted applications at `/apps/<slug>` with it.
+  if (path === '/apps' || path.startsWith('/apps/')) {
+    return 'apps';
   }
   return 'home';
 }

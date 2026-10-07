@@ -131,13 +131,15 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/agentifyx')).toBe('home');
   });
 
-  it('gives LOOP a shell of its own: its app pages and its workspace', () => {
-    expect(viewForRoute('/loop/apps/abc')).toBe('loop');
-    expect(viewForRoute('/loop')).toBe('loop');
-    expect(viewForRoute('/looping')).toBe('home');
-    expect(NAVIGATION_VIEW_HOMES.loop).toBe('/loop/apps');
+  it('gives the Apps a shell of its own: its app pages and its workspace', () => {
+    expect(viewForRoute('/apps/apps/abc')).toBe('apps');
+    expect(viewForRoute('/apps')).toBe('apps');
+    expect(viewForRoute('/appsx')).toBe('home');
+    // The former address names no shell of its own any more: no redirect.
+    expect(viewForRoute('/loop/apps/abc')).toBe('home');
+    expect(NAVIGATION_VIEW_HOMES.apps).toBe('/apps/apps');
     navigationStore.setState({ lastRouteByView: {} });
-    expect(navigationStore.getState().routeForView('loop')).toBe('/loop/apps');
+    expect(navigationStore.getState().routeForView('apps')).toBe('/apps/apps');
   });
 
   it('never sends a shell to a page that is not its own', () => {
