@@ -58,8 +58,15 @@ export const useAuthorization = () => {
     return user.roles.includes(PlatformRoles.Member.handle);
   };
 
+  /**
+   * Whether the user sees the features that are not released yet: a Platform
+   * Features Previewer, or a Platform Admin — an admin previews everything.
+   */
   const checkIsPlatformFeaturesPreviewer = (user: IUser) => {
-    return user.roles.includes(PlatformRoles.FeaturesPreviewer.handle);
+    return (
+      user.roles.includes(PlatformRoles.FeaturesPreviewer.handle) ||
+      checkIsPlatformAdmin(user)
+    );
   };
 
   const checkIsPlatformUsageReviewer = (user: IUser) => {
