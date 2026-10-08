@@ -11,7 +11,10 @@
  * projection carries them: `face_s` (the JSON of its `id`, `emoji`, `avatar`
  * and `banner`, each only when set), `app_kind_s` and `runs_live_b` — an app
  * that runs live can be tried before it is cloned: not a decision, and naming
- * the agent it runs on.
+ * the agent it runs on. One of Datalayer's examples, published from the
+ * catalogue, also says which (`catalogue_example_s`), beside `publisher_s:
+ * datalayer` — the Library projects both only for an item of the `datalayer`
+ * organization's spaces whose metadata says `catalogueExample` (STUDIO E-10).
  *
  * @module hooks/libraryApp
  */
@@ -44,6 +47,8 @@ export type LibraryAppFields = {
   appKind?: LibraryAppKind;
   /** Whether it can be tried before it is cloned. */
   runsLive: boolean;
+  /** The example of the catalogue it is, when it is one of Datalayer's. */
+  catalogueExample?: string;
 };
 
 const FACE_KEYS = ['id', 'emoji', 'avatar', 'banner'] as const;
@@ -83,10 +88,20 @@ export function libraryAppFieldsOf(
       `An app's kind is not one of ${LIBRARY_APP_KINDS}: ${String(kind)}`,
     );
   }
+  const example = raw.catalogue_example_s;
+  if (
+    example !== undefined &&
+    (typeof example !== 'string' || example.trim() === '')
+  ) {
+    throw new Error(
+      `An app's example is not an example's id: ${String(example)}`,
+    );
+  }
   const face = libraryAppFaceOf(raw.face_s);
   return {
     ...(face ? { face } : {}),
     ...(kind ? { appKind: kind as LibraryAppKind } : {}),
     runsLive: raw.runs_live_b === true,
+    ...(example ? { catalogueExample: example } : {}),
   };
 }

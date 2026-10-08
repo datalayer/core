@@ -44,6 +44,26 @@ describe('a published application', () => {
     expect(() => libraryAppFieldsOf({ app_kind_s: 'robot' })).toThrow(/kind/);
   });
 
+  it('says which example of the catalogue it is, when it is one of Datalayer’s (STUDIO E-10)', () => {
+    expect(
+      libraryAppFieldsOf({
+        app_kind_s: 'chat',
+        catalogue_example_s: 'web-research',
+      }),
+    ).toEqual({
+      appKind: 'chat',
+      runsLive: false,
+      catalogueExample: 'web-research',
+    });
+    expect(libraryAppFieldsOf({})).not.toHaveProperty('catalogueExample');
+    expect(() => libraryAppFieldsOf({ catalogue_example_s: '' })).toThrow(
+      /example/,
+    );
+    expect(() => libraryAppFieldsOf({ catalogue_example_s: 3 })).toThrow(
+      /example/,
+    );
+  });
+
   it('is what the Library item of an app is mapped with', () => {
     const source = readFileSync(join(__dirname, '..', 'useCache.ts'), 'utf8');
     expect(source).toMatch(
