@@ -54,9 +54,10 @@ export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin' | 'apps';
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
   studio: '/studio',
-  // Not `/`: the root is the Studio's, so the Power shell has an address of
-  // its own to be sent to.
-  home: '/power',
+  // Not `/`: the root is the Studio's, so the Platform shell has an address
+  // of its own to be sent to. It was `/power` until 2026-10-09, when the
+  // shell took the name it is called by everywhere else.
+  home: '/platform',
   agentify: '/agentify',
   admin: '/admin',
   // The applications: what a builder opens the Apps shell for.
