@@ -6,15 +6,15 @@
 /**
  * UserAvatar – Single source of truth for rendering a user's avatar.
  *
- * When a real (non-Gravatar) avatar URL is available it renders a
- * {@link DLAvatar}. Otherwise it falls back to a themed, colormoded
- * {@link AlienIcon} placeholder so every consumer (profile, sidebar,
- * principal overlay, …) shares the same default look.
+ * Drawn by primer-addons' `EntityAvatar`, so its ground, shape and ring are
+ * the theme's — a person's emoji, chosen icon or photograph, or a themed,
+ * colormoded {@link AlienIcon} placeholder, so every consumer (profile,
+ * sidebar, principal overlay, …) shares the same look, in every theme.
  */
 import type { JSX } from 'react';
 import { AlienIcon } from '@datalayer/icons-react';
-import { Box, useColorPalette } from '@datalayer/primer-addons';
-import { DLAvatar } from './DLAvatar';
+import { EntityAvatar, useColorPalette } from '@datalayer/primer-addons';
+import { getAvatarURL } from '../../utils';
 import { getPrincipalAvatarIcon } from '../principal/PrincipalAppearance';
 import { FluentEmoji } from '../emoji/FluentEmoji';
 
@@ -76,30 +76,18 @@ export const UserAvatar = ({
   className,
 }: UserAvatarProps): JSX.Element => {
   const palette = useColorPalette();
-  /*
-   * The ring, as a shadow rather than a border.
-   *
-   * A border would take from the size asked for — the avatar is laid out
-   * against others of the same measure — so it is drawn just outside the
-   * edge instead, following whatever shape the avatar has.
-   */
-  const ringSx = ring
-    ? { boxShadow: '0 0 0 1px var(--borderColor-default, currentColor)' }
-    : undefined;
+  // A rounded square takes the theme's corner, a circle is a circle; the
+  // ring is drawn just outside the edge, so the avatar keeps its size.
+  const shape = square ? 'rounded' : 'circle';
   if (avatarEmoji) {
     return (
-      <Box
-        role="img"
-        aria-label={avatarEmoji}
+      <EntityAvatar
+        alt={avatarEmoji}
         className={className}
-        width={size}
-        height={size}
-        borderRadius={square ? 2 : '50%'}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
+        size={size}
+        shape={shape}
+        ring={ring}
         bg={fallbackBackground || 'canvas.default'}
-        sx={ringSx}
       >
         {/* Named by the disc it sits on, so the drawing is decoration. */}
         <FluentEmoji
@@ -107,69 +95,58 @@ export const UserAvatar = ({
           size={iconSize ?? Math.round(size * 0.6)}
           label=""
         />
-      </Box>
+      </EntityAvatar>
     );
   }
+  /*
+   * A chosen icon and the default one are the same drawing in two shapes:
+   * the plain icon, coloured by the theme, on the accent's wash.
+   */
+  const iconGround = {
+    ...(fallbackBackground ? { bg: fallbackBackground } : undefined),
+    style: {
+      '--datalayer-icon-fg': fallbackForeground || palette.primary,
+    } as Record<string, string>,
+  };
   const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
   if (SelectedIcon) {
     return (
-      <Box
+      <EntityAvatar
         className={className}
-        width={size}
-        height={size}
-        borderRadius={square ? 2 : '50%'}
-        overflow="hidden"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        bg={fallbackBackground || 'accent.subtle'}
-        sx={{
-          '--datalayer-icon-fg': fallbackForeground || palette.primary,
-          ...ringSx,
-        }}
+        size={size}
+        shape={shape}
+        ring={ring}
+        {...iconGround}
       >
-        {/*
-          The plain icon, coloured by the theme — the same treatment as the
-          default avatar below, so a chosen avatar and the default one are
-          the same drawing in two shapes rather than two different looks.
-        */}
         <SelectedIcon
           size={iconSize ?? Math.round(size * 0.62)}
           themed
           colormode
         />
-      </Box>
+      </EntityAvatar>
     );
   }
   if (hasRealAvatar(avatarUrl)) {
     return (
-      <DLAvatar
+      <EntityAvatar
         className={className}
-        square={square}
-        src={avatarUrl}
+        src={getAvatarURL(avatarUrl)}
         size={size}
-        sx={ringSx}
+        shape={shape}
+        ring={ring}
       />
     );
   }
-  const resolvedIconSize = iconSize ?? Math.round(size * 0.48);
   return (
-    <Box
+    <EntityAvatar
       className={className}
-      width={size}
-      height={size}
-      borderRadius={square ? 2 : '50%'}
-      bg={fallbackBackground || 'accent.subtle'}
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      sx={{
-        '--datalayer-icon-fg': fallbackForeground || palette.primary,
-        ...ringSx,
-      }}
+      size={size}
+      shape={shape}
+      ring={ring}
+      {...iconGround}
     >
-      <AlienIcon size={resolvedIconSize} themed colormode />
-    </Box>
+      <AlienIcon size={iconSize ?? Math.round(size * 0.48)} themed colormode />
+    </EntityAvatar>
   );
 };
 

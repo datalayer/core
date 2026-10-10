@@ -4,7 +4,7 @@
  */
 
 import type { JSX } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { EntityAvatar } from '@datalayer/primer-addons';
 import { OrganizationIcon, PeopleIcon } from '@primer/octicons-react';
 import { UserAvatar } from '../avatars';
 import {
@@ -54,11 +54,7 @@ export function PrincipalAvatar({
   className,
 }: PrincipalAvatarProps): JSX.Element {
   const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
-  // Outside the edge rather than a border, so the avatar keeps the size it
-  // was asked for — see `UserAvatar`, which draws its ring the same way.
-  const ringSx = ring
-    ? { boxShadow: '0 0 0 1px var(--borderColor-default, currentColor)' }
-    : undefined;
+  const shape = square ? 'rounded' : 'circle';
   /*
    * A person is drawn by `UserAvatar`, whatever they wear.
    *
@@ -87,49 +83,34 @@ export function PrincipalAvatar({
 
   if (SelectedIcon) {
     return (
-      <Box
+      // The disc of `UserAvatar`, for the same reason: the shape is what says
+      // "avatar", and an icon drawn on nothing shows none of it.
+      <EntityAvatar
         className={className}
-        width={size}
-        height={size}
-        display="inline-flex"
-        alignItems="center"
-        justifyContent="center"
-        overflow="hidden"
-        borderRadius={square ? 2 : '50%'}
-        // The disc of `UserAvatar`, for the same reason: the shape is what
-        // says "avatar", and an icon drawn on nothing shows none of it.
-        bg="accent.subtle"
-        sx={ringSx}
-        aria-label={alt || `${kind} avatar`}
+        size={size}
+        shape={shape}
+        ring={ring}
+        alt={alt || `${kind} avatar`}
       >
         {/* The plain icon, coloured by the theme — see UserAvatar. */}
         <SelectedIcon size={getFallbackIconSize(size)} themed colormode />
-      </Box>
+      </EntityAvatar>
     );
   }
-
-  const iconSize = getFallbackIconSize(size);
-  const borderRadius = square ? 2 : '50%';
 
   const Icon = kind === 'team' ? PeopleIcon : OrganizationIcon;
 
   return (
-    <Box
+    <EntityAvatar
       className={className}
-      width={size}
-      height={size}
-      display="inline-flex"
-      alignItems="center"
-      justifyContent="center"
-      bg="canvas.subtle"
-      borderRadius={borderRadius}
-      border="1px solid"
-      borderColor="border.default"
-      sx={ringSx}
-      aria-label={alt || (kind === 'team' ? 'Team' : 'Organization')}
+      size={size}
+      shape={shape}
+      ring={ring}
+      ground="canvas"
+      alt={alt || (kind === 'team' ? 'Team' : 'Organization')}
     >
-      <Icon size={iconSize} />
-    </Box>
+      <Icon size={getFallbackIconSize(size)} />
+    </EntityAvatar>
   );
 }
 
