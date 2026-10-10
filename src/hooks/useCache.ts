@@ -3430,7 +3430,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // but this prevented useSecret from fetching fresh data (e.g., the value field).
   // Consider re-adding cache pre-population if the list endpoint returns full secret data,
   // or use a different query key pattern for partial vs full secret data.
-  const useSecrets = (options?: PrincipalScopeOptions) => {
+  const useSecrets = (
+    options?: PrincipalScopeOptions & {
+      /**
+       * `false` reads nothing: a page a visitor opens signed out, whose 401
+       * would otherwise send them to the sign-in.
+       */
+      enabled?: boolean;
+    },
+  ) => {
     const principalUid = options?.principalUid;
     const principalKind = options?.principalKind;
     return useQuery({
@@ -3458,6 +3466,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       ...DEFAULT_QUERY_OPTIONS,
       refetchOnMount: true, // Override to refetch when stale after invalidation
+      enabled: options?.enabled ?? true,
     });
   };
 
