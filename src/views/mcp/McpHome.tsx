@@ -31,7 +31,7 @@ import type { ComponentType, JSX } from 'react';
 import { useState } from 'react';
 import { AiAgentIcon } from '@datalayer/icons-react';
 import { Button, Heading, IconButton, Link, Text } from '@primer/react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import {
   CheckIcon,
   CopyIcon,
@@ -186,11 +186,10 @@ const Summary = ({
   to?: string;
   onOpen?: (to: string) => void;
 }): JSX.Element => (
-  <Box
+  <Card
+    border
+    shadow="none"
     p={3}
-    border="1px solid"
-    borderColor="border.default"
-    borderRadius={2}
     display="grid"
     gap={2}
     alignContent="start"
@@ -231,7 +230,7 @@ const Summary = ({
         </Link>
       </Box>
     )}
-  </Box>
+  </Card>
 );
 
 export const McpHome = ({
@@ -276,16 +275,16 @@ export const McpHome = ({
       {showSetup && (
         <>
           {/* What is going on now is one line and one link; the dashboard answers it. */}
-          <Box
+          <Card
+            border
+            shadow="none"
+            variant="subtle"
+            flexDirection="row"
             display="flex"
             alignItems="center"
             gap={3}
             flexWrap="wrap"
             p={3}
-            borderRadius={2}
-            bg="canvas.subtle"
-            border="1px solid"
-            borderColor="border.default"
           >
             <Text sx={{ fontSize: 1 }}>
               {live > 0
@@ -299,7 +298,7 @@ export const McpHome = ({
             >
               What is going on
             </Button>
-          </Box>
+          </Card>
 
           {/* The endpoint, and whether this browser is signed in to it. */}
           <Box display="grid" gap={2}>
@@ -329,12 +328,11 @@ export const McpHome = ({
               gridTemplateColumns={['1fr', 'repeat(2, 1fr)', 'repeat(3, 1fr)']}
             >
               {MCP_CLIENTS.map(client => (
-                <Box
+                <Card
                   key={client.setup}
+                  border
+                  shadow="none"
                   p={3}
-                  border="1px solid"
-                  borderColor="border.default"
-                  borderRadius={2}
                   display="grid"
                   gap={2}
                   minWidth={0}
@@ -360,7 +358,7 @@ export const McpHome = ({
                   >
                     Configuration and authorization
                   </Link>
-                </Box>
+                </Card>
               ))}
             </Box>
           </Box>

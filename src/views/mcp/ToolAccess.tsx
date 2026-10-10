@@ -36,7 +36,7 @@
 import type { JSX } from 'react';
 import { useState } from 'react';
 import { Button, Heading, Label, Spinner, Text, Truncate } from '@primer/react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { McpErrorBlankslate } from '../../components/mcp';
 import {
   useContentSources,
@@ -212,15 +212,7 @@ const SourceCard = ({
   const offered = manifest.data?.tools?.length ?? 0;
 
   return (
-    <Box
-      border="1px solid"
-      borderColor="border.default"
-      borderRadius={2}
-      p={3}
-      display="grid"
-      gap={2}
-      minWidth={0}
-    >
+    <Card border shadow="none" p={3} display="grid" gap={2} minWidth={0}>
       <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
         <Heading as="h3" sx={{ fontSize: 1 }}>
           {source.name}
@@ -289,7 +281,7 @@ const SourceCard = ({
           ))
         )}
       </Box>
-    </Box>
+    </Card>
   );
 };
 

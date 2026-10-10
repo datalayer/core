@@ -37,7 +37,7 @@ import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { Heading, Label, ProgressBar, Spinner, Text } from '@primer/react';
 import { Blankslate, DataTable, Table } from '@primer/react/experimental';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { GraphIcon } from '@primer/octicons-react';
 import { ClientBadge, McpErrorBlankslate } from '../../components/mcp';
 import { useOrgMcpUsage } from '../../hooks/useMcp';
@@ -145,10 +145,10 @@ const QuotaCard = ({
   const used = quota?.used;
   const fraction = quota?.fraction;
   return (
-    <Box
-      border="1px solid"
-      borderColor="border.default"
-      borderRadius={2}
+    <Card
+      border
+      shadow="none"
+      display="block"
       p={3}
       flex="1 1 220px"
       minWidth={0}
@@ -183,7 +183,7 @@ const QuotaCard = ({
       <Text as="p" sx={{ mt: 2, mb: 0, fontSize: 0, color: 'fg.muted' }}>
         {quota?.unknown ? quota.unknown : hint}
       </Text>
-    </Box>
+    </Card>
   );
 };
 

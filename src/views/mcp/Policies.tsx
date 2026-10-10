@@ -30,7 +30,7 @@ import type { JSX } from 'react';
 import { useMemo, useState } from 'react';
 import { Heading, Label, Link, Select, Spinner, Text } from '@primer/react';
 import { Blankslate, Table } from '@primer/react/experimental';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { ShieldCheckIcon } from '@primer/octicons-react';
 import { McpErrorBlankslate } from '../../components/mcp';
 import { useConnectedAgents, useEffectivePolicy } from '../../hooks/useMcp';
@@ -498,15 +498,7 @@ export const Policies = ({
       )}
 
       {/* What this page becomes, said plainly rather than left as a gap. */}
-      <Box
-        p={3}
-        border="1px solid"
-        borderColor="border.default"
-        borderRadius={2}
-        bg="canvas.subtle"
-        display="grid"
-        gap={1}
-      >
+      <Card border shadow="none" variant="subtle" p={3} display="grid" gap={1}>
         <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>Your own rules</Text>
         <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
           Narrowing the defaults for your own agents — approval by tool, a daily
@@ -522,7 +514,7 @@ export const Policies = ({
           preview of what one agent would get, is the same form the
           organization's MCP tab carries. It joins this page with the layers.
         </Text>
-      </Box>
+      </Card>
     </Box>
   );
 };

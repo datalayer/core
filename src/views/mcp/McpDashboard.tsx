@@ -50,7 +50,7 @@ import {
   Table,
 } from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import {
   ChecklistIcon,
   KebabHorizontalIcon,
@@ -176,14 +176,7 @@ const Count = ({
   to?: string;
   onOpen?: (to: string) => void;
 }): JSX.Element => (
-  <Box
-    p={3}
-    border="1px solid"
-    borderColor="border.default"
-    borderRadius={2}
-    bg="canvas.default"
-    minWidth={0}
-  >
+  <Card border shadow="none" display="block" p={3} minWidth={0}>
     <Text
       sx={{
         display: 'block',
@@ -219,7 +212,7 @@ const Count = ({
         {note}
       </Text>
     )}
-  </Box>
+  </Card>
 );
 
 /** A panel that has nothing to show, and the step that would fill it. */

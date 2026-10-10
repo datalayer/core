@@ -44,7 +44,7 @@ import {
   Text,
   Textarea,
 } from '@primer/react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { McpErrorBlankslate } from '../../components/mcp';
 import { useDecideMcpApproval, useMcpApprovals } from '../../hooks/useContents';
 import type { McpApproval } from '../../api/contents/generated';
@@ -174,11 +174,11 @@ export const ApprovalQueue = ({
           const look = approvalLook(approval);
           const decidable = isDecidable(approval);
           return (
-            <Box
+            <Card
               key={approval.uid}
-              border="1px solid"
+              border
+              shadow="none"
               borderColor={decidable ? 'attention.emphasis' : 'border.default'}
-              borderRadius={2}
               p={3}
               display="grid"
               gap={2}
@@ -283,7 +283,7 @@ export const ApprovalQueue = ({
                   {approval.note ? ` — ${approval.note}` : ''}
                 </Text>
               )}
-            </Box>
+            </Card>
           );
         })
       )}

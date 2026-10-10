@@ -43,7 +43,7 @@ import {
   TextInput,
 } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { SearchIcon, TelescopeIcon } from '@primer/octicons-react';
 import { McpErrorBlankslate } from '../../components/mcp';
 import {
@@ -186,13 +186,7 @@ const Sli = ({
   value: string;
   note?: string;
 }): JSX.Element => (
-  <Box
-    p={3}
-    border="1px solid"
-    borderColor="border.default"
-    borderRadius={2}
-    minWidth={0}
-  >
+  <Card border shadow="none" display="block" p={3} minWidth={0}>
     <Text sx={{ display: 'block', fontSize: 3, fontWeight: 'bold' }}>
       {value}
     </Text>
@@ -204,7 +198,7 @@ const Sli = ({
         {note}
       </Text>
     )}
-  </Box>
+  </Card>
 );
 
 /**
@@ -446,16 +440,11 @@ export const McpObservability = ({
                   because "which stage took the time" is the question, and the
                   named rows underneath for the detail. */}
               <TraceTimeline tree={run.data?.tree ?? []} />
-              <Box
-                border="1px solid"
-                borderColor="border.default"
-                borderRadius={2}
-                overflowX="auto"
-              >
+              <Card border shadow="none" display="block" overflowX="auto">
                 {(run.data?.tree ?? []).map(node => (
                   <SpanRow key={node.span.span_id} node={node} depth={0} />
                 ))}
-              </Box>
+              </Card>
             </Box>
           )}
         </Box>
@@ -470,14 +459,7 @@ export const McpObservability = ({
             const look = engineLook(engine.data, engine.isError);
             const queues = engine.data?.queues ?? [];
             return (
-              <Box
-                border="1px solid"
-                borderColor="border.default"
-                borderRadius={2}
-                p={3}
-                display="grid"
-                gap={2}
-              >
+              <Card border shadow="none" p={3} display="grid" gap={2}>
                 <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
                   <Heading as="h3" sx={{ fontSize: 1 }}>
                     The durable engine
@@ -520,7 +502,7 @@ export const McpObservability = ({
                     ))}
                   </Box>
                 )}
-              </Box>
+              </Card>
             );
           })()}
 
@@ -644,12 +626,7 @@ export const McpObservability = ({
                 />
               </Box>
 
-              <Box
-                border="1px solid"
-                borderColor="border.default"
-                borderRadius={2}
-                overflowX="auto"
-              >
+              <Card border shadow="none" display="block" overflowX="auto">
                 {MCP_METRIC_CATALOG.map(name => {
                   const reporting =
                     metrics.data?.reporting.includes(name) ?? false;
@@ -678,7 +655,7 @@ export const McpObservability = ({
                     </Box>
                   );
                 })}
-              </Box>
+              </Card>
 
               <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
                 Metrics carry no user, agent or organization label by design, so

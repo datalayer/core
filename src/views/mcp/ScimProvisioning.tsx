@@ -54,7 +54,7 @@ import {
   Table,
 } from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { KebabHorizontalIcon, PeopleIcon } from '@primer/octicons-react';
 
 import { McpErrorBlankslate } from '../../components/mcp';
@@ -379,14 +379,7 @@ export const ScimProvisioning = ({
                 />
               </Table.Container>
 
-              <Box
-                border="1px solid"
-                borderColor="border.default"
-                borderRadius={2}
-                p={3}
-                display="grid"
-                gap={2}
-              >
+              <Card border shadow="none" p={3} display="grid" gap={2}>
                 <Text sx={{ fontWeight: 'semibold', fontSize: 1 }}>
                   What to give the directory
                 </Text>
@@ -412,7 +405,7 @@ export const ScimProvisioning = ({
                   mappings, above; a second source of the same fact would
                   eventually disagree with the first.
                 </Text>
-              </Box>
+              </Card>
             </>
           ) : (
             <Blankslate border spacious>

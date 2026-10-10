@@ -35,7 +35,7 @@ import {
   Spinner,
   Text,
 } from '@primer/react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { useNotebookTasks } from '../../hooks/useMcp';
 import type { McpTask } from '../../models/McpTask';
 import { RUN_STATUS_LOOK, isRunOver } from './RunDetail';
@@ -102,13 +102,13 @@ export const NotebookRuns = ({
         tasks.map(task => {
           const look = RUN_STATUS_LOOK[task.status];
           return (
-            <Box
+            <Card
               key={task.uid}
+              border
+              shadow="none"
               display="grid"
               gap={1}
               p={2}
-              borderRadius={2}
-              border="1px solid"
               borderColor={
                 task.status === 'input_required'
                   ? 'attention.emphasis'
@@ -132,7 +132,7 @@ export const NotebookRuns = ({
                   <RelativeTime datetime={task.lastUpdatedAt} />
                 </Text>
               </Box>
-            </Box>
+            </Card>
           );
         })
       )}

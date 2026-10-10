@@ -51,7 +51,7 @@ import {
 } from '@primer/react';
 import { Blankslate, DataTable, Table } from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import {
   AlertIcon,
   CheckCircleIcon,
@@ -213,13 +213,7 @@ const Metric = ({
   note?: string;
   tone?: 'neutral' | 'danger';
 }): JSX.Element => (
-  <Box
-    p={3}
-    border="1px solid"
-    borderColor="border.default"
-    borderRadius={2}
-    minWidth={0}
-  >
+  <Card border shadow="none" display="block" p={3} minWidth={0}>
     <Text
       sx={{
         display: 'block',
@@ -238,7 +232,7 @@ const Metric = ({
         {note}
       </Text>
     )}
-  </Box>
+  </Card>
 );
 
 type OrgAgentRow = McpActiveClient & { id: string };

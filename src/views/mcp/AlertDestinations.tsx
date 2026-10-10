@@ -45,7 +45,7 @@ import {
   Text,
   TextInput,
 } from '@primer/react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { McpErrorBlankslate } from '../../components/mcp';
 import { useAuditSettings, useSetAuditSettings } from '../../hooks/useMcp';
 import { useToast } from '../../hooks';
@@ -157,15 +157,7 @@ export const AlertDestinations = ({
   }
 
   return (
-    <Box
-      display="grid"
-      gap={3}
-      maxWidth="42rem"
-      p={3}
-      border="1px solid"
-      borderColor="border.default"
-      borderRadius={2}
-    >
+    <Card border shadow="none" display="grid" gap={3} maxWidth="42rem" p={3}>
       <Box>
         <Heading as="h3" sx={{ fontSize: 2, mb: 1 }}>
           Where alerts go
@@ -257,7 +249,7 @@ export const AlertDestinations = ({
         that is down turns its outage into a loop against it, and the alert is
         already in the app.
       </Text>
-    </Box>
+    </Card>
   );
 };
 
