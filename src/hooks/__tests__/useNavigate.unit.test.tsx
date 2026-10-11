@@ -29,7 +29,14 @@ vi.mock('../../state', () => ({
   }),
 }));
 
+// Who is signed in, as the hook reads it: nobody unless a test says so.
+let signedInUser: unknown = undefined;
+vi.mock('../../state/substates/IAMState', () => ({
+  iamStore: { getState: () => ({ user: signedInUser }) },
+}));
+
 import { useNavigate } from '../useNavigate';
+import { navigationStore } from '../../state/substates/NavigationState';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -146,5 +153,29 @@ describe('useNavigate with the click event', () => {
   it('still takes the legacy (event, resetPortals, options) shape', () => {
     click('#legacy');
     expect(where()).toBe('/legacy');
+  });
+});
+
+describe('useNavigate remembers a shell page only for somebody signed in', () => {
+  // A page read signed out (`/features`) came back as the Platform's last page
+  // after signing in, and the header's Platform opened it (2026-10-11).
+  afterEach(() => {
+    signedInUser = undefined;
+  });
+
+  it('remembers nothing while signed out', () => {
+    navigationStore.setState({ lastRouteByView: {} });
+    click('#legacy');
+    expect(where()).toBe('/legacy');
+    expect(navigationStore.getState().lastRouteByView).toEqual({});
+  });
+
+  it('remembers the page once signed in', () => {
+    navigationStore.setState({ lastRouteByView: {} });
+    signedInUser = { id: 'u1' };
+    click('#legacy');
+    expect(Object.values(navigationStore.getState().lastRouteByView)).toContain(
+      '/legacy',
+    );
   });
 });

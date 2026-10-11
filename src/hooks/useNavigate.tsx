@@ -27,6 +27,7 @@
 import { useCallback, useMemo } from 'react';
 import { useLayoutStore } from '../state';
 import { navigationStore } from '../state/substates/NavigationState';
+import { iamStore } from '../state/substates/IAMState';
 import { createNativeNavigate } from '../navigation/adapters/native';
 // Import React Router hooks from our wrapper
 import { useNavigateRR } from '../navigation/adapters/react-router';
@@ -207,8 +208,13 @@ export const useNavigate = (): Navigate => {
       }
 
       // Where the reader is now, for the shell they are in. A new tab and a
-      // step back through history are both already past by here.
-      navigationStore.getState().rememberRoute(to);
+      // step back through history are both already past by here. Only for
+      // somebody signed in: the shells are theirs, and a page a visitor read
+      // signed out (`/features`) would otherwise come back as the Platform's
+      // last page after they sign in.
+      if (iamStore.getState().user) {
+        navigationStore.getState().rememberRoute(to);
+      }
 
       if (rrNavigate) {
         rrNavigate(to, { replace: options.replace, state: options.state });
