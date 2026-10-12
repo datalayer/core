@@ -59,7 +59,11 @@ import {
   useTaskEvents,
 } from '../../hooks/useMcp';
 import { TraceTimelineSection } from './TraceTimeline';
-import type { McpTask, McpTaskStatus } from '../../models/McpTask';
+import {
+  taskFailureOf,
+  type McpTask,
+  type McpTaskStatus,
+} from '../../models/McpTask';
 import type { McpSpanNode } from '../../api/mcp/observability';
 import type { OtelSpan } from '../../api/otel/types';
 import { type McpErrorStateFn, type McpRoutes } from './types';
@@ -291,6 +295,8 @@ export const RunDetail = ({
   }
 
   const task = mock ? SAMPLE_RUN : run.data!;
+  // An empty object is no failure: the server sends `{}` while nothing failed.
+  const failure = taskFailureOf(task.error);
   const look = RUN_STATUS_LOOK[task.status];
   const over = isRunOver(task.status);
   const output = outputTextOf(task);
@@ -395,13 +401,13 @@ export const RunDetail = ({
         )}
       </Box>
 
-      {task.error && (
+      {failure && (
         <Box>
           <Heading as="h3" sx={{ fontSize: 1, mb: 2 }}>
             Why it failed
           </Heading>
           <Text sx={{ fontFamily: 'mono', fontSize: 0, color: 'danger.fg' }}>
-            {task.error}
+            {failure}
           </Text>
         </Box>
       )}

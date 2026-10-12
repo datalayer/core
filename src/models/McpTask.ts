@@ -25,11 +25,7 @@
 
 /** Where a task has got to; the MCP task status vocabulary. */
 export type McpTaskStatus =
-  | 'working'
-  | 'input_required'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+  'working' | 'input_required' | 'completed' | 'failed' | 'cancelled';
 
 /** The engine a task's workflow runs on. */
 export type McpWorkflowEngine = 'temporal' | 'dbos';
@@ -78,7 +74,12 @@ export interface McpTask {
   pollIntervalMs?: number | null;
   /** The `CallToolResult` for small results; a resource URI otherwise. */
   result?: McpCallToolResult | string | null;
-  error?: string | null;
+  /**
+   * Why it failed, as the server keeps it: an object — empty while nothing
+   * failed, else its `reason`, and where one applies the `code`, the `step`
+   * and what the resource was doing.
+   */
+  error?: McpTaskError | null;
   traceId?: string | null;
   workflowEngine?: McpWorkflowEngine | null;
   /** Always the task uid, so a retried start cannot create a second execution. */
@@ -119,3 +120,29 @@ export const MCP_TERMINAL_TASK_STATUSES: ReadonlySet<McpTaskStatus> =
 
 export const isMcpTaskTerminal = (status: McpTaskStatus): boolean =>
   MCP_TERMINAL_TASK_STATUSES.has(status);
+
+/** A task's failure, as the server keeps it (camel-cased like the rest). */
+export type McpTaskError = {
+  reason?: string;
+  code?: string;
+  step?: string;
+  [key: string]: unknown;
+};
+
+/**
+ * Why a task failed, in a line: its reason, after its code where it has one;
+ * `null` when the server's object says nothing — an empty one is no failure.
+ */
+export const taskFailureOf = (
+  error: McpTaskError | null | undefined,
+): string | null => {
+  if (!error || Object.keys(error).length === 0) {
+    return null;
+  }
+  const reason = typeof error.reason === 'string' ? error.reason : null;
+  const code = typeof error.code === 'string' ? error.code : null;
+  if (reason) {
+    return code ? `${code}: ${reason}` : reason;
+  }
+  return code ?? JSON.stringify(error);
+};
