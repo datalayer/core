@@ -13,7 +13,7 @@ import {
   type ComponentType,
   type SVGProps,
 } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, useColorPalette } from '@datalayer/primer-addons';
 import { Button, SegmentedControl, Text, Tooltip } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
 import {
@@ -935,6 +935,9 @@ export function PrincipalAvatarPicker({
 }): JSX.Element {
   const [open, setOpen] = useState(false);
   const chosen = principalAvatarOf(value);
+  // The colour a chosen avatar is drawn in (`UserAvatar`'s `--datalayer-icon-fg`):
+  // the icons are offered as they will look.
+  const palette = useColorPalette();
   // The tab the dialog opens on: what is chosen, the icons when nothing is.
   const [tab, setTab] = useState<'emoji' | 'icons'>(
     chosen?.kind === 'emoji' ? 'emoji' : 'icons',
@@ -1044,6 +1047,12 @@ export function PrincipalAvatarPicker({
           ) : null}
           {tab === 'icons' ? (
             <Box
+              style={
+                { '--datalayer-icon-fg': palette.primary } as Record<
+                  string,
+                  string
+                >
+              }
               display="grid"
               // Twelve to a line, whatever the dialog is wide: the columns
               // share it evenly and `minmax(0, …)` lets them shrink under
