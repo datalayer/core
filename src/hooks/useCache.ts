@@ -7067,7 +7067,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Confirm password change with token
+   * Confirm password change with the token the reset email carried. The
+   * handle and token travel in the body, never in the URL: paths are written
+   * to access logs.
    */
   const useConfirmPasswordWithToken = () => {
     return useMutation({
@@ -7079,8 +7081,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         token: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamUrl}/api/iam/v1/password/confirm/users/${userHandle}/tokens/${token}`,
-          method: 'PUT',
+          url: `${configuration.iamUrl}/api/iam/v1/password-reset/confirm`,
+          method: 'POST',
+          body: { handle: userHandle, token },
         });
       },
     });
