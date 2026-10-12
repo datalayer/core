@@ -20,7 +20,7 @@ const Profile = ({ user, size = 100, onClick }: IUserProfileAvatarProps) => {
     <Box style={{ width: size }} onClick={onClick}>
       <UserAvatar
         avatarUrl={user?.avatarUrl}
-        avatarIcon={user?.avatarIcon}
+        avatar={user?.avatarIcon}
         size={size}
       />
     </Box>

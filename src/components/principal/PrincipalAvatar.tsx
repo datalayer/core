@@ -8,7 +8,8 @@ import { EntityAvatar } from '@datalayer/primer-addons';
 import { OrganizationIcon, PeopleIcon } from '@primer/octicons-react';
 import { UserAvatar } from '../avatars';
 import {
-  getPrincipalAvatarIcon,
+  ChosenAvatar,
+  principalAvatarOf,
   type PrincipalType,
 } from './PrincipalAppearance';
 
@@ -17,14 +18,12 @@ export type PrincipalAvatarKind = PrincipalType;
 export type PrincipalAvatarProps = {
   kind: PrincipalAvatarKind;
   avatarUrl?: string;
-  avatarIcon?: string;
   /**
-   * A literal emoji this platform draws for a face of its own — an agent —
-   * rather than a person's chosen picture or icon. Checked before
-   * `avatarUrl`/`avatarIcon`, and only for `kind: 'personal'`: an agent is a
-   * personal-shaped seat in every roster it appears in today.
+   * The chosen avatar, as it is kept: `emoji:…` or
+   * `@datalayer/icons-react:…` (`components/avatars/avatarChoice`). An
+   * agent's face is its emoji, as `emoji:…`.
    */
-  avatarEmoji?: string;
+  avatar?: string;
   alt?: string;
   size?: number;
   square?: boolean;
@@ -45,15 +44,14 @@ function getFallbackIconSize(size: number): number {
 export function PrincipalAvatar({
   kind,
   avatarUrl,
-  avatarIcon,
-  avatarEmoji,
+  avatar,
   alt,
   size = 20,
   square = false,
   ring = false,
   className,
 }: PrincipalAvatarProps): JSX.Element {
-  const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
+  const chosen = principalAvatarOf(avatar);
   const shape = square ? 'rounded' : 'circle';
   /*
    * A person is drawn by `UserAvatar`, whatever they wear.
@@ -70,8 +68,7 @@ export function PrincipalAvatar({
     return (
       <UserAvatar
         avatarUrl={avatarUrl}
-        avatarIcon={avatarIcon}
-        avatarEmoji={avatarEmoji}
+        avatar={avatar}
         size={size}
         square={square}
         iconSize={getFallbackIconSize(size)}
@@ -81,7 +78,7 @@ export function PrincipalAvatar({
     );
   }
 
-  if (SelectedIcon) {
+  if (chosen) {
     return (
       // The disc of `UserAvatar`, for the same reason: the shape is what says
       // "avatar", and an icon drawn on nothing shows none of it.
@@ -92,8 +89,7 @@ export function PrincipalAvatar({
         ring={ring}
         alt={alt || `${kind} avatar`}
       >
-        {/* The plain icon, coloured by the theme — see UserAvatar. */}
-        <SelectedIcon size={getFallbackIconSize(size)} themed colormode />
+        <ChosenAvatar avatar={avatar} size={getFallbackIconSize(size)} />
       </EntityAvatar>
     );
   }

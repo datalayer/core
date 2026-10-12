@@ -26,6 +26,7 @@
 import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { AvatarStack } from '@primer/react';
+import { emojiAvatar } from '../avatars/avatarChoice';
 import { PrincipalAvatar } from '../principal/PrincipalAvatar';
 import { PrincipalHoverCard } from '../principal/PrincipalHoverCard';
 
@@ -34,12 +35,11 @@ export type LiveCollaborator = {
   id: string;
   name: string;
   avatarUrl?: string;
-  avatarIcon?: string;
   /**
-   * A literal emoji, for a face this platform draws rather than a person's
-   * own — an agent's — checked before `avatarUrl`/`avatarIcon`.
+   * The chosen avatar, as it is kept: `emoji:…` or
+   * `@datalayer/icons-react:…`; an agent's face is its emoji (`emoji:…`).
    */
-  avatarEmoji?: string;
+  avatar?: string;
   /** Cursor color of the presence, worn by the initials disc. */
   color?: string;
   /** The platform uid, when the face is a real account — for its profile. */
@@ -97,8 +97,11 @@ function collaboratorOfState(
     id: String(uid ?? user.username ?? clientId),
     name,
     avatarUrl: user.avatar_url || user.avatarUrl || undefined,
-    avatarIcon: user.avatar_icon_s || user.avatarIcon || undefined,
-    avatarEmoji: user.avatar_emoji_s || user.avatarEmoji || undefined,
+    // A person's chosen avatar; an agent announces its face as an emoji.
+    avatar:
+      user.avatar_icon_s ||
+      user.avatarIcon ||
+      (user.avatar_emoji_s ? emojiAvatar(user.avatar_emoji_s) : undefined),
     color: user.color || undefined,
     uid: uid ? String(uid) : undefined,
     handle: user.handle || username || undefined,
@@ -124,8 +127,7 @@ function mergeCollaborators(
     uid: known.uid || incoming.uid,
     handle: known.handle || incoming.handle,
     avatarUrl: known.avatarUrl || incoming.avatarUrl,
-    avatarIcon: known.avatarIcon || incoming.avatarIcon,
-    avatarEmoji: known.avatarEmoji || incoming.avatarEmoji,
+    avatar: known.avatar || incoming.avatar,
     color: known.color || incoming.color,
   };
 }
@@ -263,8 +265,7 @@ export function LiveEditorCollaborators(
           displayName={face.name}
           name={face.name}
           avatarUrl={face.avatarUrl}
-          avatarIcon={face.avatarIcon}
-          avatarEmoji={face.avatarEmoji}
+          avatar={face.avatar}
           onNavigate={onNavigate}
         >
           <PrincipalAvatar
@@ -272,8 +273,7 @@ export function LiveEditorCollaborators(
             size={size}
             alt={face.name}
             avatarUrl={face.avatarUrl}
-            avatarIcon={face.avatarIcon}
-            avatarEmoji={face.avatarEmoji}
+            avatar={face.avatar}
             square={false}
           />
         </PrincipalHoverCard>

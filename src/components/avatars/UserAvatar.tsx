@@ -15,8 +15,10 @@ import type { JSX } from 'react';
 import { AlienIcon } from '@datalayer/icons-react';
 import { EntityAvatar, useColorPalette } from '@datalayer/primer-addons';
 import { getAvatarURL } from '../../utils';
-import { getPrincipalAvatarIcon } from '../principal/PrincipalAppearance';
-import { FluentEmoji } from '../emoji/FluentEmoji';
+import {
+  ChosenAvatar,
+  principalAvatarOf,
+} from '../principal/PrincipalAppearance';
 
 /**
  * Returns `true` when the given URL points to a real user avatar (i.e. not a
@@ -34,14 +36,13 @@ export function hasRealAvatar(url?: string): boolean {
 
 export type UserAvatarProps = {
   avatarUrl?: string;
-  avatarIcon?: string;
   /**
-   * A literal emoji, checked before `avatarIcon`/`avatarUrl` — an agent's
-   * face is its emoji, not a photograph or a chosen icon standing in for
-   * one. Drawn in Fluent Emoji, the same on every platform (LOOP T-20); the
-   * system's, as text, only for one Datalayer ships no drawing of.
+   * The chosen avatar, as it is kept (`components/avatars/avatarChoice`):
+   * `emoji:👀` — drawn in Fluent Emoji, the same on every platform (LOOP
+   * T-20) — or `@datalayer/icons-react:RobotIcon`. Checked before
+   * `avatarUrl`: a chosen picture wins over a photograph.
    */
-  avatarEmoji?: string;
+  avatar?: string;
   /** Avatar edge length in pixels. Defaults to 100. */
   size?: number;
   /** Render with rounded square corners instead of a circle. Defaults to true. */
@@ -65,8 +66,7 @@ export type UserAvatarProps = {
 
 export const UserAvatar = ({
   avatarUrl,
-  avatarIcon,
-  avatarEmoji,
+  avatar,
   size = 100,
   square = true,
   iconSize,
@@ -79,10 +79,11 @@ export const UserAvatar = ({
   // A rounded square takes the theme's corner, a circle is a circle; the
   // ring is drawn just outside the edge, so the avatar keeps its size.
   const shape = square ? 'rounded' : 'circle';
-  if (avatarEmoji) {
+  const chosen = principalAvatarOf(avatar);
+  if (chosen?.kind === 'emoji') {
     return (
       <EntityAvatar
-        alt={avatarEmoji}
+        alt={chosen.emoji}
         className={className}
         size={size}
         shape={shape}
@@ -90,10 +91,9 @@ export const UserAvatar = ({
         bg={fallbackBackground || 'canvas.default'}
       >
         {/* Named by the disc it sits on, so the drawing is decoration. */}
-        <FluentEmoji
-          emoji={avatarEmoji}
+        <ChosenAvatar
+          avatar={avatar}
           size={iconSize ?? Math.round(size * 0.6)}
-          label=""
         />
       </EntityAvatar>
     );
@@ -108,8 +108,7 @@ export const UserAvatar = ({
       '--datalayer-icon-fg': fallbackForeground || palette.primary,
     } as Record<string, string>,
   };
-  const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
-  if (SelectedIcon) {
+  if (chosen?.kind === 'icon') {
     return (
       <EntityAvatar
         className={className}
@@ -118,10 +117,9 @@ export const UserAvatar = ({
         ring={ring}
         {...iconGround}
       >
-        <SelectedIcon
+        <ChosenAvatar
+          avatar={avatar}
           size={iconSize ?? Math.round(size * 0.62)}
-          themed
-          colormode
         />
       </EntityAvatar>
     );

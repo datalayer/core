@@ -100,7 +100,7 @@ describe('the faces offered, each drawn in Fluent Emoji (LOOP T-20)', () => {
 
   it('draws an emoji face on its disc, in Fluent', async () => {
     await act(async () => {
-      root.render(<UserAvatar avatarEmoji="🚀" size={72} square={false} />);
+      root.render(<UserAvatar avatar="emoji:🚀" size={72} square={false} />);
     });
     await settle();
     const disc = container.querySelector('[role="img"]') as HTMLElement;
@@ -115,7 +115,7 @@ describe('the faces offered, each drawn in Fluent Emoji (LOOP T-20)', () => {
     for (const size of [72, 40, 20]) {
       await act(async () => {
         root.render(
-          <PrincipalAvatar kind="service" avatarEmoji="👀" size={size} />,
+          <PrincipalAvatar kind="service" avatar="emoji:👀" size={size} />,
         );
       });
       await settle();

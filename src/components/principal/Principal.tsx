@@ -434,7 +434,7 @@ export const Principal: React.FC<PrincipalProps> = ({
       <PrincipalAvatar
         kind={resolvedPrincipal.kind}
         avatarUrl={resolvedPrincipal.avatarUrl}
-        avatarIcon={resolvedPrincipal.avatarIcon}
+        avatar={resolvedPrincipal.avatarIcon}
         alt={resolvedPrincipal.displayName}
         size={avatarSize}
         square={square}
@@ -452,7 +452,7 @@ export const Principal: React.FC<PrincipalProps> = ({
         email={resolvedPrincipal.email}
         origin={resolvedPrincipal.origin}
         avatarUrl={resolvedPrincipal.avatarUrl}
-        avatarIcon={resolvedPrincipal.avatarIcon}
+        avatar={resolvedPrincipal.avatarIcon}
         organizationName={teamOrganizationNameResolved}
         memberCount={teamMemberCount}
         isPublic={resolvedIsPublic}

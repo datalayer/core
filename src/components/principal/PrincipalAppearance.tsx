@@ -14,8 +14,17 @@ import {
   type SVGProps,
 } from 'react';
 import { Box } from '@datalayer/primer-addons';
-import { Button, Text, Tooltip } from '@primer/react';
+import { Button, SegmentedControl, Text, Tooltip } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
+import {
+  AvatarRefused,
+  emojiAvatar,
+  iconAvatar,
+  parseAvatar,
+  type AvatarChoice,
+} from '../avatars/avatarChoice';
+import { FACE_EMOJIS } from '../emoji/faceEmojis';
+import { FluentEmoji } from '../emoji/FluentEmoji';
 
 /**
  * Who a principal is: a person, an organization, a team — or a service
@@ -806,10 +815,76 @@ export function getPrincipalBannerForSeed(seed: string): string {
   return PRINCIPAL_BANNERS[Math.abs(hash) % PRINCIPAL_BANNERS.length].name;
 }
 
-export function getPrincipalAvatarIcon(
-  name?: string,
-): AvatarComponent | undefined {
-  return PRINCIPAL_AVATAR_ICONS.find(option => option.name === name)?.Icon;
+/** The names of the avatar set: the icons an avatar may be. */
+export const PRINCIPAL_AVATAR_ICON_NAMES: ReadonlySet<string> = new Set(
+  PRINCIPAL_AVATAR_ICONS.map(option => option.name),
+);
+
+/** The avatar a kept value names; throws `AvatarRefused` for anything else. */
+export function parsePrincipalAvatar(value: string): AvatarChoice {
+  return parseAvatar(value, PRINCIPAL_AVATAR_ICON_NAMES);
+}
+
+/**
+ * The avatar a kept value names, or `undefined` when there is none or it is
+ * refused — said once on the console, in its sentence: a picture that cannot
+ * be drawn is drawn as no choice, never as a broken page.
+ */
+export function principalAvatarOf(
+  value: string | undefined,
+): AvatarChoice | undefined {
+  if (!value) {
+    return undefined;
+  }
+  try {
+    return parsePrincipalAvatar(value);
+  } catch (error) {
+    if (error instanceof AvatarRefused) {
+      console.error(`Avatar refused: ${error.message}`);
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+/**
+ * The drawing of a chosen avatar — an emoji or an icon of the set, by its
+ * kept value — on nothing: whatever holds it gives it its disc
+ * (`UserAvatar`, `PrincipalAvatar`, an application's face). `null` for no
+ * choice, or a refused one.
+ */
+export function ChosenAvatar({
+  avatar,
+  size,
+  label = '',
+}: {
+  avatar: string | undefined;
+  /** Its edge, in pixels. */
+  size: number;
+  /** What it is called for a screen reader; empty, it is decoration. */
+  label?: string;
+}): JSX.Element | null {
+  const choice = principalAvatarOf(avatar);
+  if (!choice) {
+    return null;
+  }
+  if (choice.kind === 'emoji') {
+    return <FluentEmoji emoji={choice.emoji} size={size} label={label} />;
+  }
+  const Icon = PRINCIPAL_AVATAR_ICONS.find(
+    option => option.name === choice.name,
+  )!.Icon;
+  // The plain icon, coloured by the theme — never the `colored` variant,
+  // whose fixed palette belongs to the emoji it is drawn from.
+  return (
+    <Icon
+      size={size}
+      themed
+      colormode
+      aria-label={label || undefined}
+      aria-hidden={label ? undefined : true}
+    />
+  );
 }
 
 export function PrincipalBannerImage({
@@ -859,11 +934,36 @@ export function PrincipalAvatarPicker({
   disabled?: boolean;
 }): JSX.Element {
   const [open, setOpen] = useState(false);
-  const selected = PRINCIPAL_AVATAR_ICONS.find(option => option.name === value);
+  const chosen = principalAvatarOf(value);
+  // The tab the dialog opens on: what is chosen, the icons when nothing is.
+  const [tab, setTab] = useState<'emoji' | 'icons'>(
+    chosen?.kind === 'emoji' ? 'emoji' : 'icons',
+  );
+  const choose = (next: string) => {
+    onChange(next);
+    setOpen(false);
+  };
+  const selectedLabel =
+    chosen?.kind === 'emoji'
+      ? chosen.emoji
+      : chosen
+        ? PRINCIPAL_AVATAR_ICONS.find(option => option.name === chosen.name)
+            ?.label
+        : undefined;
   return (
     <>
-      <Button type="button" disabled={disabled} onClick={() => setOpen(true)}>
-        {selected ? `Change Avatar (${selected.label})` : 'Choose Avatar'}
+      <Button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          setTab(chosen?.kind === 'emoji' ? 'emoji' : 'icons');
+          setOpen(true);
+        }}
+        leadingVisual={
+          chosen ? () => <ChosenAvatar avatar={value} size={16} /> : undefined
+        }
+      >
+        {selectedLabel ? `Change Avatar (${selectedLabel})` : 'Choose Avatar'}
       </Button>
       {open ? (
         <Dialog
@@ -890,89 +990,146 @@ export function PrincipalAvatarPicker({
             },
           }}
         >
-          <Box
-            display="grid"
-            // Twelve to a line, whatever the dialog is wide: the columns
-            // share it evenly and `minmax(0, …)` lets them shrink under
-            // their content, which a long name would otherwise widen.
-            gridTemplateColumns={[
-              'repeat(6, minmax(0, 1fr))',
-              'repeat(12, minmax(0, 1fr))',
-            ]}
-            gap={2}
+          <SegmentedControl
+            aria-label="Avatar kind"
+            sx={{ mb: 3 }}
+            onChange={index => setTab(index === 0 ? 'emoji' : 'icons')}
           >
-            {PRINCIPAL_AVATAR_ICONS.map(
-              ({ name, label, description, Icon }) => (
-                // A button drawn as a card rather than a Primer `Button`: the
-                // avatar is named under it, as the banners are under theirs.
-                // The name under a card is clipped when it is long, and a
-                // picture says only so much: the tooltip gives the whole name
-                // and what the picture is of.
-                <Tooltip
-                  key={name}
-                  text={description ? `${label} — ${description}` : label}
-                  direction="n"
-                >
+            <SegmentedControl.Button selected={tab === 'emoji'}>
+              Emoji
+            </SegmentedControl.Button>
+            <SegmentedControl.Button selected={tab === 'icons'}>
+              Icons
+            </SegmentedControl.Button>
+          </SegmentedControl>
+          {tab === 'emoji' ? (
+            <Box
+              display="grid"
+              gridTemplateColumns={[
+                'repeat(6, minmax(0, 1fr))',
+                'repeat(12, minmax(0, 1fr))',
+              ]}
+              gap={2}
+            >
+              {FACE_EMOJIS.map(emoji => {
+                const next = emojiAvatar(emoji);
+                const pressed = value === next;
+                return (
                   <Box
                     as="button"
+                    key={emoji}
                     type="button"
-                    aria-label={
-                      description ? `${label} — ${description}` : label
-                    }
-                    aria-pressed={value === name}
-                    onClick={() => {
-                      onChange(name);
-                      setOpen(false);
-                    }}
-                    display="block"
+                    aria-label={emoji}
+                    aria-pressed={pressed}
+                    onClick={() => choose(next)}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    height={72}
                     width="100%"
                     p={0}
-                    overflow="hidden"
                     appearance="none"
-                    color="fg.default"
                     cursor="pointer"
                     border="1px solid"
                     borderRadius={2}
-                    borderColor={
-                      value === name ? 'accent.emphasis' : 'border.default'
-                    }
-                    bg={value === name ? 'accent.subtle' : 'canvas.default'}
+                    borderColor={pressed ? 'accent.emphasis' : 'border.default'}
+                    bg={pressed ? 'accent.subtle' : 'canvas.default'}
                     hover={{ borderColor: 'accent.emphasis' }}
                   >
+                    <FluentEmoji emoji={emoji} size={44} label="" />
+                  </Box>
+                );
+              })}
+            </Box>
+          ) : null}
+          {tab === 'icons' ? (
+            <Box
+              display="grid"
+              // Twelve to a line, whatever the dialog is wide: the columns
+              // share it evenly and `minmax(0, …)` lets them shrink under
+              // their content, which a long name would otherwise widen.
+              gridTemplateColumns={[
+                'repeat(6, minmax(0, 1fr))',
+                'repeat(12, minmax(0, 1fr))',
+              ]}
+              gap={2}
+            >
+              {PRINCIPAL_AVATAR_ICONS.map(
+                ({ name, label, description, Icon }) => (
+                  // A button drawn as a card rather than a Primer `Button`: the
+                  // avatar is named under it, as the banners are under theirs.
+                  // The name under a card is clipped when it is long, and a
+                  // picture says only so much: the tooltip gives the whole name
+                  // and what the picture is of.
+                  <Tooltip
+                    key={name}
+                    text={description ? `${label} — ${description}` : label}
+                    direction="n"
+                  >
                     <Box
-                      height={72}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
+                      as="button"
+                      type="button"
+                      aria-label={
+                        description ? `${label} — ${description}` : label
+                      }
+                      aria-pressed={value === iconAvatar(name)}
+                      onClick={() => choose(iconAvatar(name))}
+                      display="block"
+                      width="100%"
+                      p={0}
+                      overflow="hidden"
+                      appearance="none"
+                      color="fg.default"
+                      cursor="pointer"
+                      border="1px solid"
+                      borderRadius={2}
+                      borderColor={
+                        value === iconAvatar(name)
+                          ? 'accent.emphasis'
+                          : 'border.default'
+                      }
+                      bg={
+                        value === iconAvatar(name)
+                          ? 'accent.subtle'
+                          : 'canvas.default'
+                      }
+                      hover={{ borderColor: 'accent.emphasis' }}
                     >
-                      {/*
+                      <Box
+                        height={72}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        {/*
                     The plain icon, coloured by the theme — never the `colored`
                     variant, whose fixed palette belongs to the emoji it is
                     drawn from and ignores the colour mode.
                   */}
-                      <Icon size={52} themed colormode />
+                        <Icon size={52} themed colormode />
+                      </Box>
+                      <Text
+                        sx={{
+                          display: 'block',
+                          px: 2,
+                          py: 1,
+                          fontSize: 0,
+                          textAlign: 'center',
+                          // A name too long for the card is cut rather than
+                          // stretching the grid it sits in.
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {label}
+                      </Text>
                     </Box>
-                    <Text
-                      sx={{
-                        display: 'block',
-                        px: 2,
-                        py: 1,
-                        fontSize: 0,
-                        textAlign: 'center',
-                        // A name too long for the card is cut rather than
-                        // stretching the grid it sits in.
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {label}
-                    </Text>
-                  </Box>
-                </Tooltip>
-              ),
-            )}
-          </Box>
+                  </Tooltip>
+                ),
+              )}
+            </Box>
+          ) : null}
         </Dialog>
       ) : null}
     </>

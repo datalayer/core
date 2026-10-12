@@ -449,7 +449,7 @@ export function PrincipalSwitcherMenu({
                   */}
                   <UserAvatar
                     avatarUrl={user?.avatarUrl}
-                    avatarIcon={(user as { avatarIcon?: string })?.avatarIcon}
+                    avatar={(user as { avatarIcon?: string })?.avatarIcon}
                     size={16}
                     square={false}
                     ring
