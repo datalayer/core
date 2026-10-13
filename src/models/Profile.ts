@@ -41,8 +41,8 @@ export interface Profile {
   avatar_url_s?: string;
   avatar_icon_s?: string;
   banner_s?: string;
-  /** Onboarding state as JSON string */
-  onboarding_s?: string;
+  /** Onboarding state: the child IAM keeps on the user (read by `userOnboardingOf`). */
+  onboarding?: Record<string, unknown>;
   /** New password request timestamp */
   new_password_request_ts_dt?: string | null;
   /** New password confirmation timestamp */

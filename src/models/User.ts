@@ -6,7 +6,7 @@
 import { asDisplayName, namesAsInitials, toFriendlyName } from '../utils';
 import { IInvite } from './Invite';
 import { asIAMProviderLinked, IIAMProviderLinked } from './IAMProviderLinked';
-import { BOOTSTRAP_USER_ONBOARDING, IUserOnboarding } from './UserOnboarding';
+import { IUserOnboarding, userOnboardingOf } from './UserOnboarding';
 import { IUserSettings, UserSettings } from './UserSettings';
 import { asUserEvent, IUserEvent } from './UserEvent';
 
@@ -98,9 +98,7 @@ export class User implements IUser {
     this.settings = new UserSettings(u.settings ?? {});
     this.unsubscribedFromOutbounds = u.unsubscribed_from_outbounds_b ?? false;
     this.mfaUrl = u.mfa_url_s;
-    this.onboarding = u.onboarding_s
-      ? JSON.parse(u.onboarding_s)
-      : BOOTSTRAP_USER_ONBOARDING;
+    this.onboarding = userOnboardingOf(u.onboarding);
     this.linkedContactId = u.linked_contact_uid;
     this.subscription = u.subscription;
     let events = u.events ?? [];
