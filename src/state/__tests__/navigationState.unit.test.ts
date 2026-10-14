@@ -42,7 +42,7 @@ describe('where each shell was left', () => {
     expect(routeForView('agentify')).toBe(NAVIGATION_VIEW_HOMES.agentify);
     expect(routeForView('admin')).toBe('/admin');
     // The Power shell's own address, not the root: the root is the Studio's.
-    expect(routeForView('home')).toBe('/power');
+    expect(routeForView('home')).toBe('/platform');
   });
 
   it('files the Studio, and the root it opens on, under its own shell', () => {
@@ -142,6 +142,32 @@ describe('where each shell was left', () => {
     expect(navigationStore.getState().routeForView('apps')).toBe('/apps/apps');
   });
 
+  it('gives the research areas a shell of their own, the papers with them', () => {
+    expect(viewForRoute('/research')).toBe('research');
+    expect(viewForRoute('/research/self-replicating-ai')).toBe('research');
+    expect(viewForRoute('/research/papers/context-optimized-agents?x=1')).toBe(
+      'research',
+    );
+    expect(viewForRoute('/researchx')).toBe('home');
+    expect(NAVIGATION_VIEW_HOMES.research).toBe('/research');
+    navigationStore.setState({ lastRouteByView: {} });
+    expect(navigationStore.getState().routeForView('research')).toBe(
+      '/research',
+    );
+    navigationStore
+      .getState()
+      .rememberRoute('/research/orchestration-protocol');
+    expect(navigationStore.getState().view).toBe('research');
+    expect(navigationStore.getState().routeForView('research')).toBe(
+      '/research/orchestration-protocol',
+    );
+    // Not a page of another shell.
+    navigationStore.setState({ lastRouteByView: { research: '/agentify' } });
+    expect(navigationStore.getState().routeForView('research')).toBe(
+      '/research',
+    );
+  });
+
   it('never sends a shell to a page that is not its own', () => {
     // What an earlier version could leave behind.
     navigationStore.setState({
@@ -149,15 +175,15 @@ describe('where each shell was left', () => {
     });
     const { routeForView } = navigationStore.getState();
     expect(routeForView('agentify')).toBe('/agentify');
-    expect(routeForView('home')).toBe('/power');
+    expect(routeForView('home')).toBe('/platform');
   });
 
   it('never sends Power to the root, which is the Studio', () => {
     // The Power shell's page, before it had `/power`.
     navigationStore.setState({ lastRouteByView: { home: '/' } });
-    expect(navigationStore.getState().routeForView('home')).toBe('/power');
+    expect(navigationStore.getState().routeForView('home')).toBe('/platform');
     navigationStore.setState({ lastRouteByView: { home: '/?tab=recent' } });
-    expect(navigationStore.getState().routeForView('home')).toBe('/power');
+    expect(navigationStore.getState().routeForView('home')).toBe('/platform');
   });
 
   it('does not remember the doors: sign-in, OAuth callbacks, the documentation', () => {
@@ -226,12 +252,14 @@ describe('what the last visit left', () => {
     document.cookie = `${SHELL_COOKIE}=home; path=/`;
     const state = await open();
     expect(state.view).toBe('home');
-    expect(state.routeForView(state.view)).toBe('/power');
+    expect(state.routeForView(state.view)).toBe('/platform');
   });
 
   it('keeps the other shells a cookie names, and ignores one it does not know', async () => {
     document.cookie = `${SHELL_COOKIE}=agentify; path=/`;
     expect((await open()).view).toBe('agentify');
+    document.cookie = `${SHELL_COOKIE}=research; path=/`;
+    expect((await open()).view).toBe('research');
     document.cookie = `${SHELL_COOKIE}=power; path=/`;
     expect((await open()).view).toBe('studio');
   });
@@ -259,7 +287,7 @@ describe('what the last visit left', () => {
     // The root, a page filed under the wrong shell and a shell that does not
     // exist are gone from the store itself, so no later write puts them back.
     expect(state.lastRouteByView).toEqual({ agentify: '/agentify/tutor' });
-    expect(state.routeForView('home')).toBe('/power');
+    expect(state.routeForView('home')).toBe('/platform');
     expect(state.routeForView('admin')).toBe('/admin');
     expect(state.tabsByView).toEqual({ library: 'featured' });
 

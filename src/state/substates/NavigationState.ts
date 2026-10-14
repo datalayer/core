@@ -34,9 +34,8 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { registerSessionState } from '../sessionEnd';
 
-/** The signed-in shell: the platform, the business cases, or the admin. */
 /**
- * The five shells of the signed-in application.
+ * The six shells of the signed-in application.
  *
  * `studio` is where an agentic UI application is composed, validated and
  * shipped — the default for somebody who has not chosen, and what the root
@@ -48,8 +47,12 @@ import { registerSessionState } from '../sessionEnd';
  * a sidebar of their own, every address under `/apps`, and the workspace at
  * `/apps` itself. It was `loop`, at `/loop`: a cookie still saying `loop`
  * names no shell and is ignored, the reader opening on the Studio.
+ * `research` is the research areas, each one a space of the
+ * `datalayer-research` organization, at `/research` (the public papers, read
+ * signed in, at `/research/papers/…` beside them).
  */
-export type NavigationView = 'studio' | 'home' | 'agentify' | 'admin' | 'apps';
+export type NavigationView =
+  'studio' | 'home' | 'agentify' | 'research' | 'admin' | 'apps';
 
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
@@ -59,6 +62,8 @@ export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
   // shell took the name it is called by everywhere else.
   home: '/platform',
   agentify: '/agentify',
+  // The research areas and their spaces.
+  research: '/research',
   admin: '/admin',
   // The applications: what a builder opens the Apps shell for.
   apps: '/apps/apps',
@@ -129,6 +134,7 @@ const isView = (value: unknown): value is NavigationView =>
   value === 'studio' ||
   value === 'home' ||
   value === 'agentify' ||
+  value === 'research' ||
   value === 'admin' ||
   value === 'apps';
 
@@ -333,6 +339,11 @@ export function viewForRoute(
   }
   if (path === '/agentify' || path.startsWith('/agentify/')) {
     return 'agentify';
+  }
+  // The research areas — and the papers, read signed in under
+  // `/research/papers/…`, with the areas' sidebar beside them.
+  if (path === '/research' || path.startsWith('/research/')) {
+    return 'research';
   }
   if (path === '/admin' || path.startsWith('/admin/')) {
     return 'admin';
