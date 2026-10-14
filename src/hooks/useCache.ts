@@ -51,6 +51,7 @@ import {
   BOOTSTRAP_USER_ONBOARDING,
   IAnyOrganization,
   IContact,
+  IIAMProviderName,
   IIAMToken,
   IOrganization,
   IOrganizationMember,
@@ -86,6 +87,7 @@ type ISpaceItem = any;
 type IStudentItem = any;
 import { asSpace } from './cacheConverters';
 import { libraryAppFieldsOf } from './libraryApp';
+import { unlinkIAMProvider } from './unlinkIAMProvider';
 import { useCoreStore, useIAMStore, profileStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { useDatalayer } from './useDatalayer';
@@ -9015,6 +9017,31 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Unlink a provider (github, google, linkedin, x) from the signed-in
+   * account; IAM deletes the link and the tokens it holds for it.
+   *
+   * IAM's refusal (409: the provider is the account's only way to sign in)
+   * is the error's message, for the page to show: nothing is toasted. On
+   * success the signed-in user is read again, so the settings pages and the
+   * header's provider icons follow its linked providers.
+   */
+  const useUnlinkIAMProvider = () => {
+    const iamStore = useIAMStore();
+    return useMutation({
+      mutationFn: async (provider: IIAMProviderName) =>
+        unlinkIAMProvider(
+          requestDatalayer,
+          configuration.iamUrl,
+          provider,
+          async () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+            await iamStore.refreshUser();
+          },
+        ),
+    });
+  };
+
+  /**
    * Get the server-connected LinkedIn profile.
    *
    * IAM answers 404 when no LinkedIn posting account is connected: a state
@@ -10486,6 +10513,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useGetGitHubProfile,
     useGetGoogleProfile,
     useGetLinkedinProfile,
+    useUnlinkIAMProvider,
     usePostLinkedinShare,
     usePostLinkedinShareWithUpload,
     useGetBlueskyConnection,
