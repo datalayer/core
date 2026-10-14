@@ -9014,13 +9014,20 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
-  /** Get the server-connected LinkedIn profile. */
+  /**
+   * Get the server-connected LinkedIn profile.
+   *
+   * IAM answers 404 when no LinkedIn posting account is connected: a state
+   * the caller shows (a link button), never an error toast. The resolved
+   * response then carries `success: false`, `status` and `message`.
+   */
   const useGetLinkedinProfile = () => {
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/social/linkedin/profile`,
           method: 'GET',
+          notifyOnError: false,
         });
       },
     });

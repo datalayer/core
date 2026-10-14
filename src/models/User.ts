@@ -86,15 +86,11 @@ export class User implements IUser {
     this.credits = u.credits_i ? Number(u.credits_i) : 0;
     this.creditsCustomerId = u.stripe_customer_id_s;
     this.roles = u.roles_ss ?? [];
-    let iamProviders = [];
-    try {
-      iamProviders = (u.iam_providers ?? []).map(iamProvider =>
-        asIAMProviderLinked(iamProvider),
-      );
-    } catch (e) {
-      // no-op for backwards compatibility.
-    }
-    this.iamProviders = iamProviders;
+    // IAM sends one linked provider as an object, several as a list.
+    const rawIAMProviders = u.iam_providers ?? [];
+    this.iamProviders = (
+      Array.isArray(rawIAMProviders) ? rawIAMProviders : [rawIAMProviders]
+    ).map(asIAMProviderLinked);
     this.settings = new UserSettings(u.settings ?? {});
     this.unsubscribedFromOutbounds = u.unsubscribed_from_outbounds_b ?? false;
     this.mfaUrl = u.mfa_url_s;
