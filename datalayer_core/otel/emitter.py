@@ -72,7 +72,16 @@ class OTelEmitter:
         if not resolved_user_uid:
             resolved_user_uid = _decode_user_uid(resolved_token)
 
-        if not resolved_token:
+        # Whose telemetry this is (`datalayer.user_uid`, read off the token
+        # above) and what it is exported with are two things. A runtime keeps
+        # an emitter for a person long after the request token it was built
+        # from expired, and the ingest refuses an expired token (prod1,
+        # 2026-10-15: "Require a token"); where the process holds the
+        # platform's export key, `DATALAYER_OTEL_API_KEY`, that key carries
+        # the posts, and the points stay filed under the person.
+        export_token = os.environ.get("DATALAYER_OTEL_API_KEY") or resolved_token
+
+        if not export_token:
             raise ValueError(
                 "OTelEmitter requires a token (JWT or DATALAYER_API_KEY) for authenticated OTEL export"
             )
@@ -93,7 +102,7 @@ class OTelEmitter:
             metrics_endpoint = f"{otlp_base}/v1/metrics"
             traces_endpoint = f"{otlp_base}/v1/traces"
 
-            headers = {"Authorization": f"Bearer {resolved_token}"}
+            headers = {"Authorization": f"Bearer {export_token}"}
 
             resource_attrs: dict[str, str] = {
                 "service.name": self.service_name,
