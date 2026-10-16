@@ -5,7 +5,7 @@
 Rich displays for the orchestration control plane.
 
 The workers discovered, an execution, its artifacts, and its event stream as
-lines (ORCHESTRATOR.md, O1-13).
+lines (O1-13).
 
 The words for an event are the ones the app's execution page uses
 (``ui/src/views/orchestration/executionViews.ts``), so ``datalayer executions

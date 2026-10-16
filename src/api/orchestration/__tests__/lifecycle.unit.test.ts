@@ -4,7 +4,7 @@
  */
 
 /**
- * The TypeScript lifecycle is the Python one (PLAN_ORCHESTRATOR.md, O0-02).
+ * The TypeScript lifecycle is the Python one (O0-02).
  *
  * The same three assertions as `test_orchestration_lifecycle.py`: every
  * state reachable from `created`, every terminal state absorbing, and an
@@ -71,7 +71,7 @@ describe('the canonical execution lifecycle', () => {
     }
   });
 
-  it('moves where section 6.1 draws a move', () => {
+  it('moves where the lifecycle diagram draws a move', () => {
     expect(transition('created', 'assign')).toBe('assigned');
     expect(transition('assigned', 'start')).toBe('running');
     expect(transition('running', 'wait')).toBe('waiting');

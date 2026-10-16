@@ -2,20 +2,20 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The execution, and one attempt at it (PLAN_ORCHESTRATOR.md, sections 5.2, O0-01).
+The execution, and one attempt at it (O0-01).
 
 An execution is one durable unit of delegated work. It is never called a
 task: Task is A2A's word for its own projection of this, and ``mcp_task`` is
 the gateway's. A protocol session and a remote task are projections of an
 execution; the execution is what survives them.
 
-An attempt is one dispatch of an execution to a worker. Section 6.4 requires
+An attempt is one dispatch of an execution to a worker. Delivery requires
 each attempt to have its own identifier, because retries and duplicate
 deliveries are only distinguishable if the thing that can happen twice is
 named — an execution that completed twice is a bug, an execution with two
 attempts of which one completed is ordinary.
 
-The default limits are 19.8's seventh decision, and they are constants here
+The default limits are decided, and they are constants here
 rather than numbers in a service so that the control plane, the durable
 worker and the browser agree on what a tree may do before anybody asks.
 """

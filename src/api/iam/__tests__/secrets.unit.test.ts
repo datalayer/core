@@ -51,8 +51,8 @@ describe('Secrets API', () => {
             name: 'test_secret',
             variant: 'password',
             description: 'Test secret',
-            // A secret has one representation end to end (PLAN_ENVS.md
-            // E3-05). `expect.any(String)` passed either way, which is how
+            // A secret has one representation end to end (E3-05).
+            // `expect.any(String)` passed either way, which is how
             // the encoding survived unnoticed.
             value: 'plain_text_value',
           }),

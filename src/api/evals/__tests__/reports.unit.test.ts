@@ -9,7 +9,7 @@
  */
 
 /**
- * Reports as objects (BENCHMARK.md, B4-04): the paths the AI Agents service
+ * Reports as objects (B4-04): the paths the AI Agents service
  * pins, the move sent as a state, and a regeneration that names its runs
  * only when it is given some.
  */

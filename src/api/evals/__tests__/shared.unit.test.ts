@@ -9,7 +9,7 @@
  */
 
 /**
- * What other people shared with the caller (BENCHMARK.md, B4-07): one route
+ * What other people shared with the caller (B4-07): one route
  * for the person, whatever account the views are scoped to.
  */
 

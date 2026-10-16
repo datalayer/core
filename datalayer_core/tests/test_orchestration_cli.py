@@ -1,7 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""The ``datalayer agents`` and ``datalayer executions`` commands (ORCHESTRATOR.md, O1-13).
+"""The ``datalayer agents`` and ``datalayer executions`` commands (O1-13).
 
 Against a client that answers what the control plane would: which worker a
 run is delegated to and with what, the key a command carries when none is

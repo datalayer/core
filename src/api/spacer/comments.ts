@@ -9,7 +9,7 @@
  */
 
 /**
- * Comments on documents and notebooks (BENCHMARK.md, B4-01).
+ * Comments on documents and notebooks (B4-01).
  *
  * A thread is its first comment, about one anchor — the highlighted text, a
  * report's evidence block, a cell, a task, a data point — and a reply names
@@ -30,11 +30,7 @@ import {
 export type CommentItemType = 'lexical' | 'notebook';
 
 export type CommentAnchorKind =
-  | 'mark_id'
-  | 'block_id'
-  | 'cell_id'
-  | 'case_id'
-  | 'datum';
+  'mark_id' | 'block_id' | 'cell_id' | 'case_id' | 'datum';
 
 /** What a thread is about: exactly one kind. */
 export type CommentAnchor = Partial<Record<CommentAnchorKind, string>>;

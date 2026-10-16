@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """The canonical model reads and writes the shared fixture unchanged
-(PLAN_ORCHESTRATOR.md, O0-01).
+(O0-01).
 
 `datalayer_core/orchestration/fixtures/orchestration-v1.json` is one
 document held by two languages: this suite validates it and writes it back,
@@ -128,8 +128,8 @@ def test_every_kind_of_context_reference_formats_and_parses() -> None:
         assert ContextReference(uri=uri).kind is kind
 
 
-def test_the_default_limits_are_the_ones_the_plan_decided() -> None:
-    # 19.8, question 7: depth 3, fan-out 8 per parent and 32 per tree, two
+def test_the_default_limits_are_the_decided_ones() -> None:
+    # The decided limits: depth 3, fan-out 8 per parent and 32 per tree, two
     # retries with exponential backoff.
     limits = DelegationLimits()
     assert (limits.max_depth, DEFAULT_MAX_DEPTH) == (3, 3)
@@ -142,7 +142,7 @@ def test_the_default_limits_are_the_ones_the_plan_decided() -> None:
 
 
 def test_an_artifact_keeps_every_attempt_that_produced_it() -> None:
-    # 19.8, question 4: the first attempt to commit wins, and a later one is
+    # The commit rule: the first attempt to commit wins, and a later one is
     # registered with its provenance rather than overwriting anything.
     artifact = Artifact.from_wire(fixture()["Artifact"])
     attempts = [provenance.attempt_id for provenance in artifact.provenance]

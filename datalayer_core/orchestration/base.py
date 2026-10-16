@@ -2,9 +2,9 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-What every canonical orchestration record shares (PLAN_ORCHESTRATOR.md, O0-01).
+What every canonical orchestration record shares (O0-01).
 
-The wire is camel case. Section 5.2 of the plan writes the execution as
+The wire is camel case. The model writes the execution as
 ``executionId``, ``parentExecutionId``, ``acceptanceCriteria``, and the
 browser reads those keys unconverted — unlike the MCP and Contents wires,
 which are snake case and need a converter on the TypeScript side. Python
@@ -12,7 +12,7 @@ keeps its own snake case names and reaches the wire through aliases, so one
 model serves the CLI, the control plane and the generated TypeScript without
 a second spelling of any field.
 
-Unknown fields are refused. Section 9 of the plan treats workers, protocol
+Unknown fields are refused. The security model treats workers, protocol
 metadata and artifacts as untrusted, and a field the orchestrator does not
 understand is exactly what it must not carry into shared Datalayer
 resources; the MCP models allow extras because the gateway is the authority

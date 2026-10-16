@@ -2,17 +2,17 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The twelve commands (PLAN_ORCHESTRATOR.md, sections 6.2, 6.4, O0-03).
+The twelve commands (O0-03).
 
 Protocol-neutral by construction: nothing here knows about HTTP, JSON-RPC,
 A2A or ACP. The same ``executions.delegate`` is what a browser posts, what
 the CLI sends and what a parent agent asks for, and the adapter that turns
-it into a protocol operation is somewhere else entirely (section 7).
+it into a protocol operation is somewhere else entirely (the adapters).
 
 Every mutating command carries an idempotency key, and that is enforced by
 the type rather than by a rule somebody has to remember: a mutating command
 is a ``MutatingCommand``, and a ``MutatingCommand`` without a key does not
-validate. Section 6.4 asks for this because duplicate delivery is ordinary —
+validate. Delivery needs this because duplicate delivery is ordinary —
 a client retries, a queue redelivers, a person clicks twice — and the second
 delivery of a delegation must find the first execution rather than start a
 second one.
@@ -350,7 +350,7 @@ def command_idempotency_key(command: MutatingCommand) -> str:
     Derived from what the command asks — every field but the key itself and
     the caller's clock and trace, which differ between two sendings of one
     command — so the same command sent again after a lost answer is recognised
-    as the retry it is (section 6.4), and a different request is a different
+    as the retry it is, and a different request is a different
     command. Canonical JSON, so the order the fields were given in changes
     nothing.
 

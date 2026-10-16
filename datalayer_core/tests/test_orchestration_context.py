@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """A manifest is resolved and validated, and nothing is quietly dropped from
-it (PLAN_ORCHESTRATOR.md, sections 5.3, O0-09).
+it (O0-09).
 
 Phase 0 resolves references read-only and mints nothing: the scoped grant
 that lets a worker actually read one is O1-06. What is decided here is what
@@ -101,7 +101,7 @@ def test_the_four_declarations_of_section_5_3_have_narrow_defaults() -> None:
 
 
 def test_a_cell_range_is_several_references_and_a_file_is_its_content_hash() -> None:
-    # 19.8 fixed the URI form, so section 5.3's "selected ranges" are a list
+    # The URI form is fixed, so the manifest's "selected ranges" are a list
     # of cell references rather than a second addressing scheme inside the
     # uid that only this platform could parse.
     cells = [

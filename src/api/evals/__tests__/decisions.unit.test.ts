@@ -9,7 +9,7 @@
  */
 
 /**
- * Review decisions (BENCHMARK.md, B4-03): recorded on a report or in an
+ * Review decisions (B4-03): recorded on a report or in an
  * investigation, on the route of the record they are made on.
  */
 

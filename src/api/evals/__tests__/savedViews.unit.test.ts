@@ -9,7 +9,7 @@
  */
 
 /**
- * Saved views of an investigation's page (BENCHMARK.md, B4-11): kept and
+ * Saved views of an investigation's page (B4-11): kept and
  * forgotten on the investigation's own route.
  */
 
@@ -37,8 +37,15 @@ beforeEach(() => {
 
 describe('saved views of an investigation', () => {
   it('are kept under a name on the investigation', () => {
-    const view = { name: 'The regression', query: 'surface=report&block=block-3' };
-    void saveInvestigationView(options, 'evalset_investigation:launch:l-1', view);
+    const view = {
+      name: 'The regression',
+      query: 'surface=report&block=block-3',
+    };
+    void saveInvestigationView(
+      options,
+      'evalset_investigation:launch:l-1',
+      view,
+    );
     const url = new URL(lastCall().url);
     expect([lastCall().method, url.pathname]).toEqual([
       'POST',
@@ -50,7 +57,11 @@ describe('saved views of an investigation', () => {
   it('are forgotten by name', () => {
     void forgetInvestigationView(options, 'inv-1', 'The regression');
     const url = new URL(lastCall().url);
-    expect([lastCall().method, url.pathname, url.searchParams.get('name')]).toEqual([
+    expect([
+      lastCall().method,
+      url.pathname,
+      url.searchParams.get('name'),
+    ]).toEqual([
       'DELETE',
       '/api/ai-agents/v1/evals/investigations/inv-1/views',
       'The regression',

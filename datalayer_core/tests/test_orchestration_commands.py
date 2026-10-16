@@ -2,12 +2,12 @@
 # Distributed under the terms of the Modified BSD License.
 
 """The twelve commands, the five acknowledgements and the event envelope
-(PLAN_ORCHESTRATOR.md, sections 6.2, 6.3, 6.4, O0-03).
+(O0-03).
 
-The two rules of 6.4 that a schema can hold are held here: a mutating
+The two delivery rules that a schema can hold are held here: a mutating
 command without an idempotency key does not validate, and an event that
 cannot be placed in a tree — no execution, no root — does not validate
-either. The rest of 6.4, leases and reconciliation, belongs to the control
+either. The rest of delivery, leases and reconciliation, belongs to the control
 plane."""
 
 from __future__ import annotations
@@ -114,7 +114,7 @@ def test_a_worker_declares_operations_the_commands_actually_offer() -> None:
 
 
 def test_the_five_acknowledgements_are_ordered_and_are_not_the_transport() -> None:
-    # 6.3: a transport-level response is `received`. Only a worker taking
+    # A transport-level response is `received`. Only a worker taking
     # responsibility is `accepted`, and the gap between them is where a task
     # is lost.
     assert [kind.value for kind in ACKNOWLEDGEMENT_ORDER] == [
@@ -159,7 +159,7 @@ def test_an_event_carries_the_correlation_a_tree_is_assembled_from() -> None:
 
 
 def test_each_attempt_is_named_and_the_execution_points_at_the_current_one() -> None:
-    # 6.4: each worker attempt has a distinct identifier, which is what makes
+    # Each worker attempt has a distinct identifier, which is what makes
     # a retry distinguishable from a duplicate delivery.
     attempt = Attempt.from_wire(fixture()["Attempt"])
     execution = fixture()["Execution"]

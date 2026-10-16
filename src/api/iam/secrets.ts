@@ -53,8 +53,8 @@ export const createSecret = async (
     variant: data.variant || 'generic',
     name: data.name,
     description: data.description || '',
-    // As it is. A secret has one representation end to end (PLAN_ENVS.md
-    // E3-05): this used to base64-encode, and nothing on the read side undid
+    // As it is. A secret has one representation end to end (E3-05):
+    // this used to base64-encode, and nothing on the read side undid
     // it, so a build secret arrived at its build encoded and opened nothing.
     value: data.value,
   };

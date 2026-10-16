@@ -4,8 +4,7 @@
 """
 The ``datalayer executions`` command group.
 
-Work delegated to an agent over A2A or ACP (ORCHESTRATOR.md, section 11 and
-O1-13)::
+Work delegated to an agent over A2A or ACP (O1-13)::
 
     datalayer executions run --agent validator --goal "Validate it" --context notebook:nb-1@3
     datalayer executions watch exec_123

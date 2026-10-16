@@ -2,25 +2,25 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Context as references, never as copies (PLAN_ORCHESTRATOR.md, sections 5.3, O0-01).
+Context as references, never as copies (O0-01).
 
 A worker is handed the identity of a notebook, a dataset or a sandbox
-snapshot, not its bytes. Section 2 asks for it and section 16 measures it:
+snapshot, not its bytes. That is a goal, and it is measured:
 context bytes copied versus referenced. A reference also survives what a
 copy cannot — the same document read twice at the same version is the same
 document, and a version that moved is visible rather than silent.
 
-The URI form is decided in 19.8: ``datalayer:<kind>/<uid>@<version>`` over
+The URI form is decided: ``datalayer:<kind>/<uid>@<version>`` over
 the uids the platform already mints, for the nine kinds below and no others.
 A kind this module does not know is refused here rather than carried to a
 resolver that would have to guess.
 
-Two readings of section 5.3 are settled here rather than left to whoever
+Two readings of the context manifest are settled here rather than left to whoever
 writes the first resolver. A **cell range** is several ``cell`` references,
-not a second addressing scheme inside the uid: 19.8 fixed the URI form, and
+not a second addressing scheme inside the uid: the URI form is fixed, and
 a range expressed as ``ntb-7f3a91/3-12`` would be a parser nobody else has.
 A **file** is versioned by its content hash — ``datalayer:file/f-1@sha256:…``
-— which is what section 5.3 asks for and what makes two workers reading "the
+— which is what the manifest asks for and what makes two workers reading "the
 same file" provably reading the same bytes. A **prior execution summary** is
 ``datalayer:execution/exec_…@<attempt or sequence>``, pinned so that a
 summary read twice is the same summary.
@@ -120,7 +120,7 @@ def format_context_uri(kind: ContextKind, uid: str, version: str) -> str:
     Returns
     -------
     str
-        The URI, in the form 19.8 decided.
+        The URI, in the decided form.
     """
     uri = f"datalayer:{ContextKind(kind).value}/{uid}@{version}"
     parse_context_uri(uri)
@@ -266,8 +266,8 @@ class ContextManifest(CanonicalModel):
 
         Two references to the same URI are two answers to "what may this
         worker do with it", and nothing downstream is entitled to pick one.
-        A scope with no expiry is the long-lived credential section 9 exists
-        to prevent, and it is refused here rather than at the moment O1-06
+        A scope with no expiry is the long-lived credential the security model
+        exists to prevent, and it is refused here rather than at the moment O1-06
         would have minted it — by then the execution is already running.
 
         Returns
@@ -291,8 +291,8 @@ class ContextManifest(CanonicalModel):
         if self.scope is not None and self.expires_at is None:
             raise ValueError(
                 f"The manifest is scoped to '{self.scope}' with no expiry: "
-                "a scoped credential that never ends is the one section 9 "
-                "asks not to mint."
+                "a scoped credential that never ends is the one the security "
+                "model asks not to mint."
             )
         return self
 

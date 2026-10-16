@@ -2,18 +2,18 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-What went wrong, said the same way everywhere (PLAN_ORCHESTRATOR.md, O0-01, O0-03).
+What went wrong, said the same way everywhere (O0-01, O0-03).
 
 An ``OrchestrationError`` is a record, not an exception: it is what an
 attempt reports, what an event carries and what a report shows, and it
 crosses a protocol boundary. The exceptions this package raises are
 ``InvalidTransition`` in ``lifecycle`` and pydantic's own validation errors.
 
-The codes are closed and each one exists because something in the plan has
+The codes are closed and each one exists because something in the model has
 to tell it apart from the others — a worker that refused the work before
-accepting it is not a worker that vanished after accepting it (section 13,
-scenarios 3 and 4), and a lease that expired is not yet a failure at all
-(section 6.4). ``retryable`` is the field the retry policy reads: it says
+accepting it is not a worker that vanished after accepting it (conformance
+scenarios 3 and 4), and a lease that expired is not yet a failure at all.
+``retryable`` is the field the retry policy reads: it says
 whether trying again could plausibly do anything.
 """
 
@@ -40,7 +40,7 @@ class ErrorCode(str, Enum):
     INVALID_COMMAND = "invalid_command"
     CONFLICT = "conflict"
     NOT_FOUND = "not_found"
-    # Policy: the limits of section 9 and 19.8.
+    # Policy: the security limits and the delegation limits.
     PERMISSION_DENIED = "permission_denied"
     CONTEXT_UNAVAILABLE = "context_unavailable"
     # Not `context_unavailable`: the reference is fine and the caller may

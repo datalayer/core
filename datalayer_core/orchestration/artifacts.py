@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Outputs as typed, versioned references (PLAN_ORCHESTRATOR.md, sections 5.4, O0-01).
+Outputs as typed, versioned references (O0-01).
 
 A result that arrives as a message blob cannot be opened, compared, rerun or
 attributed. An artifact names what it is, where it lives and who made it, so
@@ -10,7 +10,7 @@ that a report can render it, an eval can score it and a person can find out
 six weeks later which attempt of which execution produced the number they
 are looking at.
 
-The conflict rule is 19.8's fourth decision: the first attempt to reach
+The conflict rule: the first attempt to reach
 commit wins. A later attempt's artifacts are registered with their own
 provenance and marked ``superseded`` — nothing is overwritten and nothing is
 silently dropped, because a retry that quietly replaced a committed result
@@ -188,7 +188,7 @@ class ArtifactCommit(CanonicalModel):
     whether this attempt's outputs are the execution's result: it is true
     for the attempt that committed first and true again when that same
     attempt commits twice, which is what a duplicate delivery looks like
-    (section 6.4, conformance scenario 6).
+    (conformance scenario 6).
     """
 
     execution_id: str
@@ -206,7 +206,7 @@ def commit_artifacts(
     """
     Arbitrate one attempt's commit against what the execution already holds.
 
-    19.8's fourth decision, applied: the first attempt to reach commit wins,
+    The commit rule, applied: the first attempt to reach commit wins,
     and a later attempt's artifacts are registered with their provenance and
     marked superseded. Nothing is overwritten — a committed artifact is
     never rewritten, demoted or pointed elsewhere — and nothing is dropped:

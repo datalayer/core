@@ -37,8 +37,8 @@ class SecretsCreateMixin:
         """
         # A secret's value travels and is stored as it is. It used to be
         # base64 and nothing on the other side undid it, so a build secret
-        # arrived at its build still encoded and opened nothing (PLAN_ENVS.md
-        # E3-05, found 2026-09-17). There is one representation now — no
+        # arrived at its build still encoded and opened nothing (E3-05, found 2026-09-17).
+        # There is one representation now — no
         # marker, no encoding to agree on, nothing for a reader to guess.
         body = {
             "name": name,

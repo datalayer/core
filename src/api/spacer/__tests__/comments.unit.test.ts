@@ -9,7 +9,7 @@
  */
 
 /**
- * Comments on documents and notebooks (BENCHMARK.md, B4-01): read and written
+ * Comments on documents and notebooks (B4-01): read and written
  * on the item's route, changed and settled on the comment's, followed on a
  * websocket that carries the token.
  */

@@ -1581,7 +1581,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       tags: Array.isArray(raw_evalset.tags_ss) ? raw_evalset.tags_ss : [],
       /*
        * What the runs of a benchmark say about it, projected onto its
-       * library card whenever a run moves (BENCHMARK.md, B2-10 and B1-09).
+       * library card whenever a run moves (B2-10 and B1-09).
        *
        * These were dropped here, so a card in the Library or on the home
        * page could show a name and a description and nothing that would
@@ -1608,7 +1608,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * A published environment version as a library artifact (PLAN_ENV E2-16).
+   * A published environment version as a library artifact (E2-16).
    *
    * Keyed on the version uid, so one published version is one card, and read
    * from the publication's immutable snapshot: its name, title, README (the

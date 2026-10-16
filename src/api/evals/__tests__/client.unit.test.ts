@@ -13,7 +13,7 @@
  *
  * Each function is checked for the method and the URL it produces, against
  * the same table the AI Agents service and the landings UI test
- * (BENCHMARK.md, B0-01 and B0-02). The account scope rides on every call and
+ * (B0-01 and B0-02). The account scope rides on every call and
  * is never duplicated; empty query values are left out; ids are encoded once.
  */
 

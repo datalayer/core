@@ -4,7 +4,7 @@
  */
 
 /**
- * The canonical execution lifecycle (PLAN_ORCHESTRATOR.md, section 6.1, O0-02).
+ * The canonical execution lifecycle (O0-02).
  *
  * The states and the moves between them are not written here: they are
  * generated from `datalayer_core/orchestration/lifecycle.py`, which is the

@@ -138,7 +138,7 @@ def describe_execution(
     Describe the run of an orchestration execution's *current* attempt.
 
     The one durable route that is execution-aware rather than a literal
-    workflow uid (ORCHESTRATOR.md, O4-05). Not defaulted to your own account:
+    workflow uid (O4-05). Not defaulted to your own account:
     a platform administrator is as likely investigating someone else's.
     """
     run = call(

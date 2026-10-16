@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The orchestration control plane, as the Python client reaches it (ORCHESTRATOR.md, O1-13).
+The orchestration control plane, as the Python client reaches it (O1-13).
 
 Every path comes from ``ORCHESTRATION_API``, generated from the control
 plane's own OpenAPI document, so this module spells no route — the rule

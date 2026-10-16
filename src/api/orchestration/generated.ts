@@ -824,7 +824,7 @@ export type WorkerOperation =
   | 'terminate'
   | 'subscribe';
 
-/** The lifecycle of section 6.1: what a state accepts, and where it leads. */
+/** The lifecycle: what a state accepts, and where it leads. */
 export interface OrchestrationLifecycle {
   readonly initial: ExecutionState;
   readonly states: readonly ExecutionState[];
@@ -935,11 +935,11 @@ export const ORCHESTRATION_COMMANDS: readonly OrchestrationCommand[] = [
   { name: 'executions.subscribe', mutating: false },
 ];
 
-/** The five milestones of section 6.3, in the order they are reached. */
+/** The five milestones, in the order they are reached. */
 export const ORCHESTRATION_ACKNOWLEDGEMENT_ORDER: readonly AcknowledgementKind[] =
   ['received', 'accepted', 'started', 'checkpointed', 'completed'];
 
-/** The default limits of 19.8, read from the models' own defaults. */
+/** The default limits, read from the models' own defaults. */
 export interface OrchestrationLimits {
   readonly delegation: DelegationLimits;
   readonly retry: RetryPolicy;

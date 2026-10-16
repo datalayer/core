@@ -125,7 +125,7 @@ export const SecretNew = ({
         name: formValues.name!,
         description: formValues.description!,
         // As it is: a secret has one representation end to end
-        // (PLAN_ENVS.md E3-05). This used to `btoa` and nothing on the read
+        // (E3-05). This used to `btoa` and nothing on the read
         // side undid it, so a build secret arrived at its build encoded and
         // opened nothing.
         value: formValues.value!,

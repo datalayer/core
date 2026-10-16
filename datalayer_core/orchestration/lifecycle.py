@@ -2,32 +2,32 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The canonical execution lifecycle (PLAN_ORCHESTRATOR.md, sections 6.1, O0-02).
+The canonical execution lifecycle (O0-02).
 
 The states and the moves between them are data, and one function reads that
 data. Adapters observe what a protocol tells them and report it; they never
 decide what the canonical state becomes, because a worker that can invent a
 transition can report success it never reached.
 
-Two places where this table is not the picture in section 6.1, and why:
+Two places where this table is not the lifecycle diagram, and why:
 
 - The diagram draws ``failed -> retrying``, and the same section names
   ``failed`` terminal. Both cannot hold: a terminal state absorbs. The retry
   decision belongs to the moment an attempt fails, before failure is
-  declared, which is also what section 6.4 asks for when it says to
+  declared, which is also what delivery asks for when it says to
   reconcile the remote state before retrying — so ``retry`` leaves
   ``running`` and ``failed`` absorbs.
-- The diagram never enters ``terminated``, yet section 6.1 names it
-  terminal and section 6.2 has ``executions.terminate``. Every state that is
+- The diagram never enters ``terminated``, yet the lifecycle names it
+  terminal and the commands have ``executions.terminate``. Every state that is
   not already terminal accepts ``terminate``; without that the state is
   unreachable and the command has nowhere to land.
 
 Cancellation is likewise accepted from every non-terminal state. An
 execution waiting on an approval or paused for a person is exactly the one
-somebody cancels, and section 6.2 asks cancellation to stop work rather than
+somebody cancels, and the commands ask cancellation to stop work rather than
 to require it to be running first.
 
-A lease that expired is not a transition. Section 6.4 says to treat it as
+A lease that expired is not a transition. It is treated as
 unknown before declaring failure, so the state stays where it is until the
 control plane reconciles with the worker and then fails, retries or resumes.
 """
@@ -72,7 +72,7 @@ class LifecycleEvent(str, Enum):
 #: The state of an execution that has been created and nothing more.
 INITIAL_STATE: ExecutionState = ExecutionState.CREATED
 
-#: The states from which nothing more happens (section 6.1).
+#: The states from which nothing more happens.
 TERMINAL_STATES: frozenset[ExecutionState] = frozenset(
     {
         ExecutionState.COMPLETED,

@@ -10,7 +10,7 @@
 
 /**
  * The anonymous trial: running the public benchmark before signing up
- * (BENCHMARK.md, B2-14).
+ * (B2-14).
  *
  * A visitor with no account asks for a trial and gets a principal of its
  * own with one benchmark it may run, a few credits and a short expiry. The

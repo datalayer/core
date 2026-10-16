@@ -119,7 +119,7 @@ export type ListEvalsetsQuery = {
   run_environment?: EvalRunEnvironment;
   category?: EvalsetCategory;
   q?: string;
-  /** Only the benchmarks reading this dataset (B5-12, section 15.3). */
+  /** Only the benchmarks reading this dataset (B5-12). */
   dataset?: string;
   /** …and pinned to this revision of it: one revision is not evidence about another. */
   revision?: string;
@@ -239,8 +239,8 @@ export const previewEvalsetPublication = (
 /**
  * Publish the package: the immutable snapshot of the definition, the data, the
  * subjects, the environment, the results, the report, the evidence and the
- * evaluators (section 14.3). Refused with `detail.problems` where section 14.5
- * says it cannot be published.
+ * evaluators. Refused with `detail.problems` where something stands in the
+ * way of publishing it.
  */
 export const publishEvalsetPackage = (
   options: EvalsClientOptions,
@@ -353,7 +353,7 @@ export const getSubjectUsage = (
   );
 
 /**
- * Whether anything will run the account's benchmarks (B5-12, section 15.2):
+ * Whether anything will run the account's benchmarks (B5-12):
  * the executor, whether a worker polls the benchmark queue, and the account's
  * own queued and running launches.
  */
@@ -361,7 +361,7 @@ export const getBenchmarkCompute = (options: EvalsClientOptions) =>
   evalsRequest<BenchmarkComputeResponse>(options, '/compute/operations');
 
 /**
- * What benchmark work a sandbox is doing (B5-12, section 15.4).
+ * What benchmark work a sandbox is doing (B5-12).
  *
  * The ref is a pool slot's name (`benchmark-<run>-slot-<n>`) or the snapshot
  * a sandbox was restored from. A sandbox of nobody's benchmark answers
@@ -377,7 +377,7 @@ export const getSandboxProvenance = (
   );
 
 /**
- * Find things across the caller's benchmarks (B5-11, section 19): benchmarks,
+ * Find things across the caller's benchmarks (B5-11): benchmarks,
  * launches, tasks, reports and investigations, each row keeping its kind and
  * what it belongs to.
  *

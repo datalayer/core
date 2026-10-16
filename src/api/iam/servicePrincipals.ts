@@ -5,7 +5,7 @@
 
 /**
  * Service principals: a deployed LOOP application as a principal of its
- * own (plans/LOOP.md, I-02).
+ * own (I-02).
  *
  * The service agents' kin — a key that is exchanged for an hour's token, an
  * audit that names it — with two differences: a person may own one, not only

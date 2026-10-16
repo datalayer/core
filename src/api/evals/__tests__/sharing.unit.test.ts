@@ -9,8 +9,8 @@
  */
 
 /**
- * Sharing a benchmark, one of its runs or an investigation (BENCHMARK.md,
- * B4-05): the paths the AI Agents service pins, the grants sent as the
+ * Sharing a benchmark, one of its runs or an investigation (B4-05):
+ * the paths the AI Agents service pins, the grants sent as the
  * levels named and nothing else, and the permissions read from the record's
  * own route.
  */

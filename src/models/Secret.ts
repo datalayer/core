@@ -212,7 +212,7 @@ export class SecretDTO {
     return this._data.description_t;
   }
 
-  /** The value as its owner wrote it (PLAN_ENVS.md E3-05). */
+  /** The value as its owner wrote it (E3-05). */
   get value(): string {
     this._checkDeleted();
     return this._data.value_s;

@@ -4,7 +4,7 @@
 """
 The protocol-neutral agent descriptor and its mappings.
 
-See PLAN_ORCHESTRATOR.md, sections 5.1, O0-01, O0-08.
+See O0-01 and O0-08.
 
 What a worker is, said once, so that the scheduler can compare an A2A agent
 card, an ACP registry entry and a Datalayer agentspec without knowing which
@@ -15,7 +15,7 @@ away from its target is a mapping that stops matching it.
 
 They take and return plain documents, never a foreign library's types. This
 package may not import fasta2a, the ACP SDK or ``agent_runtimes`` — the
-first two are the adapters' business (section 7) and the third depends on
+first two are the adapters' business and the third depends on
 this one — so an agent card is the JSON served at
 ``/.well-known/agent-card.json``, an ACP registry entry is what
 ``GET /acp/agents`` answers, and an agentspec is the YAML in
@@ -276,8 +276,7 @@ A2A_CARD_CANNOT_STATE: tuple[tuple[str, str], ...] = (
         "descriptor.supportedOperations",
         "A2A declares only streaming. Delegate and cancel are taken from "
         "the protocol's mandatory methods, and steer, pause, resume, "
-        "checkpoint and terminate do not exist in A2A at all (19.8, "
-        "decision 5).",
+        "checkpoint and terminate do not exist in A2A at all.",
     ),
     (
         "descriptor.authentication.audience",
@@ -345,7 +344,7 @@ A2A_CARD_NOT_KEPT: tuple[tuple[str, str], ...] = (
         "agentCard.capabilities.pushNotifications",
         "A2A push notifications are a transport arrangement between a "
         "client and a worker. Datalayer executions stream through the "
-        "control plane's own events (6.2, executions.subscribe).",
+        "control plane's own events (executions.subscribe).",
     ),
     (
         "agentCard.capabilities.extendedAgentCard",
@@ -354,7 +353,7 @@ A2A_CARD_NOT_KEPT: tuple[tuple[str, str], ...] = (
     ),
     (
         "agentCard.capabilities.extensions",
-        "Extension URIs are negotiated per attempt by the adapter (7.2); a "
+        "Extension URIs are negotiated per attempt by the adapter; a "
         "descriptor that carried them would be deciding for it.",
     ),
     (
@@ -443,7 +442,7 @@ ACP_ENTRY_NOT_KEPT: tuple[tuple[str, str], ...] = (
     (
         "acpAgent.capabilities.tool_calling",
         "Whether an agent may call tools is a permission the execution's "
-        "policy grants (5.2), not a capability the scheduler matches.",
+        "policy grants, not a capability the scheduler matches.",
     ),
     (
         "acpAgent.capabilities.code_execution",
@@ -452,7 +451,7 @@ ACP_ENTRY_NOT_KEPT: tuple[tuple[str, str], ...] = (
     (
         "acpAgent.capabilities.file_access",
         "Whether an agent may read files is a permission, and which files "
-        "is the context manifest's answer (5.3), not a boolean's.",
+        "is the context manifest's answer, not a boolean's.",
     ),
     (
         "acpAgent.capabilities.permissions",
@@ -553,7 +552,7 @@ AGENTSPEC_NOT_KEPT: tuple[tuple[str, str], ...] = (
     (
         "agentspec.advanced",
         "cost_limit and time_limit are budgets — Policy.budget on the "
-        "execution (5.2) — and a budget read as a cost hint would tell the "
+        "execution — and a budget read as a cost hint would tell the "
         "scheduler the worker costs exactly what it is allowed to spend.",
     ),
     (
@@ -564,8 +563,8 @@ AGENTSPEC_NOT_KEPT: tuple[tuple[str, str], ...] = (
     (
         "agentspec.subagents",
         "A spec's subagents are its own delegation, configured in the "
-        "runtime. An orchestration tree is the control plane's, and 19.8 "
-        "decision 2 is that a worker does not create children itself.",
+        "runtime. An orchestration tree is the control plane's, and a "
+        "worker does not create children itself.",
     ),
 )
 
@@ -654,7 +653,7 @@ def _not_kept(
 
 def from_agent_card(card: Mapping[str, Any], *, agent_id: str) -> DescriptorMapping:
     """
-    Read an A2A agent card as a descriptor (section 7.1, O0-08).
+    Read an A2A agent card as a descriptor (O0-08).
 
     The card is the JSON document served at
     ``/.well-known/agent-card.json``. Two shapes of it are in the wild and
@@ -833,7 +832,7 @@ def _card_authentication(card: Mapping[str, Any]) -> AgentAuthentication:
 
 def to_agent_card(descriptor: AgentDescriptor) -> AgentCardMapping:
     """
-    Write a descriptor out as an A2A agent card (section 7.1, O0-08).
+    Write a descriptor out as an A2A agent card (O0-08).
 
     The card is the interoperability surface: a third-party A2A client reads
     it and has never heard of Datalayer. So everything the descriptor knows
@@ -1068,7 +1067,7 @@ def from_acp_agent(
     transport: str | None = None,
 ) -> DescriptorMapping:
     """
-    Read an ACP registry entry as a descriptor (section 7.4, O0-08).
+    Read an ACP registry entry as a descriptor (O0-08).
 
     The entry is what ``GET /acp/agents`` answers: the ``AgentInfo`` the ACP
     route keeps for each registered agent, in its own snake case. It says
@@ -1166,7 +1165,7 @@ _AGENTSPEC_ALIASES: Mapping[str, str] = {
 
 def from_agentspec(spec: Mapping[str, Any]) -> DescriptorMapping:
     """
-    Read a Datalayer agentspec as a descriptor (section 5.1, O0-08).
+    Read a Datalayer agentspec as a descriptor (O0-08).
 
     An agentspec is a template for launching an agent, not an agent
     answering somewhere, and that is what most of its gaps come down to.

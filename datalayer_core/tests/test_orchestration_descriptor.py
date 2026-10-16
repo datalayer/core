@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """The descriptor reads what the three sources say, and says what they cannot
-(PLAN_ORCHESTRATOR.md, sections 5.1, O0-08).
+(O0-08).
 
 `datalayer_core/orchestration/fixtures/agent-sources-v1.json` holds three
 agent cards and one ACP registry entry:

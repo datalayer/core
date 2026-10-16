@@ -8,8 +8,8 @@
  * work it is delegating, supervising, steering, recovering or stopping.
  *
  * Every type here is generated from the pydantic models in
- * `datalayer_core/orchestration`, which are the source of truth
- * (PLAN_ORCHESTRATOR.md, 19.8), and from the control plane's OpenAPI
+ * `datalayer_core/orchestration`, which are the source of truth,
+ * and from the control plane's OpenAPI
  * document for the answers it wraps them in and the operations it serves.
  * Regenerate with `npm run generate:orchestration`;
  * `npm run check:orchestration-generated` is the gate that fails when the

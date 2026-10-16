@@ -25,7 +25,7 @@ import { describe, expect, it } from 'vitest';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-/** The options `landings/datalayer/ui` builds its client with. */
+/** The options the landing builds its client with. */
 const appClient = () =>
   new QueryClient({
     defaultOptions: {

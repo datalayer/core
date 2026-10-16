@@ -6,7 +6,7 @@
 Generate deterministic TypeScript types from the canonical orchestration models.
 
 The pydantic models in ``datalayer_core/orchestration`` are the source of
-truth (PLAN_ORCHESTRATOR.md, 19.8) and ``src/api/orchestration/generated.ts``
+truth and ``src/api/orchestration/generated.ts``
 is what they say, in TypeScript, for the browser and the app. This is the
 ``generate-contents-types.py`` and ``generate-mcp-types.py`` pattern with two
 documents rather than one:
@@ -24,19 +24,19 @@ documents rather than one:
 What is written:
 
 - one ``interface`` per model and one ``type`` per shared vocabulary, camel
-  case on the wire because the plan writes the model that way in section 5.2
+  case on the wire because the model is written that way
   and because a browser that has to convert is a browser that can convert
   wrongly;
 - ``ORCHESTRATION_LIFECYCLE``: the states, the terminal states and the
-  transition table of section 6.1, so the TypeScript state machine (O0-02)
+  transition table, so the TypeScript state machine (O0-02)
   reads the same data the Python one does rather than a copy of it;
 - ``ORCHESTRATION_COMMANDS``: the twelve commands and which of them mutate,
-  so that "every mutating command carries an idempotency key" (6.4) is one
+  so that "every mutating command carries an idempotency key" is one
   fact in one place;
-- ``ORCHESTRATION_ACKNOWLEDGEMENT_ORDER``: the five milestones of 6.3, in
+- ``ORCHESTRATION_ACKNOWLEDGEMENT_ORDER``: the five milestones, in
   order, because "has it reached acceptance yet" is a comparison;
-- ``ORCHESTRATION_LIMITS``: the default depth, fan-out and retry limits of
-  19.8, read from the models' own defaults;
+- ``ORCHESTRATION_LIMITS``: the default depth, fan-out and retry limits,
+  read from the models' own defaults;
 - ``ORCHESTRATION_FIELDS``: which fields each model has, and which model
   each nested one holds. TypeScript
   types vanish at runtime and ``src/**/__tests__`` is outside the tsconfig,
@@ -630,7 +630,7 @@ def _api(paths: dict[str, Any]) -> list[str]:
 
 def _lifecycle() -> list[str]:
     """
-    Render the lifecycle of section 6.1 as data (O0-02).
+    Render the lifecycle as data (O0-02).
 
     Returns
     -------
@@ -651,7 +651,7 @@ def _lifecycle() -> list[str]:
         "transitions": transitions,
     }
     return [
-        "/** The lifecycle of section 6.1: what a state accepts, and where it leads. */",
+        "/** The lifecycle: what a state accepts, and where it leads. */",
         "export interface OrchestrationLifecycle {",
         f"{INDENT}readonly initial: ExecutionState;",
         f"{INDENT}readonly states: readonly ExecutionState[];",
@@ -693,7 +693,7 @@ def _commands() -> list[str]:
             "ORCHESTRATION_COMMANDS", "readonly OrchestrationCommand[]", commands
         ),
         "",
-        "/** The five milestones of section 6.3, in the order they are reached. */",
+        "/** The five milestones, in the order they are reached. */",
         *_declare(
             "ORCHESTRATION_ACKNOWLEDGEMENT_ORDER",
             "readonly AcknowledgementKind[]",
@@ -705,7 +705,7 @@ def _commands() -> list[str]:
 
 def _limits() -> list[str]:
     """
-    Render the default delegation and retry limits of 19.8.
+    Render the default delegation and retry limits.
 
     Returns
     -------
@@ -717,7 +717,7 @@ def _limits() -> list[str]:
         "retry": RetryPolicy().to_wire(),
     }
     return [
-        "/** The default limits of 19.8, read from the models' own defaults. */",
+        "/** The default limits, read from the models' own defaults. */",
         "export interface OrchestrationLimits {",
         f"{INDENT}readonly delegation: DelegationLimits;",
         f"{INDENT}readonly retry: RetryPolicy;",

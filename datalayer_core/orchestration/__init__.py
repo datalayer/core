@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-The canonical orchestration model (PLAN_ORCHESTRATOR.md, O0-01 to O0-03, O0-08 to O0-10).
+The canonical orchestration model (O0-01 to O0-03, O0-08 to O0-10).
 
 One agent discovers, delegates to, supervises, steers, recovers and
 terminates others. This package is what all of that is said in: the agent
@@ -19,22 +19,22 @@ has to come out the same wherever it is taken:
   could not state and every field the descriptor could not keep. Nothing is
   guessed: a scheduler cannot tell an invented cost hint from a real one.
 - **Whether an execution may proceed on the context it was given** (O0-09).
-  ``context`` parses and validates the reference form 19.8 decided and holds
+  ``context`` parses and validates the reference form and holds
   a manifest against what a resolver found — refusing a required reference
   that was denied, is gone, or whose pin has moved, and keeping every
   reference it could not use rather than quietly shrinking the manifest.
   Minting the grant that makes a reference readable is O1-06.
 - **Which of two attempts owns the result** (O0-10). ``artifacts`` holds
-  19.8's fourth decision: the first attempt to reach commit wins, and a
+  the commit rule: the first attempt to reach commit wins, and a
   later one is registered with its provenance and marked superseded.
 
 It is framework-neutral and transport-neutral by construction. Nothing here
 imports an adapter, a client, HTTP or a protocol library, and nothing here
 knows whether the worker at the other end speaks A2A, ACP or nothing at all
-(section 2). Adapters, stores and control planes are built on this package;
+Adapters, stores and control planes are built on this package;
 this package is built on pydantic and the standard library.
 
-It lives in `core` (19.8) because `core` is already the typed client the
+It lives in `core` because `core` is already the typed client the
 app, the CLI and the services share, and because a second copy of these
 types in another repository is how they drift. These models are the source
 of truth: the TypeScript in `src/api/orchestration/generated.ts` is

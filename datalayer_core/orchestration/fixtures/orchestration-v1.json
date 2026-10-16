@@ -622,7 +622,7 @@
       },
       {
         "field": "descriptor.supportedOperations",
-        "reason": "A2A declares only streaming. Delegate and cancel are taken from the protocol's mandatory methods, and steer, pause, resume, checkpoint and terminate do not exist in A2A at all (19.8, decision 5)."
+        "reason": "A2A declares only streaming. Delegate and cancel are taken from the protocol's mandatory methods, and steer, pause, resume, checkpoint and terminate do not exist in A2A at all."
       },
       {
         "field": "descriptor.authentication.audience",
@@ -654,7 +654,7 @@
       },
       {
         "field": "agentCard.capabilities.pushNotifications",
-        "reason": "A2A push notifications are a transport arrangement between a client and a worker. Datalayer executions stream through the control plane's own events (6.2, executions.subscribe)."
+        "reason": "A2A push notifications are a transport arrangement between a client and a worker. Datalayer executions stream through the control plane's own events (executions.subscribe)."
       }
     ]
   },

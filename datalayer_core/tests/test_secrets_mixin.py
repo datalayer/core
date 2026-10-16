@@ -9,8 +9,7 @@ What creating a secret sends.
 
 The value used to go out base64-encoded and nothing on the other side undid
 it: a build secret resolved for an environment build arrived encoded and was
-mounted that way, so a key created here opened nothing (PLAN_ENVS.md E3-05,
-found 2026-09-17).
+mounted that way, so a key created here opened nothing (E3-05, found 2026-09-17).
 """
 
 from typing import Any

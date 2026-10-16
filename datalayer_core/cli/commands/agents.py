@@ -4,7 +4,7 @@
 """
 The ``datalayer agents`` command group.
 
-The workers work is delegated to (ORCHESTRATOR.md, section 11 and O1-13).
+The workers work is delegated to (O1-13).
 
 ``discover`` asks the orchestration control plane, which reads the agentspec
 library and fills each worker's operations from its protocol's adapter.

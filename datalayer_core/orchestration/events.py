@@ -2,10 +2,9 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Acknowledgements and the event envelope (PLAN_ORCHESTRATOR.md, 6.3, 6.4, O0-03).
+Acknowledgements and the event envelope (O0-03).
 
-Section 6.3 asks for five milestones to be told apart, and the reason is in
-its last line: a transport-level response must never be treated as durable
+Five milestones are told apart, for one reason: a transport-level response must never be treated as durable
 acceptance. ``received`` says the command reached an endpoint. ``accepted``
 says a worker took responsibility for it. Between those two a task can be
 lost, and a control plane that cannot see the difference reports work as
@@ -13,7 +12,7 @@ under way that nobody is doing.
 
 One envelope carries every event. It names the root, the parent, the
 execution and the attempt, plus the agent, the session and the protocol it
-was observed through, and the trace it belongs to (section 10). Those are
+was observed through, and the trace it belongs to. Those are
 what make an event placeable in a tree afterwards: a stream of events that
 knows only its own execution cannot be assembled into the run that produced
 it.

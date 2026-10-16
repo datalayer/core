@@ -87,7 +87,7 @@ export interface WorkspaceSearchResponse {
 
 /**
  * Search the caller's own workspace: notebooks, documents, datasets, files
- * (BENCHMARKS.md, B5-11, section 19).
+ * (B5-11).
  *
  * Scoped by the service to what this person may open — never other people's
  * public items, which the Library's own search answers. An empty query lists

@@ -30,7 +30,7 @@ export type EvalRunEnvironment = 'ui' | 'sdk';
 /** Fixed cases replayed (`batch`) or live events evaluated (`interactive`). */
 export type EvalKind = 'batch' | 'interactive';
 
-/** What a benchmark measures, the closed list section 12.5 renders by. */
+/** What a benchmark measures, the closed list the benchmark pages render by. */
 export type EvalsetCategory =
   'data' | 'coding' | 'tool-use' | 'model' | 'visual' | 'performance';
 
@@ -310,7 +310,7 @@ export interface LaunchPlanResponse {
   /**
    * How run mode, run environment and execution target relate, stated by
    * the service so the wizard explains it inline rather than failing after
-   * submission (BENCHMARK.md section 9).
+   * submission.
    */
   run_mode_constraint: string;
   problems: LaunchPlanProblem[];
@@ -503,7 +503,7 @@ export interface EvalsetPackageItem {
   label: string;
 }
 
-/** What stands in the way of a publication (section 14.5). */
+/** What stands in the way of a publication. */
 export interface EvalsetPackageProblem {
   code: string;
   detail: string;
@@ -690,7 +690,7 @@ export interface SubjectUsage {
   totals: SubjectTotals;
 }
 
-/** What a search made of the words somebody typed (B5-11, section 19). */
+/** What a search made of the words somebody typed (B5-11). */
 export interface EvalsSearchQuery {
   raw: string;
   /** What is left to look for by name, once the words that mean something else are taken out. */
@@ -736,7 +736,7 @@ export interface SubjectUsageResponse {
 }
 
 /**
- * What benchmark work a sandbox is doing (B5-12, section 15.4).
+ * What benchmark work a sandbox is doing (B5-12).
  *
  * A pool slot's sandbox is named after the run it serves, and a sandbox
  * restored from a task's snapshot is found by that snapshot; either way the
@@ -776,7 +776,7 @@ export interface SandboxProvenanceResponse {
 }
 
 /**
- * Whether anything will run the account's benchmarks (B5-12, section 15.2).
+ * Whether anything will run the account's benchmarks (B5-12).
  *
  * A launch at `queued` looks the same whether the queue is busy or nothing
  * polls it. `serving` is the difference. The depth is the account's own
@@ -1137,7 +1137,7 @@ export interface EvalsetVersionResponse {
 
 export type InvestigationScope = 'case' | 'run' | 'launch' | 'window';
 export type InvestigationStatus = 'open' | 'closed';
-/** The restored sandbox, per section 12.6. */
+/** The restored sandbox. */
 export type SandboxState =
   'available' | 'restoring' | 'running' | 'expired' | 'none';
 
@@ -1274,7 +1274,7 @@ export interface EvalsSharingResponse extends SuccessResponse {
 }
 
 /**
- * How far a record reaches (BENCHMARKS.md, B5-09, section 14.5), narrowest
+ * How far a record reaches (B5-09), narrowest
  * first. Derived from the grants and the public flag rather than stored, so it
  * cannot disagree with who may actually read the thing.
  */
@@ -1292,7 +1292,7 @@ export interface EvalsPermissionsResponse extends SuccessResponse {
 
 // --- Reports (B4-04) --------------------------------------------------------
 
-/** The states of a report (section 13.3), in the order a report goes through them. */
+/** The states of a report, in the order a report goes through them. */
 export type ReportState =
   | 'draft'
   | 'in_review'

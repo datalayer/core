@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """The lifecycle is data, and one function reads it
-(PLAN_ORCHESTRATOR.md, section 6.1, O0-02).
+(O0-02).
 
 Every state is reachable from `created`, every terminal state absorbs, and a
 move the table does not hold is refused rather than performed. The same
@@ -95,7 +95,7 @@ def test_the_states_of_section_6_1_are_the_states_of_the_table() -> None:
 
 
 def test_the_retry_edge_leaves_running_rather_than_failed() -> None:
-    # Section 6.1 draws `failed -> retrying` and calls `failed` terminal.
+    # The diagram draws `failed -> retrying` and calls `failed` terminal.
     # Both cannot hold, so the retry decision is taken when the attempt
     # fails: `running -> retrying -> running`, and `failed` absorbs.
     assert transition(ExecutionState.RUNNING, LifecycleEvent.RETRY) is (

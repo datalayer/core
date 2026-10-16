@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """The first attempt to reach commit wins, and the later one is kept
-(PLAN_ORCHESTRATOR.md, sections 5.4, 19.8 decision 4, O0-10).
+(O0-10).
 
 Conformance scenario 13, conflicting artifact commit, is
 `test_a_later_attempt_is_superseded_and_keeps_everything_it_knew`, and the
@@ -230,7 +230,7 @@ def test_an_output_the_winner_never_produced_has_nothing_to_point_at() -> None:
 
 
 def test_a_commit_delivered_twice_finds_the_first_one() -> None:
-    # Section 6.4 and conformance scenario 6: duplicate delivery is
+    # Conformance scenario 6: duplicate delivery is
     # ordinary, and the second delivery must change nothing at all.
     once = commit_artifacts(
         [produced("art_1", FIRST)], execution_id=EXECUTION, attempt_id=FIRST

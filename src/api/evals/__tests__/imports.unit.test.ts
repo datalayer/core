@@ -9,7 +9,7 @@
  */
 
 /**
- * CI reports imported as snapshots (BENCHMARK.md, B4-09): the file's text
+ * CI reports imported as snapshots (B4-09): the file's text
  * sent in a JSON body to its benchmark, the imports read back, and Continue
  * investigation on the import's own route.
  */

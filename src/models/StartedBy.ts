@@ -47,10 +47,7 @@ export interface StartedBy {
 
 /** Metadata as `useUsages` builds it, or as a plain object. */
 export type UsageMetadata =
-  | Map<string, unknown>
-  | Record<string, unknown>
-  | null
-  | undefined;
+  Map<string, unknown> | Record<string, unknown> | null | undefined;
 
 const read = (metadata: UsageMetadata, key: string): string => {
   if (!metadata) {
@@ -91,7 +88,7 @@ export const startedBy = (metadata: UsageMetadata): StartedBy => {
  * The words a search box matches on for this row.
  *
  * "agent" matches every agent-started runtime, the client id matches one
- * client, and "you" matches your own — so the filter the plan asks for is the
+ * client, and "you" matches your own — so the filter asked for is the
  * search box that is already there rather than a second control beside it.
  */
 export const startedBySearchTerms = (metadata: UsageMetadata): string => {

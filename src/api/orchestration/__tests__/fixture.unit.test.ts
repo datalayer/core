@@ -5,7 +5,7 @@
 
 /**
  * TypeScript reads the same canonical fixture Python does
- * (PLAN_ORCHESTRATOR.md, O0-01).
+ * (O0-01).
  *
  * `datalayer_core/orchestration/fixtures/orchestration-v1.json` is written
  * and read back by `datalayer_core/tests/test_orchestration_model.py`. Here
@@ -90,7 +90,7 @@ describe('the canonical orchestration fixture', () => {
     }
   });
 
-  it('is the execution of section 5.2, with its tree and its trace', () => {
+  it('is the canonical execution, with its tree and its trace', () => {
     const execution = fixture.Execution as unknown as Execution;
     expect(execution.executionId).toBe('exec_8d21c4');
     expect(execution.rootExecutionId).toBe(execution.parentExecutionId);
@@ -119,7 +119,7 @@ describe('the canonical orchestration fixture', () => {
   });
 
   it('keeps every attempt that produced an artifact', () => {
-    // 19.8, question 4: the first commit wins and the later attempt is
+    // The commit rule: the first commit wins and the later attempt is
     // recorded rather than overwriting it.
     const artifact = fixture.Artifact as unknown as Artifact;
     const attempts = (artifact.provenance ?? []).map(one => one.attemptId);
@@ -130,7 +130,7 @@ describe('the canonical orchestration fixture', () => {
     expect(artifact.committedBy).toBe(attempts[0]);
   });
 
-  it('arbitrates a conflicting commit the way 19.8 decided (O0-10)', () => {
+  it('arbitrates a conflicting commit by the commit rule (O0-10)', () => {
     // Conformance scenario 13: the second attempt reached commit after the
     // first, so its report is registered with its own provenance, marked
     // superseded and pointed at the artifact that beat it. Nothing is
@@ -151,7 +151,7 @@ describe('the canonical orchestration fixture', () => {
     );
   });
 
-  it('resolves the manifest of section 5.3 against what was served (O0-09)', () => {
+  it('resolves the context manifest against what was served (O0-09)', () => {
     const resolution =
       fixture.ManifestResolution as unknown as ManifestResolution;
     const manifest = fixture.ContextManifest as unknown as {
@@ -221,7 +221,7 @@ describe('the canonical orchestration fixture', () => {
       'checkpointed',
       'completed',
     ]);
-    // 19.8, question 7.
+    // The decided limits.
     expect(ORCHESTRATION_LIMITS.delegation).toEqual({
       maxDepth: 3,
       maxChildrenPerParent: 8,

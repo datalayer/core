@@ -5,7 +5,7 @@
 What the ``agents`` and ``executions`` command groups share.
 
 The client, the error boundary, the options every command takes, and the
-machine-readable output (ORCHESTRATOR.md, O1-13).
+machine-readable output (O1-13).
 """
 
 from __future__ import annotations

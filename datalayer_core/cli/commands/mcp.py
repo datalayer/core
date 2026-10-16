@@ -817,7 +817,7 @@ def _scope_of(org: str | None, team: str | None) -> tuple[str, str]:
     Which layer a command means, from the flags it was given.
 
     One command with a scope flag rather than three commands for one
-    document. The plan named `datalayer mcp policy`, `datalayer orgs
+    document. The first design named `datalayer mcp policy`, `datalayer orgs
     mcp-policy` and `datalayer mcp quotas` separately; three entry points
     onto one policy document is three places for the rules, the refusals and
     the version handling to drift, and quotas *are* three of those rules —

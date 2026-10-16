@@ -2,21 +2,21 @@ name: Orchestration Generated Types
 
 # The checked-in `src/api/orchestration/generated.ts` must be what the
 # canonical pydantic models in `datalayer_core/orchestration` say. Those
-# models are the source of truth (PLAN_ORCHESTRATOR.md, 19.8), and this is
+# models are the source of truth, and this is
 # the gate that keeps the two languages agreeing: a field added, renamed or
 # removed on the Python side fails here until `npm run generate:orchestration`
 # is committed.
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'datalayer_core/orchestration/**'
       - 'src/api/orchestration/**'
       - 'scripts/generate-orchestration-types.py'
       - '.github/workflows/orchestration-generated-types.yaml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'datalayer_core/orchestration/**'
       - 'src/api/orchestration/**'
@@ -42,7 +42,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@v7
         with:
-          version: "latest"
+          version: 'latest'
           python-version: '3.12'
           activate-environment: true
 

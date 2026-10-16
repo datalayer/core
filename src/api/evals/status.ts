@@ -15,7 +15,7 @@
  * time (`queued`, `init`, `pending`, `running`, `completed`, `failed`,
  * `error`, `success`, `done`, …). This is the same mapping as
  * `agent_runtimes.evals.status` in Python: every word a writer has used maps
- * onto the product vocabulary of BENCHMARK.md section 11.4, and "finished" is
+ * onto the product vocabulary, and "finished" is
  * answered once. A word nobody has used maps to itself, lower-cased, so it is
  * visible rather than misread.
  *
@@ -120,13 +120,13 @@ const word = (value: unknown): string =>
     .toLowerCase()
     .replace(/[-\s]/g, '_');
 
-/** The section 11.4 word for a run status, whatever a writer wrote. */
+/** The product word for a run status, whatever a writer wrote. */
 export const normalizeRunStatus = (value: unknown): RunStatus | string => {
   const key = word(value);
   return LEGACY_RUN_STATUS[key] ?? key;
 };
 
-/** The section 11.4 word for a case status. */
+/** The product word for a case status. */
 export const normalizeCaseStatus = (value: unknown): CaseStatus | string => {
   const key = word(value);
   return LEGACY_CASE_STATUS[key] ?? key;

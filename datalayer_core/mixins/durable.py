@@ -7,8 +7,7 @@
 """
 Authenticated transport for `datalayer-durable`'s own workflow API.
 
-The API behind ``datalayer durable ...`` (ORCHESTRATOR.md's note on
-`auth.py`, 2026-09-13).
+The API behind ``datalayer durable ...`` (a note on `auth.py`, 2026-09-13).
 
 Every other caller of durable is a service presenting its own workload key —
 `durable/datalayer_durable/auth.py` says so explicitly, and stays that way.
@@ -127,7 +126,7 @@ class DurableMixin:
         Describe the run of an orchestration execution's *current* attempt.
 
         The one durable route that is execution-aware rather than a literal
-        workflow uid (ORCHESTRATOR.md, O4-05).
+        workflow uid (O4-05).
         """
         try:
             response = self._fetch(  # type: ignore[attr-defined]

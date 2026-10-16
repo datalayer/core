@@ -6,7 +6,7 @@
 
 """`DurableMixin` reaches `/api/durable` only, as itself — a platform
 administrator's own Bearer token, never a service's X-API-Key
-(ORCHESTRATOR.md's note on `durable/datalayer_durable/auth.py`, 2026-09-13).
+(a note on `durable/datalayer_durable/auth.py`, 2026-09-13).
 """
 
 from __future__ import annotations

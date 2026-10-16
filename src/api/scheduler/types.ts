@@ -46,7 +46,7 @@ export interface ScheduleRecord {
   last_update_ts_dt?: string;
 }
 
-/** What an `evalset` schedule's `config_json_t` holds (BENCHMARK.md, B2-16). */
+/** What an `evalset` schedule's `config_json_t` holds (B2-16). */
 export interface EvalsetScheduleConfig {
   /** Empty means every live experiment of the evalset, resolved at run time. */
   experiment_ids?: string[];

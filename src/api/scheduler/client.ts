@@ -52,7 +52,7 @@ export const getSchedule = (
   );
 
 /**
- * Create the one schedule a target has, or replace it (BENCHMARK.md, B2-16):
+ * Create the one schedule a target has, or replace it (B2-16):
  * a schedule is unique per owner and target, so upserting is how a person
  * changes an `evalset` schedule's cron or configuration too.
  */
