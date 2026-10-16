@@ -56,7 +56,7 @@ from datalayer_core.orchestration.lifecycle import LifecycleEvent
 
 
 class CommandName(str, Enum):
-    """The twelve commands of section 6.2."""
+    """The twelve commands of the orchestration lifecycle."""
 
     AGENTS_DISCOVER = "agents.discover"
     AGENTS_CREATE = "agents.create"
@@ -238,7 +238,7 @@ class ExecutionsTerminate(MutatingCommand):
     Release the worker or session, where that is permitted.
 
     Whether an execution may terminate a worker another execution is
-    attached to is open in 19.8 and is decided in Phase 1; the flag is here
+    attached to is still open; the flag is here
     so the answer has somewhere to live.
     """
 

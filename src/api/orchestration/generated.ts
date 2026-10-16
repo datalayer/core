@@ -19,7 +19,7 @@ export interface Acknowledgement {
   detail?: string | null;
 }
 
-/** The five milestones of section 6.3, in the order they are reached. */
+/** The five acknowledgement milestones, in the order they are reached. */
 export type AcknowledgementKind =
   'received' | 'accepted' | 'started' | 'checkpointed' | 'completed';
 
@@ -170,10 +170,10 @@ export interface ArtifactProvenance {
   traceId?: string | null;
 }
 
-/** Where an artifact stands against the commit rule of 19.8. */
+/** Where an artifact stands against the commit rule: the first attempt to commit wins. */
 export type ArtifactStatus = 'registered' | 'committed' | 'superseded';
 
-/** What an artifact is, from the nine kinds of section 5.4. */
+/** What an artifact is, one of nine kinds. */
 export type ArtifactType =
   | 'notebook'
   | 'report'
@@ -185,7 +185,7 @@ export type ArtifactType =
   | 'sandbox-snapshot'
   | 'json';
 
-/** One dispatch of an execution to a worker (section 6.4). */
+/** One dispatch of an execution to a worker. */
 export interface Attempt {
   attemptId: string;
   executionId: string;
@@ -267,7 +267,7 @@ export interface CommandAnswer {
   success?: boolean;
 }
 
-/** The twelve commands of section 6.2. */
+/** The twelve commands of the orchestration lifecycle. */
 export type CommandName =
   | 'agents.discover'
   | 'agents.create'
@@ -344,7 +344,7 @@ export interface DelegateAnswer {
   success?: boolean;
 }
 
-/** The bounds a tree is created under, defaulted to 19.8's decision. */
+/** The bounds a tree is created under, with the decided defaults. */
 export interface DelegationLimits {
   maxDepth?: number;
   maxChildrenPerParent?: number;
@@ -742,7 +742,7 @@ export interface ReportAnswer {
   success?: boolean;
 }
 
-/** How a failed attempt is tried again: 19.8's two retries, backing off. */
+/** How a failed attempt is tried again: two retries, backing off. */
 export interface RetryPolicy {
   maxRetries?: number;
   initialBackoffSeconds?: number;
@@ -760,7 +760,7 @@ export interface RuntimeRequirements {
   environment?: string | null;
 }
 
-/** The W3C context that makes one tree one trace (section 10, O0-11). */
+/** The W3C context that makes one tree one trace (O0-11). */
 export interface Trace {
   traceparent?: string | null;
   tracestate?: string | null;
@@ -812,7 +812,7 @@ export interface WorkerAnswer {
   worker: Worker;
 }
 
-/** A lifecycle operation a worker supports, named as section 6.2 names it. */
+/** A lifecycle operation a worker supports, named as the orchestration lifecycle names it. */
 export type WorkerOperation =
   | 'delegate'
   | 'steer'

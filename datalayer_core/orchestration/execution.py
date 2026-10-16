@@ -59,7 +59,7 @@ class Budget(CanonicalModel):
     """
     What the execution may spend.
 
-    Inherited from the parent and split by it (19.8): a child cannot be
+    Inherited from the parent and split by it: a child cannot be
     given more than the parent still holds, and no child raises its own.
     ``None`` means the field is not bounded, which is a decision somebody
     made, not an oversight; the control plane refuses an unbounded budget
@@ -101,7 +101,7 @@ class Permissions(CanonicalModel):
 
 
 class DelegationLimits(CanonicalModel):
-    """The bounds a tree is created under, defaulted to 19.8's decision."""
+    """The bounds a tree is created under, with the decided defaults."""
 
     max_depth: int = DEFAULT_MAX_DEPTH
     max_children_per_parent: int = DEFAULT_MAX_CHILDREN_PER_PARENT
@@ -113,7 +113,7 @@ class Policy(CanonicalModel):
     Everything that constrains an execution rather than describing it.
 
     The deadline is absolute and inherited: a child may be given less time
-    than its parent has left and never more (19.8).
+    than its parent has left and never more.
     """
 
     deadline: Timestamp | None = Field(
@@ -130,7 +130,7 @@ class Policy(CanonicalModel):
 
 
 class RetryPolicy(CanonicalModel):
-    """How a failed attempt is tried again: 19.8's two retries, backing off."""
+    """How a failed attempt is tried again: two retries, backing off."""
 
     max_retries: int = DEFAULT_MAX_RETRIES
     initial_backoff_seconds: float = DEFAULT_INITIAL_BACKOFF_SECONDS
@@ -147,7 +147,7 @@ class Recovery(CanonicalModel):
 
 class Trace(CanonicalModel):
     """
-    The W3C context that makes one tree one trace (section 10, O0-11).
+    The W3C context that makes one tree one trace (O0-11).
 
     Carried on every command and restored on every worker. A worker that
     drops it shows as a broken link in the trace, which is a fact worth
@@ -163,7 +163,7 @@ class AgentBinding(CanonicalModel):
     Which worker an execution is bound to, and how it is reached.
 
     ``session_id`` is the protocol's own handle — an ACP session, an A2A
-    context — and it is a projection: section 8 requires the session to be
+    context — and it is a projection: the session must be
     reconstructable from Datalayer state, never the other way round.
     """
 
@@ -192,7 +192,7 @@ class Usage(CanonicalModel):
 
 class Attempt(CanonicalModel):
     """
-    One dispatch of an execution to a worker (section 6.4).
+    One dispatch of an execution to a worker.
 
     ``lease_expires_at`` is when the control plane stops believing the
     worker is still on it. An expired lease is unknown, not failed: the

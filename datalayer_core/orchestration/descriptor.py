@@ -73,7 +73,7 @@ class DataClassification(str, Enum):
 
 class WorkerOperation(str, Enum):
     """
-    A lifecycle operation a worker supports, named as section 6.2 names it.
+    A lifecycle operation a worker supports, named as the orchestration lifecycle names it.
 
     The bare verb of an ``executions.*`` command. A worker that does not
     declare an operation is not asked for it, and an adapter that cannot
@@ -179,7 +179,7 @@ class AgentDescriptor(CanonicalModel):
     One worker, described the same way whatever it speaks.
 
     ``capabilities`` is what the scheduler matches on — the dotted names of
-    section 6.2's ``agents.discover``, such as ``notebook.validate`` — while
+    the lifecycle's ``agents.discover``, such as ``notebook.validate`` — while
     ``skills`` is the human-facing catalogue an agent card carries. They are
     kept apart because a card's skills are written for a person and a
     capability is a contract.

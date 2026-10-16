@@ -4,7 +4,7 @@
 """A manifest is resolved and validated, and nothing is quietly dropped from
 it (O0-09).
 
-Phase 0 resolves references read-only and mints nothing: the scoped grant
+For now, references are resolved read-only and nothing is minted: the scoped grant
 that lets a worker actually read one is O1-06. What is decided here is what
 a resolver's answers mean — which of them refuse the delegation and which
 are recorded and lived with — so that spacer, contents, the Library and a

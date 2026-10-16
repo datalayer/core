@@ -46,7 +46,7 @@ from datalayer_core.orchestration.base import CanonicalModel, Timestamp
 
 
 class ArtifactType(str, Enum):
-    """What an artifact is, from the nine kinds of section 5.4."""
+    """What an artifact is, one of nine kinds."""
 
     NOTEBOOK = "notebook"
     REPORT = "report"
@@ -60,7 +60,7 @@ class ArtifactType(str, Enum):
 
 
 class ArtifactStatus(str, Enum):
-    """Where an artifact stands against the commit rule of 19.8."""
+    """Where an artifact stands against the commit rule: the first attempt to commit wins."""
 
     REGISTERED = "registered"
     COMMITTED = "committed"

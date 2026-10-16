@@ -38,7 +38,7 @@ from datalayer_core.orchestration.lifecycle import ExecutionState, LifecycleEven
 
 
 class AcknowledgementKind(str, Enum):
-    """The five milestones of section 6.3, in the order they are reached."""
+    """The five acknowledgement milestones, in the order they are reached."""
 
     RECEIVED = "received"
     ACCEPTED = "accepted"

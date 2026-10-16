@@ -167,7 +167,7 @@ class ContextReference(CanonicalModel):
     """
     One thing a worker is given, and what it may do with it.
 
-    The four declarations are the ones section 5.3 asks for, and each of
+    The four declarations are the ones a context reference makes, and each of
     them is a decision somebody has to make: read-only or writable, required
     or optional, frozen or live, this worker's or the tree's. None of them
     has a safe default that suits every case, so the defaults here are the
@@ -242,7 +242,7 @@ class ContextManifest(CanonicalModel):
     """
     Everything one execution may reach, and for how long.
 
-    The manifest is the whole of a worker's access: section 9 asks for
+    The manifest is the whole of a worker's access: access is granted by
     short-lived scoped tokens, and the scope they are minted against is this
     list. A reference that is not here is not reachable, which is why a
     reference the caller may not read is refused when the manifest is built
