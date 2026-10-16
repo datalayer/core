@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 DEFAULT_IAM_URL = "https://prod1.datalayer.run"
-DEFAULT_RUNTIMES_URL = "https://prod1.datalayer.run"
+DEFAULT_RUNTIMES_URL = "https://r1.datalayer.run"
 
 CONFIG_DIR = Path.home() / ".datalayer"
 CONFIG_FILE = CONFIG_DIR / "config.json"
