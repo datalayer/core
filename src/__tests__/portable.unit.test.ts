@@ -6,7 +6,14 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { personOf } from './index';
+import {
+  detailOf,
+  kindOfStatus,
+  personOf,
+  Problem,
+  problemOf,
+  retries,
+} from '../portable';
 
 describe('personOf', () => {
   it('names the person by first and last name, else by handle', () => {
@@ -36,17 +43,53 @@ describe('personOf', () => {
   });
 });
 
+describe('states (MOBILE M-013b)', () => {
+  it('words each failed status, and keeps the detail free of query values', () => {
+    expect([401, 403, 404, 409, 429, 503, 500].map(kindOfStatus)).toEqual([
+      'unauthenticated',
+      'forbidden',
+      'not-found',
+      'conflict',
+      'rate-limited',
+      'unavailable',
+      'unexpected',
+    ]);
+    expect(
+      detailOf('GET', '/api/x?token=secret', 404, { detail: 'No such app.' }),
+    ).toBe('GET /api/x → 404: No such app.');
+  });
+
+  it('says a problem in the person’s words, and when trying again helps', () => {
+    const problem = new Problem('offline', 'fetch failed');
+    expect(problem.message).toBe('You are offline. Connect to continue.');
+    expect(retries(problem)).toBe(true);
+    expect(retries(new Problem('forbidden', ''))).toBe(false);
+    expect(problemOf(new Error('boom'))).toMatchObject({
+      kind: 'unexpected',
+      detail: 'boom',
+    });
+  });
+});
+
 describe('the portable entry', () => {
-  it('imports nothing but its own modules', () => {
-    for (const file of readdirSync(__dirname).filter(
+  const folder = join(__dirname, '..', 'portable');
+  it('imports nothing but its own modules and Core’s pure Person model', () => {
+    for (const file of readdirSync(folder).filter(
       name => name.endsWith('.ts') && !name.includes('.test.'),
     )) {
-      const source = readFileSync(join(__dirname, file), 'utf8');
+      const source = readFileSync(join(folder, file), 'utf8');
       const imports = [...source.matchAll(/from\s+'([^']+)'/g)].map(m => m[1]);
       expect(
-        imports.filter(path => !path.startsWith('./')),
+        imports.filter(
+          path => !path.startsWith('./') && path !== '../models/Person',
+        ),
         file,
       ).toEqual([]);
     }
+    const person = readFileSync(
+      join(__dirname, '..', 'models', 'Person.ts'),
+      'utf8',
+    );
+    expect(person).not.toMatch(/^import /m);
   });
 });
