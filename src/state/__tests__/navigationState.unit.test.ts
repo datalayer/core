@@ -19,6 +19,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetSessionState } from '../sessionEnd';
 import {
   NAVIGATION_VIEW_HOMES,
+  isHostedAppRoute,
   isRememberableRoute,
   isShellNeutralRoute,
   navigationStore,
@@ -296,6 +297,22 @@ describe('what the last visit left', () => {
     expect(written.lastRouteByView).toEqual({ agentify: '/agentify/tutor' });
   });
 
+  it('drops a hosted application an earlier visit left as the Apps page', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        view: 'apps',
+        lastRouteByView: {
+          apps: '/apps/exchange-desk?thread=slack-c9ba48132fee7ed41e96f8ba555430b02b0c5c30',
+          agentify: '/agentify/tutor',
+        },
+      }),
+    );
+    const state = await open();
+    expect(state.lastRouteByView).toEqual({ agentify: '/agentify/tutor' });
+    expect(state.routeForView('apps')).toBe(NAVIGATION_VIEW_HOMES.apps);
+  });
+
   it('reads storage it cannot make sense of as nothing remembered', async () => {
     document.cookie = `${SHELL_COOKIE}=home; path=/`;
     for (const stored of ['5', 'null', '"text"', '{"state":7}', 'not json']) {
@@ -327,5 +344,38 @@ describe('a shell-neutral page keeps the shell the reader is in', () => {
     store.getState().rememberRoute('/docs#install');
     expect(store.getState().view).toBe('home');
     expect(store.getState().routeForView('home')).toBe('/power');
+  });
+});
+
+describe('a hosted application is visited, not returned to', () => {
+  it('tells an application at its address from the Apps shell pages', () => {
+    expect(isHostedAppRoute('/apps/exchange-desk')).toBe(true);
+    expect(isHostedAppRoute('/apps/exchange-desk?thread=slack-c9ba')).toBe(
+      true,
+    );
+    expect(isHostedAppRoute('/apps/exchange-desk/preview/3')).toBe(true);
+    for (const page of [
+      '/apps/apps',
+      '/apps/apps/01M4WH6KD9HADNXRVAGA7WX9Y2',
+      '/apps/runs',
+      '/apps/home',
+      '/apps/contents/abc',
+      '/apps',
+    ]) {
+      expect(isHostedAppRoute(page)).toBe(false);
+    }
+  });
+
+  it('is never remembered as the Apps shell page', () => {
+    navigationStore.setState({
+      view: 'apps',
+      lastRouteByView: { apps: '/apps/runs' },
+    });
+    navigationStore
+      .getState()
+      .rememberRoute('/apps/exchange-desk?thread=slack-c9ba');
+    expect(navigationStore.getState().lastRouteByView.apps).toBe('/apps/runs');
+    expect(isRememberableRoute('/apps/exchange-desk')).toBe(false);
+    expect(isRememberableRoute('/apps/apps')).toBe(true);
   });
 });

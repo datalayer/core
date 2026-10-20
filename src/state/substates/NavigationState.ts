@@ -281,7 +281,52 @@ export function isRememberableRoute(route: string): boolean {
       '/oauth',
       '/join',
     ].some(prefix => path === prefix || path.startsWith(`${prefix}/`)) &&
-    !isShellNeutralRoute(route)
+    !isShellNeutralRoute(route) &&
+    !isHostedAppRoute(route)
+  );
+}
+
+/**
+ * The Apps shell's own pages under `/apps/<section>`. Any other first segment
+ * is an application's hosted address (`/apps/<slug>`, its preview at
+ * `/apps/<slug>/preview/<version>`).
+ */
+const APPS_SHELL_SECTIONS: ReadonlySet<string> = new Set([
+  'activity',
+  'agents',
+  'apps',
+  'components',
+  'connections',
+  'contents',
+  'context',
+  'deployments',
+  'evalsets',
+  'examples',
+  'home',
+  'models',
+  'readiness',
+  'reports',
+  'rules',
+  'runs',
+  'shared',
+  'skills',
+  'usage',
+  'workspace',
+]);
+
+/**
+ * Whether a page is a hosted application, run at its address, rather than a
+ * page of the Apps shell. It is visited, not returned to: the Apps shell
+ * never reopens on one, and one remembered before is dropped on load.
+ */
+export function isHostedAppRoute(route: string): boolean {
+  const segments = pathOf(route).split('/').filter(Boolean);
+  return (
+    segments[0] === 'apps' &&
+    segments.length >= 2 &&
+    !APPS_SHELL_SECTIONS.has(segments[1]) &&
+    (segments.length === 2 ||
+      (segments.length === 4 && segments[2] === 'preview'))
   );
 }
 
