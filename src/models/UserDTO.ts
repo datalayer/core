@@ -104,8 +104,9 @@ export class UserDTO {
     return `${this.firstName} ${this.lastName}`.trim();
   }
 
+  /** The avatar's URL, or `''` when the profile has none: a person without a picture is still a user. */
   get avatarUrl(): string {
-    return this._data.avatar_url_s;
+    return this._data.avatar_url_s ?? '';
   }
 
   get avatarIcon(): string | undefined {

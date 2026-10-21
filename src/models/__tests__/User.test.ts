@@ -86,6 +86,14 @@ describe('User Model', () => {
       expect(json.avatarUrl).toBe('https://example.com/avatar.png');
     });
 
+    it('should return JSON for a profile without an avatar', () => {
+      // IAM leaves avatar_url_s out when the person has no picture.
+      const { avatar_url_s: _none, ...noAvatar } = mockUserData;
+      const json = new UserDTO(noAvatar as UserData).toJSON();
+      expect(json.avatarUrl).toBe('');
+      expect(json.handle).toBe('testuser');
+    });
+
     it('should return string representation', () => {
       expect(user.toString()).toBe('User(user-uid-123, John Doe)');
     });

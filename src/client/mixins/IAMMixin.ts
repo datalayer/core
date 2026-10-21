@@ -63,7 +63,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
             response.profile.first_name_t || response.profile.first_name || '',
           last_name_t:
             response.profile.last_name_t || response.profile.last_name || '',
-          // Use avatar_url_s if available, otherwise leave undefined for fallback
+          // The avatar's URL when the profile has one; without, the user's avatarUrl is ''.
           avatar_url_s:
             response.profile.avatar_url_s || response.profile.avatar_url,
         };
