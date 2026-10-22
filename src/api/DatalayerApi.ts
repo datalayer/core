@@ -308,11 +308,13 @@ export async function requestDatalayerAPIWithResponse<T = any>({
     // Cache control headers
   };
 
-  // In Vitest+jsdom, axios may pick the XHR adapter and fail with browser-like
-  // network restrictions. Force the fetch adapter for integration reliability.
-  if (typeof process !== 'undefined' && process.env.VITEST) {
-    (axiosConfig as any).adapter = 'fetch';
-  }
+  // Through `fetch`, wherever it exists: axios would pick its XHR adapter in
+  // a browser, and a host that routes the page's network through an
+  // overridden `fetch` — a VS Code webview, whose bridge tunnels every
+  // request through the extension host and whose Content Security Policy
+  // blocks anything else — never saw those calls. (It also spares Vitest's
+  // jsdom, where the XHR adapter failed on browser-like restrictions.)
+  axiosConfig.adapter = ['fetch', 'xhr', 'http'];
 
   // Add cache control headers only for GET requests (equivalent to cache: 'no-store')
   if (method === 'GET' || !method) {
