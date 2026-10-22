@@ -1001,6 +1001,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     if (raw.reuse !== undefined) meta.reuse = raw.reuse;
     if (raw.publisher !== undefined) meta.publisher = raw.publisher;
     if (raw.image !== undefined) meta.image = raw.image;
+    // A deck's video, made by its owner: `url`, `captionsUrl`, `posterUrl`,
+    // `width`, `height`. Absent when it has none.
+    if (raw.video) meta.video = raw.video;
     /*
      * Where the artifact can be opened for editing.
      *
@@ -8529,6 +8532,46 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
+  /**
+   * A published deck's video, made in its owner's browser by the deck
+   * engine: the MP4, its WebVTT captions and its poster (the first slide).
+   * Making it again replaces it.
+   */
+  const useSetItemVideo = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        video,
+        captions,
+        poster,
+      }: {
+        itemId: string;
+        video: Blob;
+        captions: string;
+        poster: Blob;
+      }) => {
+        const body = new FormData();
+        body.append('video', video, 'video.mp4');
+        body.append(
+          'captions',
+          new Blob([captions], { type: 'text/vtt' }),
+          'captions.vtt',
+        );
+        body.append('poster', poster, 'poster.png');
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/video`,
+          method: 'PUT',
+          body,
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to set the video');
+        }
+        return resp.video;
+      },
+      onSuccess: invalidateArtifactVisibility,
+    });
+  };
+
   /** Publish a public artifact natively to LinkedIn through Library's saga. */
   const usePublishLinkedInShare = () => {
     return useMutation({
@@ -10728,6 +10771,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useSetFeaturedRank,
     useSetItemImage,
     useResetItemImage,
+    useSetItemVideo,
     useCountItemReuse,
     useSyncArtifactCatalogue,
     usePublishArtifact,
