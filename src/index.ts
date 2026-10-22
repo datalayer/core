@@ -20,7 +20,10 @@ export {
   NetworkError,
 } from './api/DatalayerApi';
 export type { IRequestDatalayerAPIOptions } from './api/DatalayerApi';
-export type { IDatalayerAPIResponse } from './api/DatalayerApi';
+export type {
+  IDatalayerAPIResponse,
+  DatalayerAPIResponseType,
+} from './api/DatalayerApi';
 export { API_BASE_PATHS } from './api/constants';
 export * as iamApi from './api/iam';
 export * as contentsApi from './api/contents';

@@ -4,17 +4,21 @@
  */
 
 import { useState } from 'react';
-import axios from 'axios';
-// import useRun from "./useRun";
+import { requestDatalayerAPI } from '../api/DatalayerApi';
 import { useIAMStore } from '../state';
 
-// TODO reuse useRun hook.
+/**
+ * Posts a form to `url` through the API transport.
+ *
+ * `progress` is 0 while the upload is in flight and 100 once the server has
+ * answered: `fetch` reports no upload progress, so there is nothing in
+ * between to show.
+ */
 export const useUploadForm = (url: string) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const { token } = useIAMStore();
-  //  const { requestRun } = useRun();
   const reset = () => {
     setIsSuccess(false);
     setIsLoading(false);
@@ -23,20 +27,11 @@ export const useUploadForm = (url: string) => {
   const uploadAndSubmit = async (formData: FormData) => {
     setIsLoading(true);
     try {
-      const { data } = await axios.post(url, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-        onUploadProgress: progressEvent => {
-          const progress = (progressEvent.loaded / progressEvent.total!) * 50;
-          setProgress(progress);
-        },
-        onDownloadProgress: progressEvent => {
-          const progress =
-            50 + (progressEvent.loaded / progressEvent.total!) * 50;
-          setProgress(progress);
-        },
+      const data = await requestDatalayerAPI({
+        url,
+        method: 'POST',
+        body: formData,
+        token,
       });
       setProgress(100);
       await new Promise(resolve => {

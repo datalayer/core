@@ -11,7 +11,6 @@
  */
 
 import { URLExt } from '@jupyterlab/coreutils';
-import axios, { AxiosRequestConfig } from 'axios';
 import { sleep } from '../utils/Sleep';
 import { getJwtExpiryMs, isJwtExpired } from '../utils/Jwt';
 
@@ -145,15 +144,15 @@ export class RunResponseError extends Error {
 
 /**
  * Error wrapper for network failures.
- * Thrown when HTTP request fails due to connectivity issues.
+ * Thrown when `fetch` could not reach the server at all.
  */
 export class NetworkError extends TypeError {
   /**
-   * Creates a NetworkError from the original TypeError.
+   * Creates a NetworkError from the error `fetch` rejected with.
    *
    * @param original - The original network error
    */
-  constructor(original: TypeError) {
+  constructor(original: Error) {
     super(original.message);
     this.name = 'NetworkError';
     this.stack = original.stack;
@@ -240,6 +239,21 @@ function throwIfTokenExpired(
 }
 
 /**
+ * How the response body is read.
+ *
+ * `json` (the default) parses the body as JSON and falls back to the text
+ * when it does not parse, so an empty body or a plain-text answer still
+ * arrives as data rather than an error. `stream` hands back the body's
+ * `ReadableStream` unread.
+ */
+export type DatalayerAPIResponseType =
+  | 'json'
+  | 'text'
+  | 'blob'
+  | 'arraybuffer'
+  | 'stream';
+
+/**
  * Options for Datalayer API requests.
  */
 export interface IRequestDatalayerAPIOptions {
@@ -247,7 +261,7 @@ export interface IRequestDatalayerAPIOptions {
   url: string;
   /** HTTP method (GET, POST, PUT, DELETE, etc.) */
   method?: string;
-  /** Request body (JSON object or FormData) */
+  /** Request body (JSON object, FormData, string, or raw bytes) */
   body?: any;
   /** Custom HTTP headers */
   headers?: Record<string, string>;
@@ -255,8 +269,8 @@ export interface IRequestDatalayerAPIOptions {
   token?: string;
   /** AbortSignal for request cancellation */
   signal?: AbortSignal;
-  /** Axios response representation for binary or streaming transports. */
-  responseType?: AxiosRequestConfig['responseType'];
+  /** How to read the body; `json` when omitted. */
+  responseType?: DatalayerAPIResponseType;
 }
 
 export interface IDatalayerAPIResponse<T> {
@@ -267,6 +281,93 @@ export interface IDatalayerAPIResponse<T> {
 }
 
 /**
+ * Bodies `fetch` sends as they are. Everything else is a JSON value and is
+ * stringified.
+ */
+function isRawBody(body: unknown): boolean {
+  return (
+    typeof body === 'string' ||
+    (typeof Blob !== 'undefined' && body instanceof Blob) ||
+    body instanceof ArrayBuffer ||
+    ArrayBuffer.isView(body) ||
+    (typeof URLSearchParams !== 'undefined' &&
+      body instanceof URLSearchParams) ||
+    (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream)
+  );
+}
+
+/**
+ * The response headers as a plain record, keyed in lower case the way
+ * `Headers` reports them.
+ */
+function headersToRecord(headers: Headers): Record<string, string> {
+  const record: Record<string, string> = {};
+  headers.forEach((value, name) => {
+    record[name] = value;
+  });
+  return record;
+}
+
+/**
+ * Reads the body the way `responseType` asks for.
+ */
+async function readBody(
+  response: Response,
+  responseType: DatalayerAPIResponseType | undefined,
+): Promise<unknown> {
+  switch (responseType) {
+    case 'text':
+      return response.text();
+    case 'blob':
+      return response.blob();
+    case 'arraybuffer':
+      return response.arrayBuffer();
+    case 'stream':
+      return response.body;
+    default: {
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    }
+  }
+}
+
+/**
+ * Sends one request and returns the response when the server accepted it.
+ *
+ * A failure to reach the server at all arrives as `NetworkError`; an abort
+ * through the caller's signal is rethrown as it came, since the caller asked
+ * for it. A non-2xx answer becomes `TokenExpiredError` when a 401 is explained
+ * by the token we sent, and `RunResponseError` otherwise.
+ */
+async function send(
+  url: string,
+  init: RequestInit,
+  token: string | undefined,
+): Promise<Response> {
+  let response: Response;
+  try {
+    response = await fetch(url, init);
+  } catch (error) {
+    // By name: a DOMException is not an `Error` in every realm.
+    if ((error as { name?: unknown } | null)?.name === 'AbortError') {
+      throw error;
+    }
+    throw new NetworkError(
+      error instanceof Error ? error : new TypeError(String(error)),
+    );
+  }
+  if (!response.ok) {
+    throwIfTokenExpired(response.status, token, url);
+    throw await RunResponseError.create(response);
+  }
+  return response;
+}
+
+/**
  * Makes authenticated HTTP requests to Datalayer APIs.
  * Handles JSON and FormData, includes auth headers, and manages redirects.
  *
@@ -274,6 +375,7 @@ export interface IDatalayerAPIResponse<T> {
  * @returns Promise resolving to response data
  * @throws {NetworkError} On network failures
  * @throws {RunResponseError} On HTTP error responses
+ * @throws {TokenExpiredError} On a 401 explained by an expired token
  *
  * @example
  * ```typescript
@@ -293,112 +395,69 @@ export async function requestDatalayerAPIWithResponse<T = any>({
   responseType,
   headers = {},
 }: IRequestDatalayerAPIOptions): Promise<IDatalayerAPIResponse<T>> {
-  // Handle FormData differently from JSON
-  const isFormData = isFormDataBody(body);
+  const requestMethod = method ?? 'GET';
+  const requestHeaders = new Headers(headers);
 
-  // Prepare axios config
-  const axiosConfig: AxiosRequestConfig = {
-    url,
-    method: (method ?? 'GET') as any,
-    headers: { ...headers },
-    withCredentials: true, // equivalent to credentials: 'include'
-    signal,
-    responseType,
-    // CORS mode is handled automatically by axios
-    // Cache control headers
-  };
-
-  // Through `fetch`, wherever it exists: axios would pick its XHR adapter in
-  // a browser, and a host that routes the page's network through an
-  // overridden `fetch` — a VS Code webview, whose bridge tunnels every
-  // request through the extension host and whose Content Security Policy
-  // blocks anything else — never saw those calls. (It also spares Vitest's
-  // jsdom, where the XHR adapter failed on browser-like restrictions.)
-  axiosConfig.adapter = ['fetch', 'xhr', 'http'];
-
-  // Add cache control headers only for GET requests (equivalent to cache: 'no-store')
-  if (method === 'GET' || !method) {
-    if (!axiosConfig.headers!['Cache-Control']) {
-      axiosConfig.headers!['Cache-Control'] =
-        'no-store, no-cache, must-revalidate';
+  // A GET must not be answered from a cache (the equivalent of
+  // `cache: 'no-store'`, said in headers so proxies hear it too).
+  if (requestMethod === 'GET') {
+    if (!requestHeaders.has('Cache-Control')) {
+      requestHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     }
-    if (!axiosConfig.headers!['Pragma']) {
-      axiosConfig.headers!['Pragma'] = 'no-cache';
+    if (!requestHeaders.has('Pragma')) {
+      requestHeaders.set('Pragma', 'no-cache');
     }
   }
 
   if (token) {
-    axiosConfig.headers!['Authorization'] = `Bearer ${token}`;
+    requestHeaders.set('Authorization', `Bearer ${token}`);
   }
 
-  if (isFormData) {
-    // For FormData: let axios handle Content-Type automatically
-    axiosConfig.data = body;
-    // Don't set Content-Type - axios will set multipart/form-data with boundary
-    if (!axiosConfig.headers!['Accept']) {
-      axiosConfig.headers!['Accept'] = 'application/json';
-    }
+  if (!requestHeaders.has('Accept')) {
+    requestHeaders.set('Accept', 'application/json');
+  }
+
+  let requestBody: BodyInit | undefined;
+  if (isFormDataBody(body)) {
+    // No Content-Type: the browser sets multipart/form-data with its
+    // boundary.
+    requestBody = body;
   } else {
-    // For regular JSON requests
-    if (!axiosConfig.headers!['Accept']) {
-      axiosConfig.headers!['Accept'] = 'application/json';
+    if (!requestHeaders.has('Content-Type')) {
+      requestHeaders.set('Content-Type', 'application/json');
     }
-    if (!axiosConfig.headers!['Content-Type']) {
-      axiosConfig.headers!['Content-Type'] = 'application/json';
-    }
-    axiosConfig.data = body;
-  }
-
-  try {
-    const response = await axios(axiosConfig);
-
-    if (response.status < 300) {
-      // Handle redirections if needed.
-      if (response.status === 202 && response.headers.location) {
-        const data = await handleAxiosRedirection(response, axiosConfig);
-        return {
-          data: data as T,
-          status: response.status,
-          statusText: response.statusText,
-          headers: { ...response.headers } as Record<string, string>,
-        };
-      }
+    if (body === undefined) {
+      requestBody = undefined;
+    } else if (isRawBody(body)) {
+      requestBody = body as BodyInit;
     } else {
-      throwIfTokenExpired(response.status, token, url);
-      const adaptedResponse = {
-        ok: false,
-        status: response.status,
-        statusText: response.statusText,
-        json: async () => response?.data,
-        text: async () => JSON.stringify(response?.data),
-      } as Response;
-      throw await RunResponseError.create(adaptedResponse);
+      requestBody = JSON.stringify(body);
     }
-
-    return {
-      data: response.data as T,
-      status: response.status,
-      statusText: response.statusText,
-      headers: { ...response.headers } as Record<string, string>,
-    };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        throwIfTokenExpired(error.response.status, token, url);
-        // Convert axios error to our RunResponseError format
-        const adaptedResponse = {
-          ok: false,
-          status: error.response.status,
-          statusText: error.response.statusText,
-          json: async () => error.response?.data,
-          text: async () => JSON.stringify(error.response?.data),
-        } as Response;
-        throw await RunResponseError.create(adaptedResponse);
-      }
-      throw new NetworkError(error);
-    }
-    throw error;
   }
+
+  const init: RequestInit = {
+    method: requestMethod,
+    headers: requestHeaders,
+    body: requestBody,
+    // Sends the browser's cookies along, cross-origin included.
+    credentials: 'include',
+    signal,
+  };
+
+  let response = await send(url, init, token);
+
+  // A 202 with a Location is the server saying the work is still running
+  // there: poll it until it is done.
+  if (response.status === 202 && response.headers.get('location')) {
+    response = await followAsyncRedirect(response, init, url, token);
+  }
+
+  return {
+    data: (await readBody(response, responseType)) as T,
+    status: response.status,
+    statusText: response.statusText,
+    headers: headersToRecord(response.headers),
+  };
 }
 
 export async function requestDatalayerAPI<T = any>(
@@ -407,58 +466,57 @@ export async function requestDatalayerAPI<T = any>(
   return (await requestDatalayerAPIWithResponse<T>(options)).data;
 }
 
-async function handleAxiosRedirection(
-  response: any,
-  originalConfig: AxiosRequestConfig,
-): Promise<any> {
-  let redirect = response.headers.location;
-  if (redirect) {
-    const baseUrl = originalConfig.url ?? '';
-    const normalizedRedirect = String(redirect).replace(
-      /^([a-z][a-z0-9+.-]*):\/(?!\/)/i,
-      '$1://',
+/**
+ * Resolves the Location of a 202 against the request's URL.
+ *
+ * A proxy that emits an http Location for the same host while the original
+ * request was https gets it forced back to https, since the browser would
+ * refuse the mixed content and report it as a CORS or network failure.
+ */
+function resolveLocation(location: string, baseUrl: string): string {
+  const normalized = location.replace(/^([a-z][a-z0-9+.-]*):\/(?!\/)/i, '$1://');
+  try {
+    const resolved = new URL(normalized, baseUrl);
+    const base = new URL(
+      baseUrl,
+      typeof window !== 'undefined' ? window.location.origin : undefined,
     );
-
-    try {
-      const resolved = new URL(normalizedRedirect, baseUrl);
-      const base = new URL(baseUrl, typeof window !== 'undefined' ? window.location.origin : undefined);
-
-      // If a proxy emits an http Location for the same host while the
-      // original request is https, force https to avoid mixed-content errors
-      // that browsers often report as CORS/network failures.
-      if (
-        base.protocol === 'https:' &&
-        resolved.protocol === 'http:' &&
-        resolved.hostname === base.hostname
-      ) {
-        resolved.protocol = 'https:';
-        if (resolved.port === '80') {
-          resolved.port = '';
-        }
+    if (
+      base.protocol === 'https:' &&
+      resolved.protocol === 'http:' &&
+      resolved.hostname === base.hostname
+    ) {
+      resolved.protocol = 'https:';
+      if (resolved.port === '80') {
+        resolved.port = '';
       }
-
-      redirect = resolved.toString();
-    } catch {
-      const parsedURL = URLExt.parse(baseUrl);
-      const fallbackBase = parsedURL.protocol + '//' + parsedURL.hostname;
-      redirect = URLExt.join(fallbackBase, normalizedRedirect);
     }
+    return resolved.toString();
+  } catch {
+    const parsedURL = URLExt.parse(baseUrl);
+    const fallbackBase = parsedURL.protocol + '//' + parsedURL.hostname;
+    return URLExt.join(fallbackBase, normalized);
   }
+}
 
+/**
+ * Polls the Location of a 202 with GETs, backing off from a second and
+ * doubling, until the answer is no longer a 202. The polls carry the
+ * original headers and credentials, never the body.
+ */
+async function followAsyncRedirect(
+  response: Response,
+  init: RequestInit,
+  url: string,
+  token: string | undefined,
+): Promise<Response> {
+  const location = resolveLocation(response.headers.get('location')!, url);
+  const pollInit: RequestInit = { ...init, method: 'GET', body: undefined };
   let sleepTimeout = 1000;
-  while (response.status === 202 && redirect) {
+  while (response.status === 202) {
     await sleep(sleepTimeout);
     sleepTimeout *= 2;
-
-    const redirectConfig: AxiosRequestConfig = {
-      ...originalConfig,
-      url: redirect,
-      method: 'GET',
-      data: undefined, // Don't send body on redirect
-    };
-
-    response = await axios(redirectConfig);
+    response = await send(location, pollInit, token);
   }
-
-  return response.data;
+  return response;
 }

@@ -21,7 +21,10 @@ export {
   TokenExpiredError,
 } from './DatalayerApi';
 export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
-export type { IDatalayerAPIResponse } from './DatalayerApi';
+export type {
+  IDatalayerAPIResponse,
+  DatalayerAPIResponseType,
+} from './DatalayerApi';
 
 // Domain-organized API exports
 export * as iam from './iam';

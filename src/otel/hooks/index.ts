@@ -37,7 +37,7 @@ export function setOtelOnUnauthorized(cb: (() => void) | null): void {
 
 /**
  * Lightweight fetch helper for OTEL API calls.
- * Uses plain `fetch` to avoid pulling in `@jupyterlab/coreutils` / axios.
+ * Uses plain `fetch` to avoid pulling in `@jupyterlab/coreutils`.
  *
  * If the response is **401 Unauthorized** and a global `onUnauthorized`
  * handler has been registered via {@link setOtelOnUnauthorized}, the

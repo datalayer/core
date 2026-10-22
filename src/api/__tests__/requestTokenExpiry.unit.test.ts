@@ -16,20 +16,18 @@
  * @module api/__tests__/requestTokenExpiry.unit
  */
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  requestDatalayerAPIWithResponse,
+  RunResponseError,
+  TokenExpiredError,
+} from '../DatalayerApi';
 
-const axiosCall = vi.fn();
+const fetchMock = vi.fn();
 
-vi.mock('axios', () => {
-  const instance = Object.assign(
-    (...args: unknown[]) => axiosCall(...args),
-    { isAxiosError: () => false },
-  );
-  return { default: instance, ...instance };
+beforeEach(() => {
+  vi.stubGlobal('fetch', fetchMock);
 });
-
-const { requestDatalayerAPIWithResponse, RunResponseError, TokenExpiredError } =
-  await import('../DatalayerApi');
 
 function jwt(payload: Record<string, unknown>): string {
   const b64 = (value: object) =>
@@ -46,19 +44,21 @@ const live = jwt({ exp: nowSeconds() + 3600 });
 
 /** The server's answer, however unhappy. */
 function respondWith(status: number) {
-  axiosCall.mockResolvedValue({
-    status,
-    statusText: 'nope',
-    data: { message: 'nope' },
-    headers: {},
-  });
+  fetchMock.mockImplementation(async () =>
+    new Response(JSON.stringify({ message: 'nope' }), {
+      status,
+      statusText: 'nope',
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  );
 }
 
 const request = (token?: string) =>
   requestDatalayerAPIWithResponse({ url: 'https://example.test/api', token });
 
 afterEach(() => {
-  axiosCall.mockReset();
+  fetchMock.mockReset();
+  vi.unstubAllGlobals();
 });
 
 describe('a 401 with an expired token', () => {
