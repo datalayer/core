@@ -247,11 +247,7 @@ function throwIfTokenExpired(
  * `ReadableStream` unread.
  */
 export type DatalayerAPIResponseType =
-  | 'json'
-  | 'text'
-  | 'blob'
-  | 'arraybuffer'
-  | 'stream';
+  'json' | 'text' | 'blob' | 'arraybuffer' | 'stream';
 
 /**
  * Options for Datalayer API requests.
@@ -402,7 +398,10 @@ export async function requestDatalayerAPIWithResponse<T = any>({
   // `cache: 'no-store'`, said in headers so proxies hear it too).
   if (requestMethod === 'GET') {
     if (!requestHeaders.has('Cache-Control')) {
-      requestHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      requestHeaders.set(
+        'Cache-Control',
+        'no-store, no-cache, must-revalidate',
+      );
     }
     if (!requestHeaders.has('Pragma')) {
       requestHeaders.set('Pragma', 'no-cache');
@@ -474,7 +473,10 @@ export async function requestDatalayerAPI<T = any>(
  * refuse the mixed content and report it as a CORS or network failure.
  */
 function resolveLocation(location: string, baseUrl: string): string {
-  const normalized = location.replace(/^([a-z][a-z0-9+.-]*):\/(?!\/)/i, '$1://');
+  const normalized = location.replace(
+    /^([a-z][a-z0-9+.-]*):\/(?!\/)/i,
+    '$1://',
+  );
   try {
     const resolved = new URL(normalized, baseUrl);
     const base = new URL(

@@ -40,7 +40,11 @@ function sentRequest(): { url: string; init: RequestInit; headers: Headers } {
   return { url, init, headers: new Headers(init.headers) };
 }
 
-function json(body: unknown, status = 200, headers: Record<string, string> = {}) {
+function json(
+  body: unknown,
+  status = 200,
+  headers: Record<string, string> = {},
+) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json', ...headers },
@@ -49,7 +53,9 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
 
 describe('a JSON GET', () => {
   it('carries the token, the cache headers and the credentials', async () => {
-    fetchMock.mockResolvedValue(json({ hello: 'world' }, 200, { etag: '"v1"' }));
+    fetchMock.mockResolvedValue(
+      json({ hello: 'world' }, 200, { etag: '"v1"' }),
+    );
 
     const response = await requestDatalayerAPIWithResponse({
       url: 'https://example.test/api/thing',
@@ -63,7 +69,9 @@ describe('a JSON GET', () => {
     expect(init.body).toBeUndefined();
     expect(headers.get('authorization')).toBe('Bearer tok');
     expect(headers.get('accept')).toBe('application/json');
-    expect(headers.get('cache-control')).toBe('no-store, no-cache, must-revalidate');
+    expect(headers.get('cache-control')).toBe(
+      'no-store, no-cache, must-revalidate',
+    );
     expect(headers.get('pragma')).toBe('no-cache');
     expect(response.data).toEqual({ hello: 'world' });
     expect(response.status).toBe(200);
@@ -281,7 +289,10 @@ describe('a 202 with a Location', () => {
       await expect(pending).resolves.toEqual({ done: true });
 
       expect(fetchMock).toHaveBeenCalledTimes(3);
-      const [pollUrl, pollInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+      const [pollUrl, pollInit] = fetchMock.mock.calls[1] as [
+        string,
+        RequestInit,
+      ];
       expect(pollUrl).toBe('https://example.test/api/jobs/1');
       expect(pollInit.method).toBe('GET');
       expect(pollInit.body).toBeUndefined();

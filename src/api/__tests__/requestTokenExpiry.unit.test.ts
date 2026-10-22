@@ -44,12 +44,13 @@ const live = jwt({ exp: nowSeconds() + 3600 });
 
 /** The server's answer, however unhappy. */
 function respondWith(status: number) {
-  fetchMock.mockImplementation(async () =>
-    new Response(JSON.stringify({ message: 'nope' }), {
-      status,
-      statusText: 'nope',
-      headers: { 'Content-Type': 'application/json' },
-    }),
+  fetchMock.mockImplementation(
+    async () =>
+      new Response(JSON.stringify({ message: 'nope' }), {
+        status,
+        statusText: 'nope',
+        headers: { 'Content-Type': 'application/json' },
+      }),
   );
 }
 
@@ -90,8 +91,11 @@ describe('every other 401 is unchanged', () => {
 });
 
 describe('other statuses are never read as an expiry', () => {
-  it.each([403, 404, 500])('leaves %i alone even with an expired token', async status => {
-    respondWith(status);
-    await expect(request(expired)).rejects.toBeInstanceOf(RunResponseError);
-  });
+  it.each([403, 404, 500])(
+    'leaves %i alone even with an expired token',
+    async status => {
+      respondWith(status);
+      await expect(request(expired)).rejects.toBeInstanceOf(RunResponseError);
+    },
+  );
 });
