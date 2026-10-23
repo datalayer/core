@@ -105,6 +105,28 @@ export type CacheProps = {
   loginRoute?: string;
 };
 
+/** A deck's video, as Spacer keeps it with the deck (`GET /decks/{id}/video`). */
+export type SavedDeckVideo = {
+  /** Signed: plays it for `expiresIn` seconds. */
+  url: string;
+  /** Signed: downloads it as `<deck name>.mp4`. */
+  downloadUrl: string;
+  /** Signed: its first frame, a PNG. */
+  posterUrl: string;
+  /** Its captions, as WebVTT text. */
+  captions: string;
+  width: number;
+  height: number;
+  bytes: number;
+  madeAt: string;
+  madeBy: string;
+  /** When the deck was last edited, if it says. */
+  editedAt: string;
+  /** The deck has been edited since the video was made. */
+  stale: boolean;
+  expiresIn: number;
+};
+
 export type ISearchOpts = {
   q: string;
   types: string[];
@@ -554,6 +576,9 @@ export const queryKeys = {
       [...queryKeys.decks.all(), 'space', spaceId] as const,
     model: (deckId: string) =>
       [...queryKeys.decks.detail(deckId), 'model'] as const,
+    /** Under the detail: saving the deck refreshes whether it is stale. */
+    video: (deckId: string) =>
+      [...queryKeys.decks.detail(deckId), 'video'] as const,
   },
 
   // Cells
@@ -3182,6 +3207,96 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           queryClient.refetchQueries({ queryKey: queryKeys.decks.all() });
           queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
+      },
+    });
+  };
+
+  /**
+   * The video saved with a deck in its space, or `null` when it has none.
+   *
+   * Signed URLs that read it for a few hours (`url`, `posterUrl`, and
+   * `downloadUrl`, an attachment named after the deck), its captions inline
+   * (WebVTT), its size, when it was made, and `stale` — the deck has been
+   * edited since: its spec is not the one the video was made from.
+   */
+  const useSavedDeckVideo = (deckId: string) => {
+    return useQuery({
+      queryKey: queryKeys.decks.video(deckId),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/decks/${encodeURIComponent(deckId)}/video`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to read the deck video');
+        }
+        return (resp.video ?? null) as SavedDeckVideo | null;
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!deckId,
+    });
+  };
+
+  /**
+   * Keep the video the deck engine made of a deck with the deck, in its
+   * space, replacing the one it had: the MP4, its WebVTT captions, its
+   * poster, and the spec it was made from.
+   */
+  const useSaveDeckVideo = () => {
+    return useMutation({
+      mutationFn: async ({
+        deckId,
+        video,
+        captions,
+        poster,
+        spec,
+      }: {
+        deckId: string;
+        video: Blob;
+        captions: string;
+        poster: Blob;
+        spec: unknown;
+      }) => {
+        const body = new FormData();
+        body.append('video', video, 'video.mp4');
+        body.append(
+          'captions',
+          new Blob([captions], { type: 'text/vtt' }),
+          'captions.vtt',
+        );
+        body.append('poster', poster, 'poster.png');
+        body.append('spec', JSON.stringify(spec));
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/decks/${encodeURIComponent(deckId)}/video`,
+          method: 'PUT',
+          body,
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to save the video');
+        }
+        return resp.video as SavedDeckVideo;
+      },
+      onSuccess: (video, { deckId }) => {
+        queryClient.setQueryData(queryKeys.decks.video(deckId), video);
+      },
+    });
+  };
+
+  /** The deck without its saved video. */
+  const useDeleteDeckVideo = () => {
+    return useMutation({
+      mutationFn: async (deckId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/decks/${encodeURIComponent(deckId)}/video`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to remove the video');
+        }
+        return resp;
+      },
+      onSuccess: (_, deckId) => {
+        queryClient.setQueryData(queryKeys.decks.video(deckId), null);
       },
     });
   };
@@ -8864,6 +8979,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         image,
         tags,
         description,
+        video,
       }: {
         itemId: string;
         image?: {
@@ -8871,6 +8987,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           ref?: string;
           data?: string;
         };
+        /**
+         * Publish a deck *as a video*: the video saved with it in its space
+         * becomes the published deck's video — its page plays it and its
+         * shared link announces it (`og:video`). The library copies it in
+         * the same request that publishes, and refuses before publishing a
+         * deck that has none.
+         */
+        video?: boolean;
         /**
          * The publisher's own words for their work, which is what somebody
          * else will search for.
@@ -8915,6 +9039,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             // words must not be able to clear them by omission.
             ...(tags === undefined ? {} : { tags }),
             ...(description === undefined ? {} : { description }),
+            ...(video ? { video: true } : {}),
           },
         });
         if (!resp.success) {
@@ -10692,6 +10817,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useUpdateDeck,
     useUpdateDeckModel,
     useCloneDeck,
+    useSavedDeckVideo,
+    useSaveDeckVideo,
+    useDeleteDeckVideo,
 
     // Documents
     useDocument,
