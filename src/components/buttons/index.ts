@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+export * from './CopyToClipboardButton';
 export * from './DownloadCSVButton';
 export * from './DownloadJsonButton';
 export * from './LongActionButton';

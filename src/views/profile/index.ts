@@ -5,3 +5,5 @@
 
 export { UserBadge } from './UserBadge';
 export type { UserBadgeProps } from './UserBadge';
+export { UserIdentity } from './UserIdentity';
+export type { UserIdentityProfile, UserIdentityProps } from './UserIdentity';
