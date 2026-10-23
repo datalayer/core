@@ -18,8 +18,8 @@
 import type { JSX } from 'react';
 import { Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
-import { UserAvatar } from '../../components/avatars';
-import { CopyToClipboardButton } from '../../components/buttons';
+import { UserAvatar } from '../../components/avatars/UserAvatar';
+import { CopyToClipboardButton } from '../../components/buttons/CopyToClipboardButton';
 
 /** What {@link UserIdentity} shows of an account. */
 export interface UserIdentityProfile {

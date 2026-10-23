@@ -14,7 +14,7 @@
 import type { JSX } from 'react';
 import { AlienIcon } from '@datalayer/icons-react';
 import { EntityAvatar, useColorPalette } from '@datalayer/primer-addons';
-import { getAvatarURL } from '../../utils';
+import { getAvatarURL } from '../../utils/Avatar';
 import {
   ChosenAvatar,
   principalAvatarOf,
