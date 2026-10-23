@@ -397,8 +397,25 @@ export function viewForRoute(
   if (path === '/apps' || path.startsWith('/apps/')) {
     return 'apps';
   }
+  // A space's decks and teaching pages are drawn beside the Agentify sidebar:
+  // filed under the Platform, the Platform button came back to a deck with
+  // the Agentify sidebar beside it (reported 23 October 2026).
+  if (AGENTIFY_SPACE_PAGE.test(path) || AGENTIFY_ACCOUNT_PAGE.test(path)) {
+    return 'agentify';
+  }
   return 'home';
 }
+
+/**
+ * `/<account>/<space>/<kind>[/…]` for the kinds a space shows beside the
+ * Agentify sidebar — decks, courses and what a course is made of. The
+ * documentation (`/docs/…`) is never an account.
+ */
+const AGENTIFY_SPACE_PAGE =
+  /^\/(?!docs\/)[^/]+\/[^/]+\/(?:decks|courses|course|lessons|exercises|assignments)(?:\/|$)/;
+
+/** `/<account>/courses`: an account's courses, beside the Agentify sidebar. */
+const AGENTIFY_ACCOUNT_PAGE = /^\/(?!docs\/)[^/]+\/courses$/;
 
 /** Whether a page may be the one a shell returns to. */
 function isRouteOfView(route: unknown, view: NavigationView): route is string {

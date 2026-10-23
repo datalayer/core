@@ -54,6 +54,19 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/studios')).toBe('home');
     expect(viewForRoute('/settings/profile')).toBe('studio');
     expect(viewForRoute('/settingsx')).toBe('home');
+    // A space's decks and teaching pages are drawn beside the Agentify
+    // sidebar, so they are Agentify's — never remembered for the Platform.
+    expect(viewForRoute('/eric/main/decks/01M5KFQ1JTCNM0X0DCHKBP6W2A')).toBe(
+      'agentify',
+    );
+    expect(viewForRoute('/eric/main/decks')).toBe('agentify');
+    expect(viewForRoute('/eric/main/course/c1/lessons/l1')).toBe('agentify');
+    expect(viewForRoute('/eric/main/exercises/e1/take')).toBe('agentify');
+    expect(viewForRoute('/eric/courses')).toBe('agentify');
+    expect(viewForRoute('/eric/main/notebooks/n1')).toBe('home');
+    expect(viewForRoute('/eric/main')).toBe('home');
+    expect(viewForRoute('/eric/main/deckster')).toBe('home');
+    expect(viewForRoute('/docs/agentify/decks')).toBe('home');
     // The settings and the documentation belong to no shell: read from the
     // one the reader is in, they keep it.
     expect(isShellNeutralRoute('/settings/profile')).toBe(true);
