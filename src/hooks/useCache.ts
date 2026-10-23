@@ -86,6 +86,7 @@ type INotebook = any;
 type ISpaceItem = any;
 type IStudentItem = any;
 import { asSpace } from './cacheConverters';
+import { parseDeckSpec } from './deckSpec';
 import { libraryAppFieldsOf } from './libraryApp';
 import { unlinkIAMProvider } from './unlinkIAMProvider';
 import { useCoreStore, useIAMStore, profileStore } from '../state';
@@ -1406,7 +1407,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       name: raw.name_t,
       description: raw.description_t,
       tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
-      spec: raw.model_s ? JSON.parse(raw.model_s) : undefined,
+      // YAML, as Spacer stores it (a deck stored as JSON reads the same).
+      spec: parseDeckSpec(raw.model_s),
       public: raw.is_public_b ?? false,
       creationDate: new Date(raw.creation_ts_dt),
       lastUpdateDate: raw.last_update_ts_dt
