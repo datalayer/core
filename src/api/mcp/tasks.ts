@@ -114,11 +114,19 @@ export const cancelTask = async (
     }),
   );
 
+/** What the gateway says of an answer: that it was passed on, not the task. */
+export type McpTaskAnswered = {
+  uid: string;
+  answered: boolean;
+};
+
 /**
  * Answer a task that is `input_required`.
  *
  * The input is the tool's own and goes over as typed; only the envelope is
- * converted. The idempotency key makes a retried answer one answer.
+ * converted. The idempotency key makes a retried answer one answer. The
+ * reply is an acknowledgement, not the task: read the task again for its
+ * status.
  */
 export const answerTask = async (
   token: string,
@@ -126,8 +134,8 @@ export const answerTask = async (
   request: McpTaskInput,
   idempotencyKey: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.JUPYTER_MCP_SERVER,
-): Promise<McpTask> =>
-  fromWire<McpTask>(
+): Promise<McpTaskAnswered> =>
+  fromWire<McpTaskAnswered>(
     await requestDatalayerAPI({
       url: taskUrl(baseUrl, taskUid, '/input'),
       method: 'POST',
@@ -173,7 +181,9 @@ export interface McpTaskEventHandlers {
  * One SSE frame as the gateway writes it: `event:` then `data:` lines, a
  * blank line between frames.
  */
-export const parseTaskEventFrame = (frame: string): McpTaskEvent | undefined => {
+export const parseTaskEventFrame = (
+  frame: string,
+): McpTaskEvent | undefined => {
   let event = 'message';
   const data: string[] = [];
   for (const line of frame.split(/\r?\n/)) {
@@ -187,7 +197,11 @@ export const parseTaskEventFrame = (frame: string): McpTaskEvent | undefined => 
     return undefined;
   }
   const payload = fromWire<Partial<McpTaskEvent>>(JSON.parse(data.join('\n')));
-  return { ...payload, event: payload.event ?? event, taskId: payload.taskId ?? '' };
+  return {
+    ...payload,
+    event: payload.event ?? event,
+    taskId: payload.taskId ?? '',
+  };
 };
 
 /**
@@ -206,11 +220,16 @@ export const subscribeTaskEvents = (
   const controller = new AbortController();
   const run = async () => {
     const response = await fetch(taskEventsUrl(taskUid, baseUrl), {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'text/event-stream',
+      },
       signal: controller.signal,
     });
     if (!response.ok || !response.body) {
-      throw new Error(`Task events refused: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Task events refused: ${response.status} ${response.statusText}`,
+      );
     }
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -244,7 +263,9 @@ export const subscribeTaskEvents = (
         handlers.onClose?.();
         return;
       }
-      handlers.onError?.(error instanceof Error ? error : new Error(String(error)));
+      handlers.onError?.(
+        error instanceof Error ? error : new Error(String(error)),
+      );
     });
   return () => controller.abort();
 };

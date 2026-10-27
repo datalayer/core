@@ -48,7 +48,11 @@ describe('MCP tasks API', () => {
       .spyOn(DatalayerApi, 'requestDatalayerAPI')
       .mockResolvedValue({ items: [wireTask()], next_cursor: 'c2' });
 
-    const page = await listTasks('token', { status: 'working', notebook: '01NB', limit: 10 }, BASE);
+    const page = await listTasks(
+      'token',
+      { status: 'working', notebook: '01NB', limit: 10 },
+      BASE,
+    );
 
     expect(request).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -76,16 +80,27 @@ describe('MCP tasks API', () => {
     expect(isMcpTaskTerminal(cancelled.status)).toBe(true);
     expect(request).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ url: `https://mcp.test/api/mcp/v1/tasks/${TASK}`, method: 'DELETE' }),
+      expect.objectContaining({
+        url: `https://mcp.test/api/mcp/v1/tasks/${TASK}`,
+        method: 'DELETE',
+      }),
     );
   });
 
   it('answers an input_required task with an idempotency key and the input as typed', async () => {
     const request = vi
       .spyOn(DatalayerApi, 'requestDatalayerAPI')
-      .mockResolvedValue(wireTask('working'));
+      .mockResolvedValue({ uid: TASK, answered: true });
 
-    await answerTask('token', TASK, { input: { confirm_delete: true } }, 'answer-1', BASE);
+    // The gateway acknowledges the answer; it does not send the task back.
+    const answered = await answerTask(
+      'token',
+      TASK,
+      { input: { confirm_delete: true } },
+      'answer-1',
+      BASE,
+    );
+    expect(answered).toEqual({ uid: TASK, answered: true });
 
     expect(request).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -102,7 +117,12 @@ describe('MCP tasks API', () => {
       .spyOn(DatalayerApi, 'requestDatalayerAPI')
       .mockResolvedValue({ items: [] });
 
-    const page = await listNotebookTasks('token', '01NB', { status: 'completed' }, BASE);
+    const page = await listNotebookTasks(
+      'token',
+      '01NB',
+      { status: 'completed' },
+      BASE,
+    );
 
     expect(page.items).toEqual([]);
     expect(request).toHaveBeenCalledWith(
@@ -123,7 +143,9 @@ describe('MCP tasks API', () => {
       statusMessage: 'done',
     });
     expect(parseTaskEventFrame(': keep-alive')).toBeUndefined();
-    expect(taskEventsUrl(TASK, BASE)).toBe(`https://mcp.test/api/mcp/v1/tasks/${TASK}/events`);
+    expect(taskEventsUrl(TASK, BASE)).toBe(
+      `https://mcp.test/api/mcp/v1/tasks/${TASK}/events`,
+    );
   });
 
   describe('subscribeTaskEvents', () => {
@@ -142,14 +164,19 @@ describe('MCP tasks API', () => {
           controller.close();
         },
       });
-      const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, statusText: 'OK', body });
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', body });
       globalThis.fetch = fetchMock as unknown as typeof fetch;
       const events: string[] = [];
       const closed = new Promise<void>(resolve => {
         subscribeTaskEvents(
           'token',
           '01T',
-          { onEvent: event => events.push(event.status ?? ''), onClose: resolve },
+          {
+            onEvent: event => events.push(event.status ?? ''),
+            onClose: resolve,
+          },
           BASE,
         );
       });
@@ -158,17 +185,28 @@ describe('MCP tasks API', () => {
       expect(fetchMock).toHaveBeenCalledWith(
         'https://mcp.test/api/mcp/v1/tasks/01T/events',
         expect.objectContaining({
-          headers: { Authorization: 'Bearer token', Accept: 'text/event-stream' },
+          headers: {
+            Authorization: 'Bearer token',
+            Accept: 'text/event-stream',
+          },
         }),
       );
     });
 
     it('reports a refused stream as an error', async () => {
-      globalThis.fetch = vi
-        .fn()
-        .mockResolvedValue({ ok: false, status: 403, statusText: 'Forbidden', body: null }) as unknown as typeof fetch;
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        body: null,
+      }) as unknown as typeof fetch;
       const error = await new Promise<Error>(resolve => {
-        subscribeTaskEvents('token', '01T', { onEvent: () => undefined, onError: resolve }, BASE);
+        subscribeTaskEvents(
+          'token',
+          '01T',
+          { onEvent: () => undefined, onError: resolve },
+          BASE,
+        );
       });
       expect(error.message).toContain('403');
     });

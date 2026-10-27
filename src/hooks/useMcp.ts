@@ -31,6 +31,7 @@ import {
 } from '@tanstack/react-query';
 import {
   answerTask,
+  type McpTaskAnswered,
   cancelTask,
   exportAuditEvents,
   fetchMcpLogs,
@@ -277,14 +278,17 @@ export const useAnswerTask = () => {
   const token = useIAMStore(state => state.token);
   const mcpUrl = useMcpServerUrl();
   return useMutation<
-    McpTask,
+    McpTaskAnswered,
     Error,
     { taskUid: string; input: Record<string, unknown> }
   >({
     mutationFn: ({ taskUid, input }) =>
       answerTask(token ?? '', taskUid, { input }, crypto.randomUUID(), mcpUrl),
-    onSuccess: task => {
-      queryClient.setQueryData(queryKeys.mcp.task(task.uid), task);
+    // The gateway acknowledges the answer, it does not send the task back:
+    // read the task again rather than writing the acknowledgement in its
+    // place (the run page read its status from it and fell).
+    onSuccess: (_answered, { taskUid }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.task(taskUid) });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.tasks() });
     },
   });
