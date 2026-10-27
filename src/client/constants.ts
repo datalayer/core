@@ -18,6 +18,8 @@ export const ItemTypes = {
   NOTEBOOK: 'notebook',
   LEXICAL: 'document',
   DECK: 'deck',
+  // A spreadsheet drawn by `@datalayer/cells`: its content is a CellsWorkbook.
+  SPREADSHEET: 'spreadsheet',
   EXERCISE: 'exercise',
   CELL: 'cell',
   SPACE: 'space',

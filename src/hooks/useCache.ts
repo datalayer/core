@@ -582,6 +582,15 @@ export const queryKeys = {
       [...queryKeys.decks.detail(deckId), 'video'] as const,
   },
 
+  // Spreadsheets: `@datalayer/cells` workbooks, kept as items of a space.
+  spreadsheets: {
+    all: () => ['spreadsheets'] as const,
+    details: () => [...queryKeys.spreadsheets.all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.spreadsheets.details(), id] as const,
+    bySpace: (spaceId: string) =>
+      [...queryKeys.spreadsheets.all(), 'space', spaceId] as const,
+  },
+
   // Cells
   cells: {
     all: () => ['cells'] as const,
@@ -1428,6 +1437,47 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
+  /**
+   * A spreadsheet: a space item whose content is a `@datalayer/cells`
+   * workbook (`CellsWorkbook`), written through the documents routes the way
+   * a Studio app's definition is. `workbook` is the parsed JSON when the
+   * answer inlined it (`GET /lexicals/{uid}` does, a listing does not), and
+   * `undefined` otherwise — never a guess, so an editor cannot open on a
+   * listing's row and draw an empty grid it would then save.
+   */
+  const toSpreadsheet = (raw: any): any => {
+    let workbook: unknown = undefined;
+    if (typeof raw.model_s === 'string' && raw.model_s.trim()) {
+      workbook = JSON.parse(raw.model_s);
+    }
+    return {
+      id: raw.uid,
+      type: 'spreadsheet',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      workbook,
+      public: raw.is_public_b ?? false,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      lastUpdateDate: raw.last_update_ts_dt
+        ? new Date(raw.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: raw.published_ts_dt
+        ? new Date(raw.published_ts_dt)
+        : undefined,
+      owner: toItemOwner(raw),
+      space: {
+        handle: raw.handle_s,
+      },
+      organization: {
+        id: raw.organization_uid_s,
+        handle: raw.organization_handle_s,
+      },
+    };
+  };
+
   const toDocument = (doc: any): IDocument => {
     const owner = toItemOwner(doc);
     return {
@@ -1739,6 +1789,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       // read no type and no name, and drew itself as a nameless notebook.
       case 'deck':
         return toDeck(item);
+      case 'spreadsheet':
+        return toSpreadsheet(item);
       case 'document':
         return toDocument(item);
       case 'exercise':
@@ -3334,6 +3386,203 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
+  // Spreadsheet Hooks
+  // ============================================================================
+  //
+  // A spreadsheet is a space item of type `spreadsheet` whose content is a
+  // `@datalayer/cells` workbook. It has no routes of its own: it is created,
+  // read, renamed, saved and cloned through the documents routes
+  // (`/lexicals`, `documentType=spreadsheet`), as a Studio app is, and Spacer
+  // refuses a body that is not a workbook.
+
+  /**
+   * Get a spreadsheet by id, its workbook inlined as `workbook`.
+   */
+  const useSpreadsheet = (spreadsheetId: string) => {
+    return useQuery({
+      queryKey: queryKeys.spreadsheets.detail(spreadsheetId),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${spreadsheetId}`,
+          method: 'GET',
+        });
+        if (resp.success && resp.document) {
+          if (resp.document.type_s !== 'spreadsheet') {
+            throw new Error('This item is not a spreadsheet.');
+          }
+          return toSpreadsheet(resp.document);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this spreadsheet',
+          );
+        }
+        throw new Error(resp.message || 'Failed to fetch spreadsheet');
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!spreadsheetId,
+    });
+  };
+
+  /**
+   * Get the spreadsheets of a space. A row carries no workbook: the detail
+   * cache is not seeded from it.
+   */
+  const useSpreadsheetsBySpace = (spaceId: string) => {
+    return useQuery({
+      queryKey: queryKeys.spreadsheets.bySpace(spaceId),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/spreadsheet`,
+          method: 'GET',
+        });
+        if (resp.success && resp.items) {
+          return resp.items.map((raw: unknown) => toSpreadsheet(raw));
+        }
+        return [];
+      },
+      ...LIST_QUERY_OPTIONS,
+      enabled: !!spaceId,
+    });
+  };
+
+  /**
+   * Create a spreadsheet from a workbook: the starter one, or one the
+   * person brings. Sent as the uploaded file, which Spacer checks.
+   */
+  const useCreateSpreadsheet = () => {
+    return useMutation({
+      mutationFn: async ({
+        spaceId,
+        name,
+        description,
+        workbook,
+      }: {
+        spaceId: string;
+        name: string;
+        description?: string;
+        workbook: unknown;
+      }) => {
+        const formData = new FormData();
+        formData.append('spaceId', spaceId);
+        formData.append('documentType', 'spreadsheet');
+        formData.append('name', name);
+        formData.append('description', description || '');
+        formData.append(
+          'file',
+          new File([JSON.stringify(workbook)], `${name}.cells.json`, {
+            type: 'application/json',
+          }),
+        );
+        return uploadDocument(formData);
+      },
+      onSuccess: resp => {
+        if (resp.success && resp.document) {
+          // The answer carries no model: the editor reads the spreadsheet
+          // from the server rather than from a seeded, empty detail.
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.spreadsheets.detail(resp.document.uid),
+          });
+          queryClient.refetchQueries({
+            queryKey: queryKeys.spreadsheets.all(),
+          });
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
+        }
+      },
+    });
+  };
+
+  /**
+   * Update a spreadsheet's name and description.
+   */
+  const useUpdateSpreadsheet = () => {
+    return useMutation({
+      mutationFn: async ({
+        id,
+        name,
+        description,
+      }: {
+        id: string;
+        name: string;
+        description: string;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${id}`,
+          method: 'PUT',
+          body: { name, description },
+        });
+      },
+      onSuccess: (resp, spreadsheet) => {
+        if (resp.success) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.spreadsheets.detail(spreadsheet.id),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.spreadsheets.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Replace a spreadsheet's workbook, whole. A refusal (a workbook Spacer
+   * does not accept) is thrown, not answered as a success.
+   */
+  const useUpdateSpreadsheetModel = () => {
+    return useMutation({
+      mutationFn: async ({
+        id,
+        workbook,
+      }: {
+        id: string;
+        workbook: unknown;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${id}/model`,
+          method: 'PUT',
+          body: { model: workbook },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'The spreadsheet was not saved.');
+        }
+        return resp;
+      },
+      onSuccess: (_, variables) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.spreadsheets.detail(variables.id),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.spreadsheets.all(),
+        });
+      },
+    });
+  };
+
+  /**
+   * Clone a spreadsheet into the caller's library: the reuse the library
+   * counts for a published one.
+   */
+  const useCloneSpreadsheet = () => {
+    return useMutation({
+      mutationFn: async (spreadsheetId: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${spreadsheetId}/clone`,
+          method: 'POST',
+        });
+      },
+      onSuccess: resp => {
+        if (resp.success && resp.document) {
+          queryClient.refetchQueries({
+            queryKey: queryKeys.spreadsheets.all(),
+          });
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
+        }
+      },
+    });
+  };
+
+  // ============================================================================
   // Document Hooks
   // ============================================================================
 
@@ -3897,6 +4146,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           queryKey: queryKeys.documents.detail(itemId),
         });
         queryClient.removeQueries({ queryKey: queryKeys.decks.detail(itemId) });
+        queryClient.removeQueries({
+          queryKey: queryKeys.spreadsheets.detail(itemId),
+        });
         queryClient.removeQueries({ queryKey: queryKeys.cells.detail(itemId) });
         queryClient.removeQueries({
           queryKey: queryKeys.lessons.detail(itemId),
@@ -3912,6 +4164,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.decks.all() });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.spreadsheets.all(),
+        });
         queryClient.invalidateQueries({ queryKey: queryKeys.cells.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.exercises.all() });
@@ -10822,6 +11077,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useSavedDeckVideo,
     useSaveDeckVideo,
     useDeleteDeckVideo,
+
+    // Spreadsheets
+    useSpreadsheet,
+    useSpreadsheetsBySpace,
+    useCreateSpreadsheet,
+    useUpdateSpreadsheet,
+    useUpdateSpreadsheetModel,
+    useCloneSpreadsheet,
 
     // Documents
     useDocument,

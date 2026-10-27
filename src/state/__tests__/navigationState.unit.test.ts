@@ -60,6 +60,9 @@ describe('where each shell was left', () => {
       'agentify',
     );
     expect(viewForRoute('/eric/main/decks')).toBe('agentify');
+    // Cells' spreadsheets, as Decker's decks.
+    expect(viewForRoute('/eric/main/spreadsheets/s1')).toBe('agentify');
+    expect(viewForRoute('/eric/main/spreadsheets')).toBe('agentify');
     expect(viewForRoute('/eric/main/course/c1/lessons/l1')).toBe('agentify');
     expect(viewForRoute('/eric/main/exercises/e1/take')).toBe('agentify');
     expect(viewForRoute('/eric/courses')).toBe('agentify');

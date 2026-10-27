@@ -408,11 +408,12 @@ export function viewForRoute(
 
 /**
  * `/<account>/<space>/<kind>[/…]` for the kinds a space shows beside the
- * Agentify sidebar — decks, courses and what a course is made of. The
+ * Agentify sidebar — decks, spreadsheets (Cells), courses and what a course
+ * is made of. The
  * documentation (`/docs/…`) is never an account.
  */
 const AGENTIFY_SPACE_PAGE =
-  /^\/(?!docs\/)[^/]+\/[^/]+\/(?:decks|courses|course|lessons|exercises|assignments)(?:\/|$)/;
+  /^\/(?!docs\/)[^/]+\/[^/]+\/(?:decks|spreadsheets|courses|course|lessons|exercises|assignments)(?:\/|$)/;
 
 /** `/<account>/courses`: an account's courses, beside the Agentify sidebar. */
 const AGENTIFY_ACCOUNT_PAGE = /^\/(?!docs\/)[^/]+\/courses$/;
