@@ -27,6 +27,67 @@ def users_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
+@app.command(name="create")
+def create_user(
+    handle: str = typer.Option(..., "--handle", help="The account's handle (its unique name)."),
+    email: str = typer.Option(..., "--email", help="The account's email address."),
+    password: str = typer.Option(
+        ...,
+        "--password",
+        prompt=True,
+        confirmation_prompt=True,
+        hide_input=True,
+        help="The account's password (asked for, hidden, when not given).",
+    ),
+    first_name: str = typer.Option("", "--first-name", help="The person's first name."),
+    last_name: str = typer.Option("", "--last-name", help="The person's last name."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Datalayer API key."),
+) -> None:
+    """Create an account: a platform administrator's command.
+
+    The account is created as a verified member, with the handle, email and
+    password given; the administrator vouches for it, so no confirmation mail
+    is sent. IAM refuses a caller who is not a platform administrator, a
+    handle or email already taken, and a password the sign-up would refuse,
+    each in a sentence, which is printed as it is. The password is sent to
+    IAM once and never printed.
+    """
+    try:
+        client = DatalayerClient(api_key=api_key)
+        response = requests.post(
+            f"{client.urls.iam_url}/api/iam/v1/users",
+            headers={
+                "Authorization": f"Bearer {client._get_api_key()}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "handle": handle,
+                "email": email,
+                "password": password,
+                "first_name": first_name,
+                "last_name": last_name,
+            },
+            timeout=30,
+        )
+        try:
+            body = response.json()
+        except ValueError:
+            body = {}
+        if not response.ok:
+            console.print(f"[red]{body.get('detail') or body.get('message') or response.text}[/red]")
+            raise typer.Exit(1)
+        user = body.get("user") or body.get("data") or {}
+        console.print(
+            f"[green]Account created:[/green] {user.get('handle_s', handle)} "
+            f"({user.get('email_s', email)}), uid {user.get('uid', '?')}"
+        )
+    except typer.Exit:
+        raise
+    except requests.exceptions.RequestException as e:
+        console.print(f"[red]Request error: {e}[/red]")
+        raise typer.Exit(1)
+
+
 @app.command(name="dump-user")
 def dump_user(
     uid: str = typer.Argument(..., help="User UID to query"),
