@@ -13,7 +13,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import {
   Text,
   IconButton,
@@ -96,11 +96,11 @@ const CollapsibleSection: React.FC<{
         <CounterLabel>{Object.keys(data).length}</CounterLabel>
       </Box>
       {open && (
-        <Box
-          bg="canvas.subtle"
-          borderRadius={2}
-          border="1px solid"
-          borderColor="border.default"
+        <Card
+          border
+          shadow="none"
+          variant="subtle"
+          display="block"
           p={2}
           mt={1}
           overflowX="auto"
@@ -108,7 +108,7 @@ const CollapsibleSection: React.FC<{
           {Object.entries(data).map(([key, val]) => (
             <AttributeRow key={key} attrKey={key} value={val} depth={0} />
           ))}
-        </Box>
+        </Card>
       )}
     </Box>
   );
@@ -367,12 +367,12 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
                   <CounterLabel>{span.events.length}</CounterLabel>
                 </Box>
                 {span.events.map((ev, idx) => (
-                  <Box
+                  <Card
+                    border
+                    shadow="none"
+                    variant="subtle"
+                    display="block"
                     key={idx}
-                    bg="canvas.subtle"
-                    borderRadius={2}
-                    border="1px solid"
-                    borderColor="border.default"
                     p={2}
                     mt={2}
                   >
@@ -400,7 +400,7 @@ export const OtelSpanDetail: React.FC<OtelSpanDetailProps> = ({
                         ))}
                       </Box>
                     )}
-                  </Box>
+                  </Card>
                 ))}
               </Box>
             )}

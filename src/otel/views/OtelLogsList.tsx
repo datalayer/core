@@ -13,7 +13,7 @@
  */
 
 import React, { useState } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { Text, Label, Spinner } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
 import { LogIcon } from '@primer/octicons-react';
@@ -53,21 +53,20 @@ const LogDetail: React.FC<{ log: OtelLog }> = ({ log }) => (
       >
         Body
       </Text>
-      <Box
+      <Card
+        border
+        shadow="none"
+        display="block"
         as="pre"
         fontSize={1}
         fontFamily="mono"
         whiteSpace="pre-wrap"
         wordBreak="break-word"
         m={0}
-        bg="canvas.default"
-        border="1px solid"
-        borderColor="border.default"
-        borderRadius={2}
         p={2}
       >
         {log.body}
-      </Box>
+      </Card>
     </Box>
 
     {/* Trace correlation */}
@@ -102,13 +101,7 @@ const LogDetail: React.FC<{ log: OtelLog }> = ({ log }) => (
         >
           Attributes
         </Text>
-        <Box
-          bg="canvas.default"
-          border="1px solid"
-          borderColor="border.default"
-          borderRadius={2}
-          p={2}
-        >
+        <Card border shadow="none" display="block" p={2}>
           {Object.entries(log.attributes).map(([k, v]) => (
             <Box
               key={k}
@@ -139,7 +132,7 @@ const LogDetail: React.FC<{ log: OtelLog }> = ({ log }) => (
               </Text>
             </Box>
           ))}
-        </Box>
+        </Card>
       </Box>
     )}
   </Box>

@@ -20,7 +20,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { Text, Button, Label } from '@primer/react';
 import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
 import { getOtelConsumeUrl } from '../../state/substates/CoreState';
@@ -383,17 +383,15 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
   }, [metrics, isRangeActive, rangeStart, rangeEnd]);
 
   return (
-    <Box
+    <Card
+      border
+      shadow="none"
       display="flex"
       flexDirection="column"
       flex={1}
       minHeight={0}
       height="100%"
       color="fg.default"
-      bg="canvas.default"
-      border="1px solid"
-      borderColor="border.default"
-      borderRadius={2}
       overflow="hidden"
     >
       {/* ─── Search Bar ─── */}
@@ -590,7 +588,7 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
           )}
         </>
       )}
-    </Box>
+    </Card>
   );
 };
 

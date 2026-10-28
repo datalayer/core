@@ -17,7 +17,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { ActionList, ActionMenu, Button, Text } from '@primer/react';
 import {
   DownloadIcon,
@@ -222,12 +222,11 @@ export const OtelLiveSpans: React.FC<OtelLiveSpansProps> = ({
   const side = detailPlacement === 'side' && !compact;
 
   return (
-    <Box
+    <Card
+      border
+      shadow="none"
+      display="block"
       data-otel-live-spans=""
-      border="1px solid"
-      borderColor="border.default"
-      borderRadius={2}
-      bg="canvas.default"
       color="fg.default"
       minWidth={0}
     >
@@ -338,7 +337,7 @@ export const OtelLiveSpans: React.FC<OtelLiveSpansProps> = ({
           </Box>
         )}
       </Box>
-    </Box>
+    </Card>
   );
 };
 

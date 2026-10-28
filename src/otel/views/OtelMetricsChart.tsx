@@ -17,7 +17,7 @@
  * @module otel/OtelMetricsChart
  */
 
-import React from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import { Box } from '@datalayer/primer-addons';
@@ -145,35 +145,129 @@ const TYPE_ORDER: Record<string, number> = {
   exponentialHistogram: 3,
 };
 
+// ── The theme's ink, for a canvas ───────────────────────────────────
+
+/**
+ * The colours ECharts draws its text, axes, grid lines and tooltip with.
+ * A canvas reads no CSS variable, so they are read off a probe the theme
+ * colours (fg.default, fg.muted, border.muted, canvas.overlay), resolved to
+ * what the colour mode makes them: hard-coded, the axes and the tooltip were
+ * light-mode only and unreadable in the dark (28 October 2026).
+ */
+export interface ChartInk {
+  text: string;
+  muted: string;
+  line: string;
+  surface: string;
+}
+
+/** Light-mode values, until the probe has been read. */
+const DEFAULT_INK: ChartInk = {
+  text: '#1f2328',
+  muted: '#59636e',
+  line: '#d1d9e0',
+  surface: '#ffffff',
+};
+
+function useChartInk(): [React.RefObject<HTMLDivElement | null>, ChartInk] {
+  const probe = useRef<HTMLDivElement | null>(null);
+  const [ink, setInk] = useState<ChartInk>(DEFAULT_INK);
+  useLayoutEffect(() => {
+    const node = probe.current;
+    if (!node || typeof getComputedStyle === 'undefined') {
+      return;
+    }
+    const read = () => {
+      const style = getComputedStyle(node);
+      const muted = node.firstElementChild
+        ? getComputedStyle(node.firstElementChild).color
+        : style.color;
+      const next: ChartInk = {
+        text: style.color || DEFAULT_INK.text,
+        muted: muted || DEFAULT_INK.muted,
+        line: style.borderTopColor || DEFAULT_INK.line,
+        surface: style.backgroundColor || DEFAULT_INK.surface,
+      };
+      setInk(current =>
+        current.text === next.text &&
+        current.muted === next.muted &&
+        current.line === next.line &&
+        current.surface === next.surface
+          ? current
+          : next,
+      );
+    };
+    read();
+    // The colour mode changes on the document's attributes.
+    const observer = new MutationObserver(read);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      subtree: false,
+    });
+    observer.observe(document.body, { attributes: true, subtree: false });
+    return () => observer.disconnect();
+  });
+  return [probe, ink];
+}
+
+/** The probe the ink is read off: drawn, never seen. */
+const InkProbe = React.forwardRef<HTMLDivElement>((_, ref) => (
+  <Box
+    ref={ref}
+    aria-hidden
+    color="fg.default"
+    bg="canvas.overlay"
+    borderTop="1px solid"
+    borderColor="border.muted"
+    sx={{
+      position: 'absolute',
+      width: 0,
+      height: 0,
+      overflow: 'hidden',
+      pointerEvents: 'none',
+    }}
+  >
+    <Box as="span" color="fg.muted" />
+  </Box>
+));
+InkProbe.displayName = 'InkProbe';
+
 // ── Build ECharts option per type ──────────────────────────────────
 
 function buildOption(
   mtype: string,
   nameMap: Map<string, { ts: number; value: number }[]>,
+  ink: ChartInk = DEFAULT_INK,
 ): Record<string, unknown> {
   const names = [...nameMap.keys()];
 
   const baseLegend = {
     data: names,
     top: 6,
-    textStyle: { fontSize: 11 },
+    textStyle: { fontSize: 11, color: ink.muted },
   };
   const baseGrid = { left: 50, right: 20, top: 40, bottom: 30 };
   const baseTooltip = {
     trigger: 'axis' as const,
-    axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } },
+    axisPointer: {
+      type: 'cross',
+      label: { backgroundColor: ink.muted, color: ink.surface },
+    },
+    backgroundColor: ink.surface,
+    borderColor: ink.line,
+    textStyle: { color: ink.text },
   };
   const baseXAxis = {
     type: 'time' as const,
     boundaryGap: false as boolean | [string, string],
-    axisLine: { lineStyle: { color: '#ccc' } },
-    axisLabel: { fontSize: 10 },
+    axisLine: { lineStyle: { color: ink.line } },
+    axisLabel: { fontSize: 10, color: ink.muted },
   };
   const baseYAxis = {
     type: 'value' as const,
-    splitLine: { lineStyle: { type: 'dashed', color: '#e8e8e8' } },
+    splitLine: { lineStyle: { type: 'dashed', color: ink.line } },
     axisLine: { show: false },
-    axisLabel: { fontSize: 10 },
+    axisLabel: { fontSize: 10, color: ink.muted },
   };
 
   if (mtype === 'histogram' || mtype === 'exponentialHistogram') {
@@ -325,21 +419,29 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
   metrics,
   height = 240,
 }) => {
+  const [probe, ink] = useChartInk();
   if (!metrics || metrics.length === 0) {
     return (
-      <ReactECharts
-        echarts={echarts}
-        option={{
-          title: {
-            text: 'No metrics data',
-            left: 'center',
-            top: 'center',
-            textStyle: { color: '#999', fontSize: 14, fontWeight: 'normal' },
-          },
-        }}
-        style={{ width: '100%', height: `${height}px` }}
-        notMerge={true}
-      />
+      <Box position="relative">
+        <InkProbe ref={probe} />
+        <ReactECharts
+          echarts={echarts}
+          option={{
+            title: {
+              text: 'No metrics data',
+              left: 'center',
+              top: 'center',
+              textStyle: {
+                color: ink.muted,
+                fontSize: 14,
+                fontWeight: 'normal',
+              },
+            },
+          }}
+          style={{ width: '100%', height: `${height}px` }}
+          notMerge={true}
+        />
+      </Box>
     );
   }
 
@@ -351,10 +453,16 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
   );
 
   return (
-    <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+    <Box
+      display="grid"
+      gridTemplateColumns="1fr 1fr"
+      gap={2}
+      position="relative"
+    >
+      <InkProbe ref={probe} />
       {sortedTypes.map(mtype => {
         const nameMap = byType.get(mtype)!;
-        const option = buildOption(mtype, nameMap);
+        const option = buildOption(mtype, nameMap, ink);
         const stats = computeStats(nameMap);
         const durationMs =
           stats.startTs !== null && stats.endTs !== null

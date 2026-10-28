@@ -18,7 +18,7 @@
  */
 
 import React, { useCallback, useRef, useState, useMemo } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { Text } from '@primer/react';
 import type { OtelTimelineRangeSliderProps } from '../types';
 
@@ -366,15 +366,15 @@ export const OtelTimelineRangeSlider: React.FC<
               pointerEvents="none"
               zIndex={5}
             />
-            <Box
+            <Card
+              border
+              shadow="none"
+              display="block"
               position="absolute"
               top={-36}
               left={`${hoverPct}%`}
               transform="translateX(-50%)"
               bg="canvas.overlay"
-              border="1px solid"
-              borderColor="border.default"
-              borderRadius={2}
               px={2}
               py="2px"
               pointerEvents="none"
@@ -392,7 +392,7 @@ export const OtelTimelineRangeSlider: React.FC<
               >
                 {formatHoverDate(hoverPct)}
               </Text>
-            </Box>
+            </Card>
           </>
         )}
 

@@ -15,7 +15,7 @@
  */
 
 import React, { useMemo, useCallback, useState } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { Text, Label, Spinner } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
 import {
@@ -281,13 +281,12 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                 const usage = getTokenUsage(span);
                 if (!usage) return null;
                 return (
-                  <Box
+                  <Card
+                    border
+                    shadow="none"
                     display="inline-flex"
                     alignItems="center"
                     gap="2px"
-                    border="1px solid"
-                    borderColor="border.default"
-                    borderRadius={2}
                     px={1}
                     fontSize="10px"
                     fontFamily="mono"
@@ -311,7 +310,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                         <Text>{usage.output}</Text>
                       </Box>
                     )}
-                  </Box>
+                  </Card>
                 );
               })()}
               {description && (

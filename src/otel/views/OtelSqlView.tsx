@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import {
   ActionList,
   ActionMenu,
@@ -225,17 +225,18 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
 
       {/* ── Error banner ── */}
       {error && (
-        <Box
+        <Card
+          border
+          shadow="none"
+          display="block"
           p={3}
           bg="danger.subtle"
-          borderRadius={2}
-          border="1px solid"
           borderColor="danger.muted"
         >
           <Text sx={{ color: 'danger.fg', fontFamily: 'mono', fontSize: 1 }}>
             {error}
           </Text>
-        </Box>
+        </Card>
       )}
 
       {/* ── Results table ── */}
@@ -316,13 +317,13 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
               <Text sx={{ fontSize: 0 }}>CSV</Text>
             </Box>
           </Box>
-          <Box
+          <Card
+            border
+            shadow="none"
+            display="block"
             flex={1}
             minHeight={200}
             overflow="auto"
-            border="1px solid"
-            borderColor="border.default"
-            borderRadius={2}
           >
             <Box as="table" width="100%" borderCollapse="collapse">
               <Box as="thead">
@@ -379,7 +380,7 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
                 ))}
               </Box>
             </Box>
-          </Box>
+          </Card>
         </Box>
       )}
 
@@ -405,12 +406,11 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
               History
             </Text>
           </Box>
-          <Box
+          <Card
+            border
+            shadow="none"
             display="flex"
             flexDirection="column"
-            border="1px solid"
-            borderColor="border.default"
-            borderRadius={2}
             overflow="hidden"
           >
             {history.map((entry, i) => (
@@ -446,7 +446,7 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
                 </Text>
               </Box>
             ))}
-          </Box>
+          </Card>
         </Box>
       )}
     </Box>

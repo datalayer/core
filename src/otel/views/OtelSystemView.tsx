@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { Button, Spinner, Text } from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
 import { useOtelSystem } from '../hooks';
@@ -249,15 +249,16 @@ export const OtelSystemView: React.FC<OtelSystemViewProps> = ({
       )}
 
       {!loading && error && (
-        <Box
+        <Card
+          border
+          shadow="none"
+          display="block"
           bg="danger.subtle"
-          border="1px solid"
           borderColor="danger.muted"
-          borderRadius={2}
           p={3}
         >
           <Text sx={{ color: 'danger.fg', fontSize: 1 }}>{error}</Text>
-        </Box>
+        </Card>
       )}
 
       {!loading && !error && data && <SystemViewContent data={data} />}

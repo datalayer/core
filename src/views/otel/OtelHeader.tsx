@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Card } from '@datalayer/primer-addons';
 import { Text, Button, Dialog } from '@primer/react';
 import { TelescopeIcon, SignOutIcon } from '@primer/octicons-react';
 import { UserBadge } from '../profile';
@@ -203,23 +203,23 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
             <Text sx={{ fontWeight: 'bold', fontSize: 1, color: 'fg.muted' }}>
               Request
             </Text>
-            <Box
+            <Card
+              border
+              shadow="none"
+              display="block"
               as="pre"
               fontFamily="mono"
               fontSize={1}
               p={2}
               mt={1}
               bg="canvas.inset"
-              borderRadius={2}
               overflow="auto"
               color="fg.default"
               whiteSpace="pre-wrap"
               wordBreak="break-all"
-              border="1px solid"
-              borderColor="border.default"
             >
               {dialogRequest}
-            </Box>
+            </Card>
           </Box>
           {/* Response */}
           <Box>
