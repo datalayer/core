@@ -390,7 +390,15 @@ export function viewForRoute(
   if (path === '/research' || path.startsWith('/research/')) {
     return 'research';
   }
-  if (path === '/admin' || path.startsWith('/admin/')) {
+  // The SVG gallery is the admin sidebar's, at its own address: filed under
+  // the Platform, the Platform button came back to it with the admin sidebar
+  // beside it (reported 28 October 2026).
+  if (
+    path === '/admin' ||
+    path.startsWith('/admin/') ||
+    path === '/svg' ||
+    path.startsWith('/svg/')
+  ) {
     return 'admin';
   }
   // The Apps shell, and the hosted applications at `/apps/<slug>` with it.

@@ -145,6 +145,9 @@ describe('where each shell was left', () => {
     // So the toggle can take them to Agentify: it is not "already there".
     expect(viewForRoute('/agentify/tutor?tab=home')).toBe('agentify');
     expect(viewForRoute('/admin/users')).toBe('admin');
+    // The SVG gallery is the admin sidebar's (28 October 2026).
+    expect(viewForRoute('/svg')).toBe('admin');
+    expect(viewForRoute('/svg/logo', 'home')).toBe('admin');
     expect(viewForRoute('/agentifyx')).toBe('home');
   });
 
