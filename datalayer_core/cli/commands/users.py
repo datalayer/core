@@ -29,7 +29,9 @@ def users_callback(ctx: typer.Context) -> None:
 
 @app.command(name="create")
 def create_user(
-    handle: str = typer.Option(..., "--handle", help="The account's handle (its unique name)."),
+    handle: str = typer.Option(
+        ..., "--handle", help="The account's handle (its unique name)."
+    ),
     email: str = typer.Option(..., "--email", help="The account's email address."),
     password: str = typer.Option(
         ...,
@@ -43,7 +45,8 @@ def create_user(
     last_name: str = typer.Option("", "--last-name", help="The person's last name."),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="Datalayer API key."),
 ) -> None:
-    """Create an account: a platform administrator's command.
+    """
+    Create an account: a platform administrator's command.
 
     The account is created as a verified member, with the handle, email and
     password given; the administrator vouches for it, so no confirmation mail
@@ -74,12 +77,113 @@ def create_user(
         except ValueError:
             body = {}
         if not response.ok:
-            console.print(f"[red]{body.get('detail') or body.get('message') or response.text}[/red]")
+            console.print(
+                f"[red]{body.get('detail') or body.get('message') or response.text}[/red]"
+            )
             raise typer.Exit(1)
         user = body.get("user") or body.get("data") or {}
         console.print(
             f"[green]Account created:[/green] {user.get('handle_s', handle)} "
             f"({user.get('email_s', email)}), uid {user.get('uid', '?')}"
+        )
+    except typer.Exit:
+        raise
+    except requests.exceptions.RequestException as e:
+        console.print(f"[red]Request error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+def _iam_headers(client: DatalayerClient) -> dict[str, str]:
+    """
+    The headers of a call to IAM with the client's key.
+    """
+    return {
+        "Authorization": f"Bearer {client._get_api_key()}",
+        "Content-Type": "application/json",
+    }
+
+
+def _say_refusal(response: requests.Response) -> None:
+    """
+    Print IAM's refusal as it is, and exit 1.
+    """
+    try:
+        body = response.json()
+    except ValueError:
+        body = {}
+    console.print(
+        f"[red]{body.get('detail') or body.get('message') or response.text}[/red]"
+    )
+    raise typer.Exit(1)
+
+
+def _account_uid(client: DatalayerClient, account: str) -> str:
+    """
+    The uid of an account named by its handle or its uid.
+    """
+    if len(account) == 26 and account.isalnum() and account.upper() == account:
+        return account
+    response = requests.get(
+        f"{client.urls.iam_url}/api/iam/v1/users/public/{account}",
+        headers=_iam_headers(client),
+        timeout=30,
+    )
+    if not response.ok:
+        _say_refusal(response)
+    uid = ((response.json() or {}).get("profile") or {}).get("uid")
+    if not uid:
+        console.print(f"[red]No account has the handle {account}.[/red]")
+        raise typer.Exit(1)
+    return str(uid)
+
+
+@app.command(name="credits")
+def user_credits(
+    account: str = typer.Argument(..., help="The account's handle or uid."),
+    add: Optional[float] = typer.Option(
+        None, "--add", help="Credits to add to the balance."
+    ),
+    set_to: Optional[float] = typer.Option(None, "--set", help="The balance to set."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Datalayer API key."),
+) -> None:
+    """
+    Show an account's credits, or add to them: a platform administrator's command.
+
+    With neither option, prints the balance. `--add` reads the balance and
+    sets it to the balance plus the amount; `--set` sets it. IAM refuses a
+    caller who is not a platform administrator, in a sentence printed as it
+    is.
+    """
+    if add is not None and set_to is not None:
+        console.print("[red]Give --add or --set, not both.[/red]")
+        raise typer.Exit(1)
+    if add is not None and add <= 0:
+        console.print("[red]--add takes a positive amount of credits.[/red]")
+        raise typer.Exit(1)
+    if set_to is not None and set_to < 0:
+        console.print("[red]--set takes a balance of zero or more.[/red]")
+        raise typer.Exit(1)
+    try:
+        client = DatalayerClient(api_key=api_key)
+        uid = _account_uid(client, account)
+        url = f"{client.urls.iam_url}/api/iam/v1/usage/credits/users/{uid}"
+        read = requests.get(url, headers=_iam_headers(client), timeout=30)
+        if not read.ok:
+            _say_refusal(read)
+        balance = float(
+            ((read.json() or {}).get("credits") or {}).get("credits") or 0.0
+        )
+        if add is None and set_to is None:
+            console.print(f"{account} ({uid}) has {balance:,.2f} credits.")
+            return
+        target = balance + add if add is not None else float(set_to)  # type: ignore[arg-type]
+        written = requests.put(
+            url, headers=_iam_headers(client), json={"credits": target}, timeout=30
+        )
+        if not written.ok:
+            _say_refusal(written)
+        console.print(
+            f"[green]{account} ({uid}): {balance:,.2f} credits, now {target:,.2f}.[/green]"
         )
     except typer.Exit:
         raise
