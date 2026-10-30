@@ -480,6 +480,8 @@ export interface LaunchPlanResponse {
   run_mode_constraint: string;
   /** How an imported definition would run; null for one made here. */
   external_plan?: ExternalPlan | null;
+  /** Whom an imported definition's model calls are metered under, in a sentence. */
+  metering?: string;
   problems: LaunchPlanProblem[];
   estimate: {
     cases: number;
