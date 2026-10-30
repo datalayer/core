@@ -205,6 +205,8 @@ export interface ExternalCaseResult {
   }>;
   usage?: Record<string, unknown>;
   details?: Record<string, unknown>;
+  /** The task's own environment, when it ran in one: what ran, by digest. */
+  environment?: { uid?: string; image_digest?: string; base_image?: string };
   artifacts?: Array<{
     name: string;
     media_type: string;
