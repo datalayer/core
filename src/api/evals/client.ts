@@ -26,6 +26,9 @@ import {
   type EvalsClientOptions,
 } from './request';
 import type {
+  AdapterInspectionResponse,
+  EvalAdapterListResponse,
+  InspectExternalSourceRequest,
   CaseListResponse,
   CreateReportRequest,
   MoveReportRequest,
@@ -908,6 +911,56 @@ export const archiveLaunch = (options: EvalsClientOptions, launchId: string) =>
   );
 
 // --- Spec import and definition versions (B2-08, B2-09) --------------------
+
+// --- External frameworks ---------------------------------------------------
+
+/** The external frameworks this deployment offers; none hides them. */
+export const listEvalAdapters = (options: EvalsClientOptions) =>
+  evalsRequest<EvalAdapterListResponse>(options, '/adapters');
+
+/** Keep a framework's archive by its digest and inspect it in a sandbox. */
+export const inspectExternalSource = (
+  options: EvalsClientOptions,
+  framework: string,
+  body: InspectExternalSourceRequest,
+) =>
+  evalsRequest<AdapterInspectionResponse>(
+    options,
+    `/adapters/${segment(framework)}/inspect`,
+    { method: 'POST', body },
+  );
+
+/** An inspection under way, or what it found. */
+export const getAdapterInspection = (
+  options: EvalsClientOptions,
+  inspectionId: string,
+) =>
+  evalsRequest<AdapterInspectionResponse>(
+    options,
+    `/adapters/inspections/${segment(inspectionId)}`,
+  );
+
+/** Where an imported benchmark's original source is downloaded from. */
+export const externalSourceUrl = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  version?: number,
+): string =>
+  evalsUrl(options, `/evalsets/${segment(evalsetId)}/external-source`, {
+    version,
+  });
+
+/** Where a task's raw evidence is downloaded from, by the digest it names. */
+export const caseArtifactUrl = (
+  options: EvalsClientOptions,
+  runId: string,
+  caseId: string,
+  digest: string,
+): string =>
+  evalsUrl(
+    options,
+    `/runs/${segment(runId)}/cases/${segment(caseId)}/artifacts/${segment(digest)}`,
+  );
 
 /** An evalset from a spec file, the same body the CLI and the action send. */
 export const importEvalset = (

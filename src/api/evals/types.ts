@@ -58,6 +58,161 @@ export interface EvalCase {
 }
 
 /** An evalset, the benchmark: versioned cases, evaluators, metadata. */
+/** How an adapter runs a framework's component. */
+export type AdapterCapabilityStatus =
+  'native' | 'framework-run' | 'unsupported';
+
+/** One component of an external definition, as its adapter classified it. */
+export interface AdapterCapability {
+  component: string;
+  kind: string;
+  status: AdapterCapabilityStatus;
+  /** Why it cannot run, for an `unsupported` one. */
+  reason: string;
+  /** A stable code to count refusals by. */
+  code: string;
+}
+
+/** The immutable thing a definition was read from. */
+export interface ExternalSourceRef {
+  kind: 'archive' | 'git' | 'library' | 'registry';
+  /** The sha256 of the archive, a commit, or a pinned package. */
+  reference: string;
+  filename: string;
+}
+
+/** What a version and a launch keep of an imported definition. */
+export interface ExternalDefinition {
+  framework: string;
+  adapter_version: string;
+  framework_version: string;
+  source: ExternalSourceRef;
+  entry_point: string;
+  configuration: Record<string, unknown>;
+  capabilities: AdapterCapability[];
+  /** A digest covering every file of the source. */
+  content_digest: string;
+}
+
+/** An external framework this deployment offers. */
+export interface EvalAdapter {
+  framework: string;
+  adapter_version: string;
+  framework_version: string;
+  environment: string;
+}
+
+export interface EvalAdapterListResponse {
+  success: boolean;
+  adapters: EvalAdapter[];
+}
+
+export interface InspectedCase {
+  native_id: string;
+  name: string;
+  input: unknown;
+  target: unknown;
+  entry_point: string;
+  metadata: Record<string, unknown>;
+}
+
+/** What a source defines, found in a sandbox with none of it run. */
+export interface AdapterInspection {
+  framework: string;
+  adapter_version: string;
+  framework_version: string;
+  archive_digest: string;
+  content_digest: string;
+  name: string;
+  description: string;
+  entry_points: string[];
+  cases: InspectedCase[];
+  subjects: Array<Record<string, unknown>>;
+  scorers: Array<Record<string, unknown>>;
+  models: string[];
+  tools: string[];
+  secrets: string[];
+  network: 'none' | 'inference' | 'boundary';
+  environment: Record<string, unknown>;
+  capabilities: AdapterCapability[];
+  configuration: Record<string, unknown>;
+}
+
+/** An inspection under way, or its answer. */
+export interface AdapterInspectionRecord {
+  id: string;
+  owner_uid: string;
+  framework: string;
+  digest: string;
+  filename: string;
+  status: 'pending' | 'ready' | 'failed';
+  inspection: AdapterInspection | Record<string, never>;
+  error: string;
+  workflow_uid: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface AdapterInspectionResponse {
+  success: boolean;
+  inspection: AdapterInspectionRecord;
+}
+
+export interface InspectExternalSourceRequest {
+  filename: string;
+  content_base64: string;
+  options?: Record<string, unknown>;
+}
+
+/** What was chosen from an inspection's preview. */
+export interface ExternalSelection {
+  entry_points?: string[];
+  limit?: number;
+  arguments?: Record<string, unknown>;
+  /** Catalogue models of AI Inference, one experiment each. */
+  models?: string[];
+  /** The headline score: `{scorer}` or `{kind: 'mean' | 'all'}`, with a `threshold`. */
+  aggregation?: Record<string, unknown>;
+  name?: string;
+}
+
+/** How a launch of an imported definition runs. */
+export interface ExternalPlan {
+  framework: string;
+  adapter_version: string;
+  framework_version: string;
+  environment: string;
+  policy: Record<string, unknown>;
+  capabilities: AdapterCapability[];
+  resolved_configuration: Record<string, unknown>;
+  /** The pinned framework command, with no secret in it. */
+  reproduction: string;
+}
+
+/** What a framework said of one task, beside the normalized fields. */
+export interface ExternalCaseResult {
+  framework?: string;
+  adapter_version?: string;
+  framework_version?: string;
+  native_id?: string;
+  attempt?: number;
+  scores?: Array<{
+    name: string;
+    value: unknown;
+    answer: string;
+    explanation: string;
+    metadata: Record<string, unknown>;
+  }>;
+  usage?: Record<string, unknown>;
+  details?: Record<string, unknown>;
+  artifacts?: Array<{
+    name: string;
+    media_type: string;
+    digest: string;
+    size: number;
+  }>;
+}
+
 export interface Evalset {
   id: string;
   owner_uid: string;
@@ -67,6 +222,8 @@ export interface Evalset {
   kind: EvalKind;
   category: EvalsetCategory | '';
   dataset_ref: DatasetRef | null;
+  /** Where an imported definition came from; empty for one made here. */
+  external_definition?: ExternalDefinition | Record<string, never>;
   /** Moves on every change to cases, evaluators, schema or category. */
   version: number;
   /** How many launches this benchmark has had; the next is number + 1. */
@@ -213,6 +370,8 @@ export interface EvalRun {
 
 /** A task result: one case of one run, its own document. */
 export interface EvalTaskResult {
+  /** What a framework said of this task, beside the normalized fields. */
+  external?: ExternalCaseResult;
   id: string;
   run_id: string;
   launch_id: string;
@@ -256,6 +415,9 @@ export interface EvalTaskResult {
 
 /** A launch: one submission of a benchmark across its experiments. */
 export interface EvalLaunch {
+  /** An imported definition's launch: what it ran from, and how. */
+  external_definition?: ExternalDefinition | Record<string, never>;
+  external_plan?: ExternalPlan | Record<string, never>;
   id: string;
   owner_uid: string;
   account_uid: string;
@@ -298,6 +460,9 @@ export interface LaunchPlanProblem {
   severity: 'error' | 'warning';
   message: string;
   experiment_id?: string;
+  /** The component an imported definition's plan refused. */
+  component?: string;
+  capability_code?: string;
 }
 
 /** The plan of a launch before it is made (B2-07). */
@@ -313,6 +478,8 @@ export interface LaunchPlanResponse {
    * submission.
    */
   run_mode_constraint: string;
+  /** How an imported definition would run; null for one made here. */
+  external_plan?: ExternalPlan | null;
   problems: LaunchPlanProblem[];
   estimate: {
     cases: number;
@@ -1113,13 +1280,17 @@ export interface CaseResultResponse {
 
 export interface ImportEvalsetRequest {
   /** An `*.evalset.json` spec, as the CLI and the action read it. */
-  spec: Record<string, unknown>;
+  spec?: Record<string, unknown>;
+  /** Or an inspected external source. One of the two. */
+  external?: { inspection_id: string; selection?: ExternalSelection };
   run_environment?: EvalRunEnvironment;
 }
 
 export interface ImportEvalsetResponse extends EvalsetResponse {
   /** Evaluators the platform cannot run, left out of the evalset. */
   unsupported_evaluators: string[];
+  /** An external import's experiments, one per model. */
+  experiments?: EvalExperiment[];
 }
 
 export interface EvalsetVersionListResponse {

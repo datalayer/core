@@ -411,6 +411,28 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/launches/l1/cancel',
     ],
     [
+      'listEvalAdapters',
+      () => client.listEvalAdapters(options),
+      'GET',
+      '/api/ai-agents/v1/evals/adapters',
+    ],
+    [
+      'inspectExternalSource',
+      () =>
+        client.inspectExternalSource(options, 'inspect-ai', {
+          filename: 'a.tar.gz',
+          content_base64: 'YQ==',
+        }),
+      'POST',
+      '/api/ai-agents/v1/evals/adapters/inspect-ai/inspect',
+    ],
+    [
+      'getAdapterInspection',
+      () => client.getAdapterInspection(options, 'i1'),
+      'GET',
+      '/api/ai-agents/v1/evals/adapters/inspections/i1',
+    ],
+    [
       'importEvalset',
       () => client.importEvalset(options, { spec: { name: 'x' } }),
       'POST',
