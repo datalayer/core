@@ -129,11 +129,20 @@ export const MCP_CLIENTS: { name: string; setup: string }[] = [
  * does: a reader who has seen one and then the other should not have to
  * work out whether they are the same affordance.
  */
-export const Copyable = ({ text }: { text: string }): JSX.Element => {
+export const Copyable = ({
+  text,
+  compact = false,
+}: {
+  text: string;
+  /** As wide as the text, with the button right after it. */
+  compact?: boolean;
+}): JSX.Element => {
   const [copied, setCopied] = useState(false);
   return (
     <Box
-      display="flex"
+      display={compact ? 'inline-flex' : 'flex'}
+      justifySelf={compact ? 'start' : undefined}
+      maxWidth="100%"
       alignItems="center"
       gap={2}
       p={2}
@@ -145,7 +154,7 @@ export const Copyable = ({ text }: { text: string }): JSX.Element => {
         sx={{
           fontFamily: 'mono',
           fontSize: 0,
-          flex: 1,
+          flex: compact ? undefined : 1,
           minWidth: 0,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -305,7 +314,10 @@ export const McpHome = ({
             <Heading as="h3" sx={{ fontSize: 2 }}>
               The endpoint
             </Heading>
-            <Copyable text={endpoint || 'https://mcp.datalayer.run/mcp'} />
+            <Copyable
+              compact
+              text={endpoint || 'https://mcp.datalayer.run/mcp'}
+            />
             <Box display="flex" alignItems="center" gap={2}>
               <KeyIcon size={14} />
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
