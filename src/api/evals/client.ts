@@ -126,6 +126,8 @@ export type ListEvalsetsQuery = {
   dataset?: string;
   /** …and pinned to this revision of it: one revision is not evidence about another. */
   revision?: string;
+  /** Only the benchmarks imported from this framework. */
+  framework?: string;
   limit?: number;
   offset?: number;
 };
