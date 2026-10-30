@@ -48,9 +48,30 @@ export const ScopeList = ({ scopes, max = 3 }: ScopeListProps): JSX.Element => {
   const shown = scopes.slice(0, max);
   const rest = scopes.length - shown.length;
   return (
-    <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
+    <Box
+      display="flex"
+      gap={1}
+      flexWrap="wrap"
+      alignItems="center"
+      minWidth={0}
+      maxWidth="100%"
+    >
       {shown.map(scope => (
-        <Label key={scope} size="small" variant="secondary">
+        // A long scope is cut with an ellipsis and said in full on hover,
+        // never drawn past its cell into the next column.
+        <Label
+          key={scope}
+          size="small"
+          variant="secondary"
+          title={scope}
+          sx={{
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            display: 'inline-block',
+          }}
+        >
           {scope}
         </Label>
       ))}

@@ -55,6 +55,7 @@ import {
   ChecklistIcon,
   KebabHorizontalIcon,
   PlayIcon,
+  McpIcon,
   PlugIcon,
   StackIcon,
 } from '@primer/octicons-react';
@@ -894,7 +895,7 @@ export const McpDashboard = ({
           </Table.Container>
         ) : (
           <PanelEmpty
-            icon={PlugIcon}
+            icon={McpIcon}
             heading="No client connected"
             description="Connect Claude Code, Codex, Cursor, VS Code or any MCP client to your workspace, and it appears here on its first call."
             action={{

@@ -46,7 +46,7 @@ import {
 } from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
-import { KebabHorizontalIcon, PlugIcon } from '@primer/octicons-react';
+import { KebabHorizontalIcon, McpIcon } from '@primer/octicons-react';
 import {
   ClientBadge,
   McpErrorBlankslate,
@@ -173,13 +173,16 @@ export const ConnectedAgents = ({
     {
       header: 'Allowed to',
       id: 'scopes',
-      width: 'growCollapse',
+      // Room for its scopes, which wrap inside the cell rather than run
+      // over the dates beside it (30 October 2026).
+      width: 'grow',
+      minWidth: '240px',
       renderCell: row => <ScopeList scopes={row.scopes} />,
     },
     {
       header: 'Connected',
       id: 'created',
-      width: '130px',
+      width: '140px',
       renderCell: row =>
         row.createdAt ? (
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
@@ -192,7 +195,7 @@ export const ConnectedAgents = ({
     {
       header: 'Last used',
       id: 'last-used',
-      width: '130px',
+      width: '140px',
       renderCell: row =>
         row.lastUsedAt ? (
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
@@ -317,7 +320,7 @@ export const ConnectedAgents = ({
       ) : (
         <Blankslate border spacious>
           <Blankslate.Visual>
-            <PlugIcon size="medium" />
+            <McpIcon size="medium" />
           </Blankslate.Visual>
           <Blankslate.Heading>No agent connected</Blankslate.Heading>
           <Blankslate.Description>
