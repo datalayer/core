@@ -57,6 +57,7 @@ export * from './Invite';
 export * from './LandingRoles';
 export * from './McpAuditEvent';
 export * from './McpBinding';
+export * from './McpAgentAccess';
 export * from './McpPolicy';
 export * from './McpTask';
 export * from './Member';

@@ -85,4 +85,8 @@ export interface McpRoutes {
   calls?: string;
   /** The bound code sandboxes, where the Overview's sandbox count leads. */
   sandboxes?: string;
+  /** What each agent may execute, where the Tools summary leads. */
+  tools?: string;
+  /** What each agent can reach, where the Reach summary leads. */
+  reach?: string;
 }

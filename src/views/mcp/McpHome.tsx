@@ -462,19 +462,43 @@ export const McpHome = ({
             </Text>
           </Summary>
 
-          <Summary icon={ToolsIcon} title="Tools">
+          <Summary
+            icon={ToolsIcon}
+            title="Tools"
+            to={routes.tools}
+            onOpen={navigate}
+            action={
+              routes.tools
+                ? {
+                    label: 'What each agent may execute',
+                    onClick: () => navigate(routes.tools as string),
+                  }
+                : undefined
+            }
+          >
             <Text>
-              The toolsets an agent may execute — the Contents sources you have
-              enabled for it, their tools, their approval policy and their
-              health — are managed here once toolset bindings ship.
+              The toolsets each of your agents may execute, with their tools,
+              their approval policy and their health.
             </Text>
           </Summary>
 
-          <Summary icon={RssIcon} title="Reach">
+          <Summary
+            icon={RssIcon}
+            title="Reach"
+            to={routes.reach}
+            onOpen={navigate}
+            action={
+              routes.reach
+                ? {
+                    label: 'What each agent reaches',
+                    onClick: () => navigate(routes.reach as string),
+                  }
+                : undefined
+            }
+          >
             <Text>
-              Which notebooks and sources an agent can actually reach, as a list
-              you can read at a glance, arrives with sharing to agents as
-              principals.
+              The notebooks and sources each of your agents can actually reach,
+              and whether it may read, edit or run them.
             </Text>
           </Summary>
 

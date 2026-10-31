@@ -20,6 +20,7 @@ export * from './generated';
 export * from './gateway';
 export * from './tasks';
 export * from './bindings';
+export * from './agentAccess';
 export * from './audit';
 export * from './activity';
 export * from './organizations';

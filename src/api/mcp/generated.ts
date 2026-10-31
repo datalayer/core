@@ -97,6 +97,7 @@ export const MCP_GATEWAY_ROUTES: ReadonlyArray<McpGatewayRoute> = [
       { name: 'team', in: 'query' },
       { name: 'user', in: 'query' },
       { name: 'client', in: 'query' },
+      { name: 'credential', in: 'query' },
       { name: 'agent', in: 'query' },
       { name: 'tool', in: 'query' },
       { name: 'method', in: 'query' },
@@ -105,6 +106,7 @@ export const MCP_GATEWAY_ROUTES: ReadonlyArray<McpGatewayRoute> = [
       { name: 'notebook', in: 'query' },
       { name: 'source', in: 'query' },
       { name: 'task', in: 'query' },
+      { name: 'trace_id', in: 'query' },
       { name: 'since', in: 'query' },
       { name: 'until', in: 'query' },
       { name: 'cursor', in: 'query' },
@@ -190,6 +192,12 @@ export const MCP_GATEWAY_ROUTES: ReadonlyArray<McpGatewayRoute> = [
     ],
   },
   {
+    method: 'POST',
+    path: '/api/mcp/v1/pap/checks',
+    operationId: 'pap_signed_checks_endpoint_api_mcp_v1_pap_checks_post',
+    parameters: [],
+  },
+  {
     method: 'GET',
     path: '/api/mcp/v1/policy',
     operationId: 'policy_endpoint_api_mcp_v1_policy_get',
@@ -198,6 +206,12 @@ export const MCP_GATEWAY_ROUTES: ReadonlyArray<McpGatewayRoute> = [
       { name: 'org', in: 'query' },
       { name: 'team', in: 'query' },
     ],
+  },
+  {
+    method: 'GET',
+    path: '/api/mcp/v1/reach',
+    operationId: 'agent_reach_endpoint_api_mcp_v1_reach_get',
+    parameters: [{ name: 'grant', in: 'query' }],
   },
   {
     method: 'GET',
@@ -236,6 +250,12 @@ export const MCP_GATEWAY_ROUTES: ReadonlyArray<McpGatewayRoute> = [
     path: '/api/mcp/v1/tasks/{task_uid}/input',
     operationId: 'answer_task_endpoint_api_mcp_v1_tasks__task_uid__input_post',
     parameters: [{ name: 'task_uid', in: 'path' }],
+  },
+  {
+    method: 'GET',
+    path: '/api/mcp/v1/toolsets',
+    operationId: 'agent_toolsets_endpoint_api_mcp_v1_toolsets_get',
+    parameters: [{ name: 'grant', in: 'query' }],
   },
   {
     method: 'GET',
