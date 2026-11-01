@@ -57,7 +57,7 @@ import {
   PlayIcon,
   McpIcon,
   PlugIcon,
-  StackIcon,
+  PackageIcon,
 } from '@primer/octicons-react';
 import { ShareAccessDialog, sandboxSharingUrl } from '../../components/sharing';
 import { ClientBadge, McpErrorBlankslate } from '../../components/mcp';
@@ -961,8 +961,8 @@ export const McpDashboard = ({
           </Table.Container>
         ) : (
           <PanelEmpty
-            icon={StackIcon}
-            heading="No sandbox bound"
+            icon={PackageIcon}
+            heading="No Code Sandbox bound"
             description="An agent that launches a sandbox keeps it for the session; it appears here with its provider, its capabilities and what it is doing."
           />
         ))}
