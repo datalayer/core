@@ -44,3 +44,30 @@ describe('the toasts shown outside JupyterLab', () => {
     expect(defaultAutoClose('error')).toBe(false);
   });
 });
+
+describe('a toast already waiting', () => {
+  it('is not queued twice: the same variant and message are one toast', () => {
+    toastQueue.dismiss();
+    const first = toastQueue.push({
+      variant: 'error',
+      message: 'Server Error.\nTypeError',
+      autoClose: false,
+    });
+    const again = toastQueue.push({
+      variant: 'error',
+      message: 'Server Error.\nTypeError',
+      autoClose: false,
+    });
+    const other = toastQueue.push({
+      variant: 'warning',
+      message: 'Server Error.\nTypeError',
+      autoClose: false,
+    });
+    expect(again).toBe(first);
+    expect(toastQueue.snapshot().map(toast => toast.id)).toEqual([
+      first,
+      other,
+    ]);
+    toastQueue.dismiss();
+  });
+});

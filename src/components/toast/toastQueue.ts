@@ -55,6 +55,15 @@ export const toastQueue = {
     return toasts;
   },
   push(toast: Omit<QueuedToast, 'id'>): string {
+    // The same toast already waiting is not said twice: a page that asks
+    // twice, or two requests that fail alike, show it once.
+    const same = toasts.find(
+      queued =>
+        queued.variant === toast.variant && queued.message === toast.message,
+    );
+    if (same) {
+      return same.id;
+    }
     next += 1;
     const id = `toast-${next}`;
     toasts = [...toasts, { ...toast, id }];

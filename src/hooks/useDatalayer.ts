@@ -102,26 +102,27 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
             }
           } else {
             if (notifyOnError_ && !isForbidden) {
-              if (responseError.warnings) {
-                responseError.warnings.forEach(warning =>
-                  enqueueToast(`${warning}`, { variant: 'warning' }),
-                );
+              // One toast per failed request, its lines together and each once
+              // (2 November 2026: its message and its exception were a toast
+              // each, so a page that asked twice showed four).
+              const once = (lines: unknown[]): string =>
+                Array.from(
+                  new Set(
+                    lines.map(line => `${line ?? ''}`.trim()).filter(Boolean),
+                  ),
+                ).join('\n');
+              const warnings = once(responseError.warnings ?? []);
+              if (warnings) {
+                enqueueToast(warnings, { variant: 'warning' });
               }
-              if (responseError.errors) {
-                responseError.errors.forEach(error =>
-                  enqueueToast(`${error}`, { variant: 'error' }),
-                );
-              }
-              if (responseError.message) {
-                enqueueToast(`${responseError.message}`, { variant: 'error' });
-              } else {
-                enqueueToast(`API Error`, { variant: 'error' });
-              }
-              if (responseError.exceptionMessage) {
-                enqueueToast(`${responseError.exceptionMessage}`, {
-                  variant: 'error',
-                });
-              }
+              enqueueToast(
+                once([
+                  ...(responseError.errors ?? []),
+                  responseError.message || 'API Error',
+                  responseError.exceptionMessage,
+                ]),
+                { variant: 'error' },
+              );
             }
           }
           const response = {

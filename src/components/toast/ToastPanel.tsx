@@ -13,7 +13,7 @@
  */
 
 import type { JSX, MouseEvent } from 'react';
-import { useSyncExternalStore } from 'react';
+import { Fragment, useSyncExternalStore } from 'react';
 import { Button } from '@primer/react';
 import { Box, SlidingPanel } from '@datalayer/primer-addons';
 import { toastQueue, type ToastAction } from './toastQueue';
@@ -45,7 +45,13 @@ export const ToastPanel = (): JSX.Element => {
       // A new toast is a new panel: it slides in, and its own clock runs.
       key={shown?.id ?? 'none'}
       isOpen={Boolean(shown)}
-      message={shown?.message ?? ''}
+      // A toast of several lines (a failed request's message and exception) says each on its own line.
+      message={(shown?.message ?? '').split('\n').map((line, index) => (
+        <Fragment key={index}>
+          {index > 0 ? <br /> : null}
+          {line}
+        </Fragment>
+      ))}
       variant={shown?.variant ?? 'default'}
       position="north"
       durationMs={
