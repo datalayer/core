@@ -13,3 +13,4 @@ export * from './sharing';
 export * from './sparklines';
 export * from './time';
 export * from './timeline';
+export * from './toast';

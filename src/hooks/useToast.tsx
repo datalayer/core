@@ -10,6 +10,7 @@ import type { Notification } from '@jupyterlab/apputils';
 import { Button } from '@primer/react';
 import type { VariantType } from './../components/buttons';
 import { isInsideJupyterLab } from '../utils';
+import { defaultAutoClose, toastQueue } from '../components/toast/toastQueue';
 
 // `@datalayer/jupyter-react` and `@jupyterlab/apputils` are heavy (they pull
 // JupyterLab / CodeMirror / lumino) and are only needed when running INSIDE
@@ -167,6 +168,12 @@ function createContent(
   );
 }
 
+/**
+ * Toasts in JupyterLab, as they always were: its notifications, or
+ * react-toastify until they are loaded. Everywhere else (the SaaS, the
+ * desktop…) they go to `ToastPanel`, primer-addons' sliding panel, which the
+ * application mounts once (2 November 2026).
+ */
 export const useToast = () => {
   // This CANNOT use Jupyter React hooks as it may be used outside Jupyter React context.
   const insideJupyterLab = isInsideJupyterLab();
@@ -175,6 +182,14 @@ export const useToast = () => {
     options: ToastProps = { variant: 'info' },
   ) => {
     const { actions, autoClose } = options;
+    if (!insideJupyterLab) {
+      return toastQueue.push({
+        variant: options.variant,
+        message,
+        actions,
+        autoClose: autoClose ?? defaultAutoClose(options.variant),
+      });
+    }
     const theme = resolveToastTheme();
     switch (options.variant) {
       case 'info': {
@@ -264,6 +279,33 @@ export const useToast = () => {
     promise: Promise<any>,
     options: Notification.IPromiseOptions<any>,
   ) => {
+    if (!insideJupyterLab) {
+      // One toast for the task: pending, then what it came to.
+      const message = (value: unknown, result: unknown): string =>
+        typeof value === 'function'
+          ? String((value as (data: unknown) => unknown)(result))
+          : String(value);
+      const id = toastQueue.push({
+        variant: 'info',
+        message: message(options.pending.message, undefined),
+        autoClose: false,
+      });
+      promise.then(
+        result =>
+          toastQueue.update(id, {
+            variant: 'success',
+            message: message(options.success.message, result),
+            autoClose: defaultAutoClose('success'),
+          }),
+        reason =>
+          toastQueue.update(id, {
+            variant: 'error',
+            message: message(options.error.message, reason),
+            autoClose: defaultAutoClose('error'),
+          }),
+      );
+      return id;
+    }
     const theme = resolveToastTheme();
     return insideJupyterLab && NotificationApi
       ? NotificationApi.promise(promise, options)
@@ -300,7 +342,9 @@ export const useToast = () => {
      * @param id Toast id
      */
     dismiss: (id?: Id) => {
-      if (insideJupyterLab && NotificationApi) {
+      if (!insideJupyterLab) {
+        toastQueue.dismiss(id === undefined ? undefined : String(id));
+      } else if (insideJupyterLab && NotificationApi) {
         NotificationApi.dismiss(id as string | undefined);
       } else {
         toast.dismiss(id);
