@@ -158,9 +158,7 @@ def test_credits_add_reads_the_balance_and_sets_it_plus_the_amount(
     monkeypatch.setattr(users, "DatalayerClient", _Client)
     monkeypatch.setattr(users.requests, "get", get)
     monkeypatch.setattr(users.requests, "put", put)
-    answer = CliRunner().invoke(
-        users.app, ["credits", "datalayer-demo", "--add", "500"]
-    )
+    answer = CliRunner().invoke(users.app, ["credits", "add", "datalayer-demo", "500"])
     assert answer.exit_code == 0, answer.stdout
     credits_url = (
         "https://iam.test/api/iam/v1/usage/credits/users/01M4BDHQWKVGT55RS5AQPC430T"
@@ -188,25 +186,65 @@ def test_credits_shows_the_balance_by_uid_without_writing(
     monkeypatch.setattr(
         users.requests, "put", lambda *a, **k: pytest.fail("a read writes nothing")
     )
-    answer = CliRunner().invoke(users.app, ["credits", "01M4BDHQWKVGT55RS5AQPC430T"])
+    answer = CliRunner().invoke(
+        users.app, ["credits", "show", "01M4BDHQWKVGT55RS5AQPC430T"]
+    )
     assert answer.exit_code == 0, answer.stdout
     assert "12.50 credits" in answer.stdout
 
 
 @pytest.mark.parametrize(
-    "args", [["--add", "5", "--set", "5"], ["--add", "-1"], ["--set", "-3"]]
+    "args",
+    [
+        ["add", "01M4BDHQWKVGT55RS5AQPC430T", "0"],
+        ["add", "01M4BDHQWKVGT55RS5AQPC430T", "--", "-1"],
+        ["set", "01M4BDHQWKVGT55RS5AQPC430T", "--", "-3"],
+    ],
 )
 def test_credits_refuses_unclear_amounts(
     monkeypatch: pytest.MonkeyPatch, args: list[str]
 ) -> None:
     """
-    Both options, or a negative amount, are refused before any call.
+    A zero or negative amount to add, or a negative balance, is refused before any call.
     """
     monkeypatch.setattr(users, "DatalayerClient", _Client)
-    answer = CliRunner().invoke(
-        users.app, ["credits", "01M4BDHQWKVGT55RS5AQPC430T", *args]
+    monkeypatch.setattr(
+        users.requests, "get", lambda *a, **k: pytest.fail("refused before any call")
     )
+    answer = CliRunner().invoke(users.app, ["credits", *args])
     assert answer.exit_code == 1
+
+
+def test_credits_set_writes_the_balance(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    set reads the balance, then writes the one given.
+    """
+    written: list[Any] = []
+    monkeypatch.setattr(users, "DatalayerClient", _Client)
+    monkeypatch.setattr(
+        users.requests,
+        "get",
+        lambda url, **kwargs: _Response(200, {"credits": {"credits": 12.5}}),
+    )
+    monkeypatch.setattr(
+        users.requests,
+        "put",
+        lambda url, **kwargs: written.append(kwargs["json"]) or _Response(200, {}),
+    )
+    answer = CliRunner().invoke(
+        users.app, ["credits", "set", "01M4BDHQWKVGT55RS5AQPC430T", "1000"]
+    )
+    assert answer.exit_code == 0, answer.stdout
+    assert written == [{"credits": 1000.0}]
+    assert "now 1,000.00" in " ".join(answer.stdout.split())
+
+
+def test_credits_has_no_command_named_after_an_account() -> None:
+    """
+    The verbs are show, add and set: an account's handle is never read as one.
+    """
+    answer = CliRunner().invoke(users.app, ["credits", "ada"])
+    assert answer.exit_code != 0
 
 
 def test_credits_prints_iams_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -222,6 +260,6 @@ def test_credits_prints_iams_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
     )
     answer = CliRunner().invoke(
-        users.app, ["credits", "01M4BDHQWKVGT55RS5AQPC430T", "--add", "10"]
+        users.app, ["credits", "add", "01M4BDHQWKVGT55RS5AQPC430T", "10"]
     )
     assert answer.exit_code == 1 and "Not a platform administrator." in answer.stdout

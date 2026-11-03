@@ -137,32 +137,72 @@ def _account_uid(client: DatalayerClient, account: str) -> str:
     return str(uid)
 
 
-@app.command(name="credits")
-def user_credits(
-    account: str = typer.Argument(..., help="The account's handle or uid."),
-    add: Optional[float] = typer.Option(
-        None, "--add", help="Credits to add to the balance."
-    ),
-    set_to: Optional[float] = typer.Option(None, "--set", help="The balance to set."),
-    api_key: Optional[str] = typer.Option(None, "--api-key", help="Datalayer API key."),
+# An account's credits: a platform administrator's commands, each its own verb
+# (`show`, `add`, `set`), so that no account's handle reads as one (3 November 2026).
+credits_app = typer.Typer(
+    name="credits",
+    help="Show, add to or set an account's credits (platform administrators).",
+    no_args_is_help=True,
+)
+app.add_typer(credits_app, name="credits")
+
+ACCOUNT_ARGUMENT = typer.Argument(..., help="The account's handle or uid.")
+API_KEY_OPTION = typer.Option(None, "--api-key", help="Datalayer API key.")
+
+
+@credits_app.command(name="show")
+def credits_show(
+    account: str = ACCOUNT_ARGUMENT,
+    api_key: Optional[str] = API_KEY_OPTION,
 ) -> None:
     """
-    Show an account's credits, or add to them: a platform administrator's command.
-
-    With neither option, prints the balance. `--add` reads the balance and
-    sets it to the balance plus the amount; `--set` sets it. IAM refuses a
-    caller who is not a platform administrator, in a sentence printed as it
-    is.
+    Print an account's credits.
     """
-    if add is not None and set_to is not None:
-        console.print("[red]Give --add or --set, not both.[/red]")
+    _credits(account, None, None, api_key)
+
+
+@credits_app.command(name="add")
+def credits_add(
+    account: str = ACCOUNT_ARGUMENT,
+    amount: float = typer.Argument(..., help="Credits to add to the balance."),
+    api_key: Optional[str] = API_KEY_OPTION,
+) -> None:
+    """
+    Add credits: the balance is read and set to the balance plus the amount.
+    """
+    if amount <= 0:
+        console.print("[red]add takes a positive amount of credits.[/red]")
         raise typer.Exit(1)
-    if add is not None and add <= 0:
-        console.print("[red]--add takes a positive amount of credits.[/red]")
+    _credits(account, amount, None, api_key)
+
+
+@credits_app.command(name="set")
+def credits_set(
+    account: str = ACCOUNT_ARGUMENT,
+    balance: float = typer.Argument(..., help="The balance to set."),
+    api_key: Optional[str] = API_KEY_OPTION,
+) -> None:
+    """
+    Set an account's balance.
+    """
+    if balance < 0:
+        console.print("[red]set takes a balance of zero or more.[/red]")
         raise typer.Exit(1)
-    if set_to is not None and set_to < 0:
-        console.print("[red]--set takes a balance of zero or more.[/red]")
-        raise typer.Exit(1)
+    _credits(account, None, balance, api_key)
+
+
+def _credits(
+    account: str,
+    add: Optional[float],
+    set_to: Optional[float],
+    api_key: Optional[str],
+) -> None:
+    """
+    Read an account's balance and, with an amount, write it.
+
+    IAM refuses a caller who is not a platform administrator, in a sentence
+    printed as it is.
+    """
     try:
         client = DatalayerClient(api_key=api_key)
         uid = _account_uid(client, account)
