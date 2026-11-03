@@ -348,7 +348,7 @@ export const Policies = ({
           <Link
             as="button"
             sx={{ cursor: 'pointer' }}
-            onClick={() => navigate(routes.access)}
+            onClick={() => navigate(routes.configuration)}
           >
             Set up a client
           </Link>

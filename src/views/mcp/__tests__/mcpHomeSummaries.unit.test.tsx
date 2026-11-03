@@ -42,11 +42,11 @@ import { McpHome } from '../McpHome';
 
 const ROUTES: McpRoutes = {
   dashboard: '/mcp',
-  access: '/mcp/access',
+  configuration: '/mcp/configuration',
   audit: '/mcp/audit',
   runs: '/mcp/runs',
   observability: '/mcp/observability',
-  agents: '/mcp/agents',
+  clients: '/mcp/clients',
   policies: '/mcp/policies',
 };
 

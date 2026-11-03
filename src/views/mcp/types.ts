@@ -69,16 +69,16 @@ export type McpErrorStateFn = (
 export interface McpRoutes {
   /** The dashboard: what the connected clients are doing right now. */
   dashboard: string;
-  /** Setup and access: the endpoint and the per-client cards. */
-  access: string;
+  /** Configuration: the endpoint and the per-client setup cards. */
+  configuration: string;
   /** The audit log. */
   audit: string;
   /** The runs list; a task appends `/{uid}`. */
   runs: string;
   /** The observability panes. */
   observability: string;
-  /** The connected agents. */
-  agents: string;
+  /** The MCP clients: live connections and authorized clients. */
+  clients: string;
   /** The effective policy. */
   policies: string;
   /** The calls list, where an Overview count of calls or credits leads. */

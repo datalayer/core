@@ -385,22 +385,22 @@ export const McpHome = ({
         >
           <Summary
             icon={AiAgentIcon}
-            title="Agents"
-            to={routes.agents}
+            title="Clients"
+            to={routes.clients}
             onOpen={navigate}
             action={{
-              label: 'Connected agents',
-              onClick: () => navigate(routes.agents),
+              label: 'Authorized clients',
+              onClick: () => navigate(routes.clients),
             }}
           >
             {connected.length === 0 ? (
               <Text>
-                No agent has been authorized yet. Set up a client above and
+                No client has been authorized yet. Set up a client above and
                 approve the scopes it asks for.
               </Text>
             ) : (
               <>
-                <Text>{plural(connected.length, 'agent')} authorized.</Text>
+                <Text>{plural(connected.length, 'client')} authorized.</Text>
                 {connected.slice(0, 3).map(agent => (
                   <Text key={agent.uid}>
                     {agent.clientName || agent.clientId} —{' '}

@@ -18,7 +18,7 @@
  * writing information down that hides it from the readers most likely to
  * need it.
  *
- * Both offenders were on `/mcp/agents`, and both had started life as a
+ * Both offenders were on `/mcp/clients`, and both had started life as a
  * `title` attribute that somebody upgraded. The fix went the other way: the
  * text lives in `title` for the mouse and in the accessible name for
  * everything else.
@@ -63,7 +63,8 @@ describe('what a Primer Tooltip is allowed to wrap', () => {
     // So a rename in Primer fails here rather than making the assertion
     // below pass against a file list with nothing in it.
     const total = files.reduce(
-      (count, file) => count + tooltipTargets(readFileSync(file, 'utf8')).length,
+      (count, file) =>
+        count + tooltipTargets(readFileSync(file, 'utf8')).length,
       0,
     );
     expect(total).toBeGreaterThan(0);

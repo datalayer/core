@@ -9,7 +9,7 @@
  */
 
 /**
- * The agents a person has connected, and the one action that matters:
+ * The MCP clients a person has authorized, and the one action that matters:
  * disconnecting one.
  *
  * A grant is not a setting — it is authority a person handed to a piece of
@@ -107,8 +107,8 @@ export const ConnectedAgents = ({
       onSuccess: answer => {
         enqueueToast(
           answer.revoked === 1
-            ? '1 agent disconnected.'
-            : `${answer.revoked} agents disconnected.`,
+            ? '1 client disconnected.'
+            : `${answer.revoked} clients disconnected.`,
           { variant: 'success' },
         );
         setDisconnectingEvery(false);
@@ -261,7 +261,7 @@ export const ConnectedAgents = ({
   if (agents.isError) {
     return (
       <McpErrorBlankslate
-        state={errorState(agents.error, 'Connected agents')}
+        state={errorState(agents.error, 'Authorized clients')}
         onRetry={() => agents.refetch()}
       />
     );
@@ -278,11 +278,11 @@ export const ConnectedAgents = ({
         >
           <Box>
             <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
-              Connected Agents
+              Authorized clients
             </Heading>
             <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
-              Every agent you have authorized, what it may do, and when it last
-              did it.
+              Every MCP client you have authorized, what it may do, and when it
+              last did it.
             </Text>
           </Box>
           {!readOnly && rows.length > 0 && (
@@ -303,16 +303,16 @@ export const ConnectedAgents = ({
         </Box>
       ) : rows.length > 0 ? (
         <Table.Container>
-          <Table.Title as="h3" id="connected-agents">
-            Agents
+          <Table.Title as="h3" id="authorized-clients">
+            Clients
           </Table.Title>
-          <Table.Subtitle as="p" id="connected-agents-subtitle">
-            An agent acts with exactly the access of the person who authorized
+          <Table.Subtitle as="p" id="authorized-clients-subtitle">
+            A client acts with exactly the access of the person who authorized
             it, and no more.
           </Table.Subtitle>
           <DataTable
-            aria-labelledby="connected-agents"
-            aria-describedby="connected-agents-subtitle"
+            aria-labelledby="authorized-clients"
+            aria-describedby="authorized-clients-subtitle"
             data={rows}
             columns={columns}
           />
@@ -322,15 +322,15 @@ export const ConnectedAgents = ({
           <Blankslate.Visual>
             <McpIcon size="medium" />
           </Blankslate.Visual>
-          <Blankslate.Heading>No agent connected</Blankslate.Heading>
+          <Blankslate.Heading>No client authorized</Blankslate.Heading>
           <Blankslate.Description>
             <Text sx={{ textAlign: 'center' }}>
               Connect an MCP client and approve the scopes it asks for; the
               grant appears here and can be revoked from here.
             </Text>
           </Blankslate.Description>
-          <Button size="small" onClick={() => navigate(routes.access)}>
-            Connect an agent
+          <Button size="small" onClick={() => navigate(routes.configuration)}>
+            Connect a client
           </Button>
         </Blankslate>
       )}
@@ -344,7 +344,7 @@ export const ConnectedAgents = ({
 
       {disconnecting && (
         <Dialog
-          title="Disconnect this agent?"
+          title="Disconnect this client?"
           onClose={() => setDisconnecting(null)}
           returnFocusRef={returnFocusRef}
           footerButtons={[
@@ -364,7 +364,7 @@ export const ConnectedAgents = ({
           <Text sx={{ fontSize: 1 }}>
             {disconnecting.clientName || disconnecting.clientId} loses its grant
             at once and its next call is refused. An access token it still holds
-            dies with its own short expiry. The other agents are untouched, and
+            dies with its own short expiry. The other clients are untouched, and
             nothing this one already did is undone.
           </Text>
         </Dialog>
@@ -372,7 +372,7 @@ export const ConnectedAgents = ({
 
       {disconnectingEvery && (
         <Dialog
-          title="Disconnect every agent?"
+          title="Disconnect every client?"
           onClose={() => setDisconnectingEvery(false)}
           returnFocusRef={returnFocusRef}
           footerButtons={[
@@ -390,7 +390,7 @@ export const ConnectedAgents = ({
           ]}
         >
           <Text sx={{ fontSize: 1 }}>
-            Every agent you have authorized loses its grant at once — signing
+            Every client you have authorized loses its grant at once — signing
             out everywhere. Each will ask again the next time you connect it,
             and this time it goes through the approval screen rather than being
             answered from what you agreed before, so this is also how you force
@@ -398,7 +398,7 @@ export const ConnectedAgents = ({
           </Text>
           <Text as="p" sx={{ fontSize: 1, color: 'fg.muted', mt: 2, mb: 0 }}>
             Yours only. Nobody else&rsquo;s sessions end, in this organization
-            or any other, and nothing any agent already did is undone.
+            or any other, and nothing any client already did is undone.
           </Text>
         </Dialog>
       )}

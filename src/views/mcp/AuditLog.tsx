@@ -368,7 +368,7 @@ export const AuditLog = ({
               notebooks.
             </Text>
           </Blankslate.Description>
-          <Button size="small" onClick={() => navigate(routes.access)}>
+          <Button size="small" onClick={() => navigate(routes.configuration)}>
             Connect an agent
           </Button>
         </Blankslate>

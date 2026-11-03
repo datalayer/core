@@ -103,7 +103,7 @@ export interface McpDashboardProps {
 
 /** The parts of the dashboard, each its own tab. */
 export type McpDashboardSection =
-  'overview' | 'agents' | 'runs' | 'sandboxes' | 'calls';
+  'overview' | 'clients' | 'runs' | 'sandboxes' | 'calls';
 
 /** How a client's status is drawn. */
 const STATUS_LOOK: Record<
@@ -830,7 +830,7 @@ export const McpDashboard = ({
             <Count
               label="Clients connected"
               value={clients.length}
-              to={routes.agents}
+              to={routes.clients}
               onOpen={navigate}
             />
             <Count
@@ -874,17 +874,19 @@ export const McpDashboard = ({
           </Box>
         ))}
 
-      {/* Connected clients */}
-      {draws('agents') &&
+      {/* Live connections: the MCP server's sessions, one per grant. The
+          grants themselves — what each client may do — are the
+          Authorized clients list below it, which IAM answers. */}
+      {draws('clients') &&
         !loading &&
         (clients.length > 0 ? (
           <Table.Container>
             <Table.Title as="h3" id="mcp-clients">
-              Connected clients
+              Live connections
             </Table.Title>
             <Table.Subtitle as="p" id="mcp-clients-subtitle">
-              {plural(clients.length, 'client')} with a live grant on your
-              workspace.
+              {plural(clients.length, 'client')} connected to your workspace
+              now, with its status and the last tool it called.
             </Table.Subtitle>
             <DataTable
               aria-labelledby="mcp-clients"
@@ -900,7 +902,7 @@ export const McpDashboard = ({
             description="Connect Claude Code, Codex, Cursor, VS Code or any MCP client to your workspace, and it appears here on its first call."
             action={{
               label: 'Set up a client',
-              onClick: () => navigate(routes.access),
+              onClick: () => navigate(routes.configuration),
             }}
           />
         ))}
