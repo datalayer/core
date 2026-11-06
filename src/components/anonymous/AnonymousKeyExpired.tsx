@@ -33,9 +33,9 @@
 
 import type { JSX } from 'react';
 import { useCallback } from 'react';
-import { Text } from '@primer/react';
+import { Button, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
-import { KeyIcon } from '@primer/octicons-react';
+import { KeyIcon, SyncIcon } from '@primer/octicons-react';
 import { SignInSimple } from '../../views/iam/SignInSimple';
 import { useCoreStore, iamStore } from '../../state/substates';
 
@@ -164,6 +164,38 @@ export function AnonymousKeyExpired({
             ? ' Your notebook is still running in this page.'
             : ''}
         </Text>
+        {temporary && (
+          /*
+            Or another trial key (the user, 6 November 2026): a new page gets
+            a new one, so the demo can go on without an account. The button
+            reloads the browser rather than the chat, since the key is minted
+            as the page opens; what was said is gone with it, and the line
+            says so.
+          */
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={2}
+            mb={3}
+            data-anonymous-key-refresh=""
+          >
+            <Text sx={{ fontSize: 1, color: 'fg.muted', textAlign: 'center' }}>
+              Or keep trying without an account: refreshing the page gives this
+              demo a new key, and starts the conversation over.
+            </Text>
+            <Button
+              leadingVisual={SyncIcon}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.reload();
+                }
+              }}
+            >
+              Refresh the page for a new key
+            </Button>
+          </Box>
+        )}
 
         <SignInSimple
           // The panel above has already said what happened and why; the form's
