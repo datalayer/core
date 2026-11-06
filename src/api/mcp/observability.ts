@@ -90,7 +90,7 @@ export const MCP_METRIC_CATALOG = [
   'mcp.limit.unenforced',
   'mcp.forwards',
   'mcp.workers',
-  // A replica's file descriptors, open and the limit (6 November 2026).
+  // A gateway replica: file descriptors open, and the limit (6 November 2026).
   'mcp.process.fds',
   'mcp.worker_start_seconds',
   'mcp.bindings',
