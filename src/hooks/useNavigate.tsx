@@ -39,8 +39,15 @@ export interface NavigateOptions {
   state?: unknown;
   /** Open the destination in a new tab and leave this one where it is. */
   newTab?: boolean;
-  /** Scroll to the top on arrival; on by default. */
-  scroll?: boolean;
+  /**
+   * Where the reader lands: the top of the page when unsaid or `true`; an
+   * element, by its id (with or without its `#`), scrolled into view once
+   * the page has it; `false` to leave the scroll where it is. The page and
+   * every scroll panel marked `data-scroll-root` are scrolled, so a layout
+   * that scrolls inside its own panel lands at the top too (the user,
+   * 6 November 2026: the Trust page opened scrolled down).
+   */
+  scroll?: boolean | string;
   /**
    * Close the layout's side portals on the way; on by default. Only the
    * history API host has them.
@@ -118,6 +125,66 @@ function isLinkTo(event: NavigateEvent, to: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** The scroll panels a layout marks, beside the page itself. */
+const scrollRoots = (): HTMLElement[] =>
+  Array.from(document.querySelectorAll<HTMLElement>('[data-scroll-root]'));
+
+const nextFrame = (run: () => void): void => {
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(run);
+  } else {
+    setTimeout(run, 16);
+  }
+};
+
+/** How many frames an element is waited for: a page loaded lazily takes a few. */
+const ARRIVAL_FRAMES = 60;
+
+/**
+ * Scroll on arrival: to the top (`undefined` or `true`), to an element by
+ * its id (a string, `#` or not), or nowhere (`false`). Done now and again
+ * on the next frames, since the page navigated to renders after the call
+ * and a layout's panel keeps its scroll across pages.
+ */
+export function scrollOnArrival(target: boolean | string | undefined): void {
+  if (target === false || typeof document === 'undefined') {
+    return;
+  }
+  const id = typeof target === 'string' ? target.replace(/^#/, '') : '';
+  if (!id) {
+    const toTop = () => {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+      for (const root of scrollRoots()) {
+        root.scrollTop = 0;
+      }
+    };
+    toTop();
+    let frames = 0;
+    const again = () => {
+      toTop();
+      if (++frames < 2) {
+        nextFrame(again);
+      }
+    };
+    nextFrame(again);
+    return;
+  }
+  let tries = 0;
+  const attempt = () => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ block: 'start' });
+      return;
+    }
+    if (++tries < ARRIVAL_FRAMES) {
+      nextFrame(attempt);
+    }
+  };
+  attempt();
 }
 
 const isEvent = (value: unknown): value is NavigateEvent =>
@@ -202,10 +269,7 @@ export const useNavigate = (): Navigate => {
       }
 
       event?.preventDefault();
-      if (options.scroll !== false) {
-        window.scrollTo(0, 0);
-        document.body.scrollTop = 0;
-      }
+      scrollOnArrival(options.scroll);
 
       // Where the reader is now, for the shell they are in. A new tab and a
       // step back through history are both already past by here. Only for
@@ -228,7 +292,8 @@ export const useNavigate = (): Navigate => {
       nativeNavigate(to, {
         replace: options.replace,
         state: options.state,
-        scroll: options.scroll,
+        // Scrolled above, after the page has rendered.
+        scroll: false,
       });
     },
     [rrNavigate, nativeNavigate, layoutStore],
