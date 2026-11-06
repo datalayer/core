@@ -63,6 +63,19 @@ import { type McpErrorStateFn, type McpRoutes } from './types';
 
 export type McpObservabilityPane = 'runs' | 'live' | 'metrics';
 
+/** Every pane, in the order the switcher shows them. */
+export const ALL_PANES: readonly McpObservabilityPane[] = [
+  'runs',
+  'live',
+  'metrics',
+];
+
+const PANE_LABELS: Record<McpObservabilityPane, string> = {
+  runs: 'Runs',
+  live: 'Live',
+  metrics: 'Metrics',
+};
+
 export interface McpObservabilityProps {
   /** The application's words for a failed request. */
   errorState: McpErrorStateFn;
@@ -71,6 +84,13 @@ export interface McpObservabilityProps {
   /** Which pane is open; the address owns it. */
   pane: McpObservabilityPane;
   onPaneChange: (pane: McpObservabilityPane) => void;
+  /**
+   * The panes offered, in this order; all three when unsaid. The Live pane
+   * reads the platform's own engine and is a platform administrator's
+   * (the user, 6 November 2026): an application shows an account its runs
+   * and metrics, and its admin page the live engine.
+   */
+  panes?: readonly McpObservabilityPane[];
   /** The run to open, when the address names one. */
   taskUid?: string;
   /** The trace to open — what a synchronous call leaves behind. */
@@ -263,6 +283,7 @@ export const McpObservability = ({
   routes,
   pane,
   onPaneChange,
+  panes = ALL_PANES,
   taskUid,
   traceId,
   onSelect,
@@ -316,26 +337,19 @@ export const McpObservability = ({
         </Box>
       )}
 
-      <SegmentedControl aria-label="Observability panes" size="small">
-        <SegmentedControl.Button
-          selected={pane === 'runs'}
-          onClick={() => onPaneChange('runs')}
-        >
-          Runs
-        </SegmentedControl.Button>
-        <SegmentedControl.Button
-          selected={pane === 'live'}
-          onClick={() => onPaneChange('live')}
-        >
-          Live
-        </SegmentedControl.Button>
-        <SegmentedControl.Button
-          selected={pane === 'metrics'}
-          onClick={() => onPaneChange('metrics')}
-        >
-          Metrics
-        </SegmentedControl.Button>
-      </SegmentedControl>
+      {panes.length > 1 && (
+        <SegmentedControl aria-label="Observability panes" size="small">
+          {panes.map(each => (
+            <SegmentedControl.Button
+              key={each}
+              selected={pane === each}
+              onClick={() => onPaneChange(each)}
+            >
+              {PANE_LABELS[each]}
+            </SegmentedControl.Button>
+          ))}
+        </SegmentedControl>
+      )}
 
       {telemetryNotice}
 
