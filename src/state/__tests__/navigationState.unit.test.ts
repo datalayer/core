@@ -102,10 +102,20 @@ describe('where each shell was left', () => {
     // So neither is a page a shell returns to, nor one that moves the shell.
     expect(isRememberableRoute('/settings/profile')).toBe(false);
     expect(isRememberableRoute('/docs/cli')).toBe(false);
-    // The agentspecs catalogue is read from the Studio, with its sidebar.
+    // The agentspecs catalogue belongs to no shell: read beside the sidebar
+    // the reader came with, the Studio's when none is current.
+    expect(isShellNeutralRoute('/agentspecs/env-vars/X_BEARER_TOKEN')).toBe(
+      true,
+    );
+    expect(viewForRoute('/agentspecs/env-vars/X_BEARER_TOKEN', 'home')).toBe(
+      'home',
+    );
+    expect(viewForRoute('/agentspecs/agents', 'apps')).toBe('apps');
+    expect(isRememberableRoute('/agentspecs/mcp-servers/odoo')).toBe(false);
     expect(viewForRoute('/agentspecs')).toBe('studio');
     expect(viewForRoute('/agentspecs/skills')).toBe('studio');
     expect(viewForRoute('/agentspecsx')).toBe('home');
+    expect(isShellNeutralRoute('/agentspecsx')).toBe(false);
     expect(viewForRoute('/power')).toBe('home');
     expect(isRememberableRoute('/')).toBe(true);
     expect(isRememberableRoute('/power')).toBe(true);

@@ -331,8 +331,10 @@ export function isHostedAppRoute(route: string): boolean {
 }
 
 /**
- * Whether a page belongs to no shell: the settings, the documentation and
- * the decks.
+ * Whether a page belongs to no shell: the settings, the documentation, the
+ * decks and the agentspecs catalogue (since 8 November 2026: reached from an
+ * agent's picker on /agents/new, its env var's page swapped the Sessions
+ * sidebar for the Studio's).
  *
  * They are read from whichever shell the reader is in — its sidebar stays
  * beside them and the header's selector does not move — so they are never a
@@ -341,7 +343,7 @@ export function isHostedAppRoute(route: string): boolean {
  */
 export function isShellNeutralRoute(route: string): boolean {
   const path = pathOf(route);
-  return ['/settings', '/docs', '/decks'].some(
+  return ['/settings', '/docs', '/decks', '/agentspecs'].some(
     prefix => path === prefix || path.startsWith(`${prefix}/`),
   );
 }
@@ -369,8 +371,8 @@ export function viewForRoute(
     return current;
   }
   // The root is the Studio: what a signed-in reader opens on. The settings
-  // are read from it too, with its sidebar beside them — and so is the
-  // agentspecs catalogue, the specs an app is composed from.
+  // and the agentspecs catalogue are read from it too, with its sidebar
+  // beside them, when no shell is current.
   if (
     path === '/' ||
     path === '/studio' ||
