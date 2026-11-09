@@ -52,7 +52,7 @@ import { registerSessionState } from '../sessionEnd';
  * signed in, at `/research/papers/…` beside them).
  */
 export type NavigationView =
-  'studio' | 'home' | 'agentify' | 'research' | 'admin' | 'apps';
+  'studio' | 'home' | 'spaces' | 'agentify' | 'research' | 'admin' | 'apps';
 
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
@@ -61,6 +61,9 @@ export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
   // of its own to be sent to. It was `/power` until 2026-10-09, when the
   // shell took the name it is called by everywhere else.
   home: '/platform',
+  // The spaces and what they hold: the Workspace of the Sessions shell,
+  // a shell of its own since 9 November 2026.
+  spaces: '/spaces',
   agentify: '/agentify',
   // The research areas and their spaces.
   research: '/research',
@@ -133,6 +136,7 @@ type Persisted = {
 const isView = (value: unknown): value is NavigationView =>
   value === 'studio' ||
   value === 'home' ||
+  value === 'spaces' ||
   value === 'agentify' ||
   value === 'research' ||
   value === 'admin' ||
@@ -384,6 +388,13 @@ export function viewForRoute(
   ) {
     return 'studio';
   }
+  if (
+    SPACES_SHELL_ROUTES.some(
+      prefix => path === prefix || path.startsWith(`${prefix}/`),
+    )
+  ) {
+    return 'spaces';
+  }
   if (path === '/agentify' || path.startsWith('/agentify/')) {
     return 'agentify';
   }
@@ -415,6 +426,23 @@ export function viewForRoute(
   }
   return 'home';
 }
+
+/**
+ * The Spaces shell's pages: the spaces, then the work they hold — what was
+ * the Workspace of the Sessions sidebar until 9 November 2026, when it became
+ * a shell of its own.
+ */
+const SPACES_SHELL_ROUTES = [
+  '/spaces',
+  '/items',
+  '/library/private',
+  '/shared',
+  '/notebooks',
+  '/documents',
+  '/cells',
+  '/datasets',
+  '/contents',
+];
 
 /**
  * `/<account>/<space>/<kind>[/…]` for the kinds a space shows beside the

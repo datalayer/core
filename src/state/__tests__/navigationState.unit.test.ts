@@ -127,10 +127,10 @@ describe('where each shell was left', () => {
 
   it('returns to the page a shell was left on', () => {
     const state = navigationStore.getState();
-    state.rememberRoute('/items');
+    state.rememberRoute('/agents');
     state.setView('agentify');
     state.rememberRoute('/agentify/tutor/lessons');
-    expect(navigationStore.getState().routeForView('home')).toBe('/items');
+    expect(navigationStore.getState().routeForView('home')).toBe('/agents');
     expect(navigationStore.getState().routeForView('agentify')).toBe(
       '/agentify/tutor/lessons',
     );
@@ -147,10 +147,10 @@ describe('where each shell was left', () => {
   it('files a page under the shell its route names, and moves the view there', () => {
     // The toggle said Agentify; the reader went Home through a sidebar link.
     navigationStore.getState().setView('agentify');
-    navigationStore.getState().rememberRoute('/items');
+    navigationStore.getState().rememberRoute('/agents');
     const state = navigationStore.getState();
     expect(state.view).toBe('home');
-    expect(state.lastRouteByView.home).toBe('/items');
+    expect(state.lastRouteByView.home).toBe('/agents');
     expect(state.lastRouteByView.agentify).toBeUndefined();
     // So the toggle can take them to Agentify: it is not "already there".
     expect(viewForRoute('/agentify/tutor?tab=home')).toBe('agentify');
@@ -170,6 +170,37 @@ describe('where each shell was left', () => {
     expect(NAVIGATION_VIEW_HOMES.apps).toBe('/apps/apps');
     navigationStore.setState({ lastRouteByView: {} });
     expect(navigationStore.getState().routeForView('apps')).toBe('/apps/apps');
+  });
+
+  it('gives the spaces a shell of their own, with the work they hold', () => {
+    for (const route of [
+      '/spaces',
+      '/spaces/new',
+      '/items',
+      '/library/private',
+      '/shared',
+      '/notebooks/new',
+      '/documents',
+      '/cells',
+      '/datasets',
+      '/contents?kind=notebook',
+    ]) {
+      expect(viewForRoute(route)).toBe('spaces');
+    }
+    expect(viewForRoute('/spacesx')).toBe('home');
+    expect(viewForRoute('/sessions')).toBe('home');
+    expect(viewForRoute('/agents')).toBe('home');
+    expect(NAVIGATION_VIEW_HOMES.spaces).toBe('/spaces');
+    navigationStore.setState({ lastRouteByView: {} });
+    expect(navigationStore.getState().routeForView('spaces')).toBe('/spaces');
+    navigationStore.getState().rememberRoute('/notebooks');
+    expect(navigationStore.getState().view).toBe('spaces');
+    expect(navigationStore.getState().routeForView('spaces')).toBe(
+      '/notebooks',
+    );
+    // Sessions does not return to a page of the Spaces shell.
+    navigationStore.setState({ lastRouteByView: { home: '/items' } });
+    expect(navigationStore.getState().routeForView('home')).toBe('/platform');
   });
 
   it('gives the research areas a shell of their own, the papers with them', () => {
