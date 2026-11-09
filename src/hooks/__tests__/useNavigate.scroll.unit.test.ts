@@ -44,6 +44,16 @@ describe('scrollOnArrival', () => {
     expect(scrolled).toBe(3);
   });
 
+  it('scrolls a pane marked by its class too: Primer’s PageLayout.Content passes no data attribute', () => {
+    const pane = document.createElement('div');
+    pane.className = 'dla-scroll-root';
+    document.body.appendChild(pane);
+    pane.scrollTop = 300;
+    scrollOnArrival(undefined);
+    expect(pane.scrollTop).toBe(0);
+    pane.remove();
+  });
+
   it('leaves the scroll alone when told false', () => {
     scrollOnArrival(false);
     vi.runAllTimers();

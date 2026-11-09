@@ -127,9 +127,19 @@ function isLinkTo(event: NavigateEvent, to: string): boolean {
   }
 }
 
-/** The scroll panels a layout marks, beside the page itself. */
+/**
+ * The scroll panels a layout marks, beside the page itself: `data-scroll-root`,
+ * or the `dla-scroll-root` class for a component that passes a class name but
+ * no data attribute (Primer's `PageLayout.Content`, whose own element is the
+ * one that scrolls; 9 November 2026, a card on /agentspecs/identities opened
+ * its page scrolled down).
+ */
 const scrollRoots = (): HTMLElement[] =>
-  Array.from(document.querySelectorAll<HTMLElement>('[data-scroll-root]'));
+  Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '[data-scroll-root], .dla-scroll-root',
+    ),
+  );
 
 const nextFrame = (run: () => void): void => {
   if (typeof requestAnimationFrame === 'function') {
