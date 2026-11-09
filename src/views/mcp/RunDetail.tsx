@@ -370,6 +370,13 @@ export const RunDetail = ({
             >
               {answer.isPending ? 'Answering…' : 'Answer'}
             </Button>
+            {/* An answer that did not go through says why: before, the box
+                emptied or not and the run went on asking (9 November 2026). */}
+            {answer.error && (
+              <Text as="p" sx={{ fontSize: 0, color: 'danger.fg', mt: 2 }}>
+                The answer did not reach the run: {answer.error.message}
+              </Text>
+            )}
           </Box>
         </Box>
       )}
@@ -433,6 +440,11 @@ export const RunDetail = ({
           >
             {cancel.isPending ? 'Cancelling…' : 'Cancel this run'}
           </Button>
+          {cancel.error && (
+            <Text as="p" sx={{ fontSize: 0, color: 'danger.fg', mt: 2 }}>
+              The run was not cancelled: {cancel.error.message}
+            </Text>
+          )}
           <Text as="p" sx={{ fontSize: 0, color: 'fg.muted', mt: 2 }}>
             Cancelling interrupts the work itself, so the sandbox stops being
             billed for it. What it has already printed is kept.

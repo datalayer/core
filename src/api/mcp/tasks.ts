@@ -105,8 +105,8 @@ export const cancelTask = async (
   token: string,
   taskUid: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.JUPYTER_MCP_SERVER,
-): Promise<McpTask> =>
-  fromWire<McpTask>(
+): Promise<McpTaskCancelled> =>
+  fromWire<McpTaskCancelled>(
     await requestDatalayerAPI({
       url: taskUrl(baseUrl, taskUid),
       method: 'DELETE',
@@ -118,6 +118,15 @@ export const cancelTask = async (
 export type McpTaskAnswered = {
   uid: string;
   answered: boolean;
+  /** Set when the answer closed a run its engine no longer carried. */
+  status?: string;
+};
+
+/** What the gateway says of a cancel: whether it stopped, and the status. */
+export type McpTaskCancelled = {
+  uid: string;
+  cancelled: boolean;
+  status?: string;
 };
 
 /**

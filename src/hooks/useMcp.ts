@@ -32,6 +32,7 @@ import {
 import {
   answerTask,
   type McpTaskAnswered,
+  type McpTaskCancelled,
   cancelTask,
   exportAuditEvents,
   fetchMcpLogs,
@@ -263,10 +264,13 @@ export const useCancelTask = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const mcpUrl = useMcpServerUrl();
-  return useMutation<McpTask, Error, string>({
+  return useMutation<McpTaskCancelled, Error, string>({
     mutationFn: taskUid => cancelTask(token ?? '', taskUid, mcpUrl),
-    onSuccess: task => {
-      queryClient.setQueryData(queryKeys.mcp.task(task.uid), task);
+    // The gateway answers `{uid, cancelled, status}`, not the task: read the
+    // task again rather than caching that reply in its place (the run page
+    // lost its tool and output on a cancel, as it did on an answer).
+    onSuccess: (_cancelled, taskUid) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.task(taskUid) });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.tasks() });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
     },
