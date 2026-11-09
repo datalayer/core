@@ -30,7 +30,8 @@ export interface McpGatewayHealth {
   version: string;
 }
 
-export type McpWorkerState = 'starting' | 'running' | 'idle' | 'draining' | 'stopped';
+export type McpWorkerState =
+  'starting' | 'running' | 'idle' | 'draining' | 'stopped';
 
 /** One worker process of the directory, keyed by user and by sandbox binding. */
 export interface McpWorker {
@@ -53,11 +54,17 @@ export interface McpWorkerList {
   replica?: string;
 }
 
-export interface McpWorkflowQueue {
-  name: string;
-  backlog: number;
-  /** Seconds the oldest waiting workflow has waited. */
-  oldestWaitSeconds?: number | null;
+/** One of the newest runs the durable engine reports. */
+export interface McpWorkflowRun {
+  uid: string;
+  workflow: string;
+  queue: string;
+  /** `running` (DBOS's pending and enqueued alike), `blocked`, `completed`, `failed` or `cancelled`. */
+  status: string;
+  taskUid?: string;
+  /** Unix seconds. */
+  startedAt?: number;
+  updatedAt?: number;
 }
 
 /** One periodic job on the replica that answered. */
@@ -86,14 +93,26 @@ export interface McpJobSchedule {
   jobs: McpJob[];
 }
 
-/** Engine health, queue backlog and worker versions. */
+/**
+ * What the durable engine says about itself (`/operations/workflows`, the
+ * engine's `operations()` as the gateway forwards it): whether it is taking
+ * work, the queues it polls, the queues it was told to run that nobody serves,
+ * and its newest runs.
+ */
 export interface McpWorkflowsHealth {
   engine: 'temporal' | 'dbos' | string;
-  healthy: boolean;
+  /** Whether it takes work: launched, and its run listing readable. */
+  durable: boolean;
   detail?: string | null;
-  queues: McpWorkflowQueue[];
-  workerVersions: Record<string, number>;
-  checkedAt: string;
+  /** The queues declared on the engine, by name. */
+  queues: string[];
+  /** Queues this deployment was told to run that the catalogue does not have: work sent there is never done. */
+  queuesNobodyServes: string[];
+  workflows: string[];
+  /** Its newest runs (twenty), newest first. */
+  runs: McpWorkflowRun[];
+  databaseConfigured?: boolean;
+  applicationVersion?: string;
 }
 
 export const getGatewayVersion = async (

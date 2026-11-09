@@ -20,17 +20,28 @@
 
 import { describe, expect, it } from 'vitest';
 import type { McpWorkflowsHealth } from '../../../api/mcp/operations';
-import { engineLook, stageOf } from '../McpObservability';
+import { engineLook, engineQueues, stageOf } from '../McpObservability';
 
+// The shape the gateway answers, as read on r1 on 9 November 2026 (camelCased by fromWire).
 const health = (
   patch: Partial<McpWorkflowsHealth> = {},
 ): McpWorkflowsHealth => ({
   engine: 'dbos',
-  healthy: true,
-  queues: [],
-  workerVersions: {},
-  checkedAt: '2026-09-07T12:00:00Z',
+  durable: true,
+  detail: 'ready',
+  queues: ['agent', 'notebook', 'sandbox'],
+  queuesNobodyServes: [],
+  workflows: ['AgentRunWorkflow'],
+  runs: [],
   ...patch,
+});
+
+const run = (queue: string, status: string, startedAt?: number) => ({
+  uid: `${queue}-${status}-${startedAt ?? 0}`,
+  workflow: 'W',
+  queue,
+  status,
+  startedAt,
 });
 
 describe('stageOf', () => {
@@ -59,87 +70,78 @@ describe('stageOf', () => {
 describe('engineLook', () => {
   it('separates an engine that cannot be reached from one that is unwell', () => {
     const unreachable = engineLook(undefined, true);
-    const unwell = engineLook(health({ healthy: false }), false);
+    const unwell = engineLook(
+      health({
+        durable: false,
+        detail: 'the dbos runtime is not launched, so no queue is polled',
+      }),
+      false,
+    );
     expect(unreachable.label).toBe('Unreachable');
     expect(unwell.label).toBe('Unhealthy');
-    expect(unreachable.label).not.toBe(unwell.label);
+    expect(unwell.note).toContain('not launched');
   });
 
-  it('does not call a healthy engine with a queue unhealthy', () => {
+  it('calls an engine that takes work healthy: durable, not a missing field', () => {
+    // On r1 the page said Unhealthy for an engine answering durable: true and detail "ready".
+    const ready = engineLook(health(), false);
+    expect(ready.label).toBe('Healthy');
+    expect(ready.variant).toBe('success');
+    expect(ready.note).toMatch(/None of its newest runs/);
+  });
+
+  it('counts what is running among the newest runs, and says it is those', () => {
     const busy = engineLook(
-      health({ queues: [{ name: 'notebook', backlog: 4 }] }),
-      false,
-    );
-    expect(busy.label).toBe('Healthy');
-    expect(busy.note).toContain('4');
-  });
-
-  it('says plainly when nothing is waiting', () => {
-    const idle = engineLook(health(), false);
-    expect(idle.label).toBe('Healthy');
-    expect(idle.variant).toBe('success');
-    expect(idle.note).toMatch(/Nothing/);
-  });
-
-  it('draws a queue that is not empty differently from one that is', () => {
-    const idle = engineLook(health(), false);
-    const busy = engineLook(
-      health({ queues: [{ name: 'q', backlog: 1 }] }),
-      false,
-    );
-    expect(busy.variant).not.toBe(idle.variant);
-  });
-
-  it('counts the backlog across every queue, not just the first', () => {
-    const many = engineLook(
       health({
-        queues: [
-          { name: 'notebook', backlog: 2 },
-          { name: 'sandbox', backlog: 3 },
+        runs: [
+          run('agent', 'running'),
+          run('agent', 'completed'),
+          run('sandbox', 'running'),
         ],
       }),
       false,
     );
-    expect(many.note).toContain('5');
+    expect(busy.label).toBe('Healthy');
+    expect(busy.note).toBe('2 of its newest runs are running.');
   });
 
-  it('does not invent a waiting run out of a queue that reported no number', () => {
-    // `backlog` is required by the contract, so a missing one is a malformed
-    // answer — and the reading to avoid is the one that puts a number on an
-    // operator's screen that nothing measured.
-    const malformed = engineLook(
-      health({ queues: [{ name: 'q' } as unknown as McpWorkflowsHealth['queues'][number]] }),
-      false,
+  it('warns of a queue nobody serves', () => {
+    const typo = engineLook(health({ queuesNobodyServes: ['notebok'] }), false);
+    expect(typo.label).toBe('Healthy');
+    expect(typo.variant).toBe('attention');
+    expect(typo.note).toContain('notebok');
+  });
+});
+
+describe('engineQueues', () => {
+  it('names every queue, with what runs there and the oldest of it', () => {
+    const now = 1_000_000_000;
+    const queues = engineQueues(
+      health({
+        runs: [
+          run('agent', 'running', now / 1000 - 90),
+          run('agent', 'running', now / 1000 - 30),
+          run('notebook', 'completed', 1),
+        ],
+      }),
+      now,
     );
-    expect(malformed.note).toMatch(/Nothing/);
-    expect(malformed.variant).toBe('success');
+    expect(queues).toEqual([
+      { name: 'agent', running: 2, oldestSeconds: 90, served: true },
+      { name: 'notebook', running: 0, oldestSeconds: undefined, served: true },
+      { name: 'sandbox', running: 0, oldestSeconds: undefined, served: true },
+    ]);
   });
 
-  it('reads one waiting run as singular', () => {
-    const one = engineLook(
-      health({ queues: [{ name: 'q', backlog: 1 }] }),
-      false,
-    );
-    expect(one.note).toContain('1 run is');
-  });
-
-  it("passes on the engine's own account of why it is unhealthy", () => {
-    const said = engineLook(
-      health({ healthy: false, detail: 'no worker has polled in 4 minutes' }),
-      false,
-    );
-    expect(said.note).toBe('no worker has polled in 4 minutes');
-  });
-
-  it('says it is still asking rather than guessing, before the answer arrives', () => {
-    const pending = engineLook(undefined, false);
-    expect(pending.label).not.toBe('Healthy');
-    expect(pending.label).not.toBe('Unhealthy');
-  });
-
-  it('prefers unreachable over anything a stale answer says', () => {
-    // A cached healthy answer with the current ask failing is not health.
-    const stale = engineLook(health(), true);
-    expect(stale.label).toBe('Unreachable');
+  it('lists a queue nobody serves, marked, and never a nameless row', () => {
+    const queues = engineQueues(health({ queuesNobodyServes: ['notebok'] }));
+    expect(queues.map(queue => queue.name)).toEqual([
+      'agent',
+      'notebook',
+      'sandbox',
+      'notebok',
+    ]);
+    expect(queues.find(queue => queue.name === 'notebok')?.served).toBe(false);
+    expect(queues.every(queue => queue.name)).toBe(true);
   });
 });

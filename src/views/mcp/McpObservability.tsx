@@ -231,8 +231,11 @@ const Sli = ({
  * second is usually a problem with the network between them, and sending
  * somebody to the wrong one costs an hour.
  *
- * A healthy engine with a backlog is still healthy, and says so with the
- * backlog beside it: a queue is a queue, not a fault.
+ * An engine taking work is healthy; a queue it was told to run that nobody
+ * serves is drawn as a warning beside it — work sent there is accepted and
+ * never done. The engine reports no backlog of its own (DBOS's pending and
+ * enqueued are both `running`), so what is running is counted among the
+ * newest runs it lists, and said as such.
  */
 export const engineLook = (
   health: McpWorkflowsHealth | undefined,
@@ -252,25 +255,66 @@ export const engineLook = (
   if (!health) {
     return { label: 'Asking…', variant: 'secondary', note: '' };
   }
-  const backlog = (health.queues ?? []).reduce(
-    (total, queue) => total + (queue.backlog ?? 0),
-    0,
-  );
-  if (!health.healthy) {
+  if (!health.durable) {
     return {
       label: 'Unhealthy',
       variant: 'danger',
-      note: health.detail || 'The engine reports itself unhealthy.',
+      note: health.detail || 'The engine reports it is not taking work.',
     };
   }
+  const unserved = health.queuesNobodyServes ?? [];
+  if (unserved.length > 0) {
+    return {
+      label: 'Healthy',
+      variant: 'attention',
+      note: `Nobody serves ${unserved.join(', ')}: work sent there is accepted and never done.`,
+    };
+  }
+  const running = (health.runs ?? []).filter(
+    run => run.status === 'running',
+  ).length;
   return {
     label: 'Healthy',
-    variant: backlog > 0 ? 'attention' : 'success',
+    variant: 'success',
     note:
-      backlog > 0
-        ? `${backlog} ${backlog === 1 ? 'run is' : 'runs are'} waiting to be picked up.`
-        : 'Nothing is waiting to be picked up.',
+      running > 0
+        ? `${running} of its newest runs ${running === 1 ? 'is' : 'are'} running.`
+        : 'None of its newest runs is running.',
   };
+};
+
+/** Each queue the engine polls, with how many of its newest runs are running there and the oldest of them. */
+export const engineQueues = (
+  health: McpWorkflowsHealth | undefined,
+  now: number = Date.now(),
+): {
+  name: string;
+  running: number;
+  oldestSeconds?: number;
+  served: boolean;
+}[] => {
+  if (!health) return [];
+  const unserved = health.queuesNobodyServes ?? [];
+  const names = [
+    ...(health.queues ?? []),
+    ...unserved.filter(name => !(health.queues ?? []).includes(name)),
+  ];
+  return names.map(name => {
+    const running = (health.runs ?? []).filter(
+      run => run.queue === name && run.status === 'running',
+    );
+    const started = running
+      .map(run => run.startedAt)
+      .filter((at): at is number => typeof at === 'number');
+    return {
+      name,
+      running: running.length,
+      oldestSeconds: started.length
+        ? Math.max(0, Math.round(now / 1000 - Math.min(...started)))
+        : undefined,
+      served: !unserved.includes(name),
+    };
+  });
 };
 
 const percentLabel = (value: number | null | undefined): string =>
@@ -471,7 +515,7 @@ export const McpObservability = ({
               the engine. */}
           {(() => {
             const look = engineLook(engine.data, engine.isError);
-            const queues = engine.data?.queues ?? [];
+            const queues = engineQueues(engine.data);
             return (
               <Card border shadow="none" p={3} display="grid" gap={2}>
                 <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
@@ -503,13 +547,20 @@ export const McpObservability = ({
                         fontSize={0}
                       >
                         <Text sx={{ fontFamily: 'mono' }}>{queue.name}</Text>
-                        <Text sx={{ color: 'fg.muted' }}>
-                          {queue.backlog} waiting
-                        </Text>
-                        {typeof queue.oldestWaitSeconds === 'number' && (
+                        {queue.served ? (
                           <Text sx={{ color: 'fg.muted' }}>
-                            oldest{' '}
-                            {durationLabel(queue.oldestWaitSeconds * 1000)}
+                            {queue.running > 0
+                              ? `${queue.running} running`
+                              : 'idle'}
+                          </Text>
+                        ) : (
+                          <Label size="small" variant="attention">
+                            nobody serves it
+                          </Label>
+                        )}
+                        {typeof queue.oldestSeconds === 'number' && (
+                          <Text sx={{ color: 'fg.muted' }}>
+                            oldest {durationLabel(queue.oldestSeconds * 1000)}
                           </Text>
                         )}
                       </Box>
