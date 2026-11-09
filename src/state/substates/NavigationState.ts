@@ -435,7 +435,9 @@ export function viewForRoute(
 const SPACES_SHELL_ROUTES = [
   '/spaces',
   '/items',
-  '/library/private',
+  // The Library, public and private, beside the Spaces sidebar (the user,
+  // 9 November 2026).
+  '/library',
   '/shared',
   '/notebooks',
   '/documents',

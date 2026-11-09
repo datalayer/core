@@ -177,6 +177,7 @@ describe('where each shell was left', () => {
       '/spaces',
       '/spaces/new',
       '/items',
+      '/library',
       '/library/private',
       '/shared',
       '/notebooks/new',
@@ -188,6 +189,7 @@ describe('where each shell was left', () => {
       expect(viewForRoute(route)).toBe('spaces');
     }
     expect(viewForRoute('/spacesx')).toBe('home');
+    expect(viewForRoute('/libraryx')).toBe('home');
     expect(viewForRoute('/sessions')).toBe('home');
     expect(viewForRoute('/agents')).toBe('home');
     expect(NAVIGATION_VIEW_HOMES.spaces).toBe('/spaces');
