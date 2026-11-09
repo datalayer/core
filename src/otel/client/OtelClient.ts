@@ -60,6 +60,28 @@ async function otelFetch<T = unknown>(
 
 // ── Options / types ─────────────────────────────────────────────────────────
 
+export interface FetchTokenUsageOptions {
+  /** The window, in hours back from now (24 by default). */
+  hours?: number;
+  /** Only these services (runtimes); every one by default. */
+  serviceNames?: string[];
+  accountUid?: string;
+}
+
+/** What `GET /api/otel/v1/metrics/tokens` answers. */
+export interface OtelTokenUsage {
+  total: number;
+  prompt: number;
+  completion: number;
+  by_service: Array<{
+    service_name: string;
+    total: number;
+    prompt: number;
+    completion: number;
+  }>;
+  window?: { start: number; end: number; hours: number };
+}
+
 export interface OtelClientOptions {
   /**
    * Base URL of the OTEL service.
@@ -271,6 +293,33 @@ export class OtelClient {
         )
       : [];
     return { data: normalized, count: normalized.length };
+  }
+
+  /**
+   * The tokens agents counted over the last `hours` (24 by default): total,
+   * prompt and completion, overall and per service, in one request — the
+   * service reads each counter's increase over the window in one scan.
+   */
+  async fetchTokenUsage(
+    options: FetchTokenUsageOptions = {},
+  ): Promise<OtelTokenUsage> {
+    const params = new URLSearchParams({ hours: String(options.hours ?? 24) });
+    for (const name of options.serviceNames ?? []) {
+      params.append('service_name', name);
+    }
+    if (options.accountUid) params.set('account_uid', options.accountUid);
+    const resp = await otelFetch<OtelTokenUsage>(
+      `${this.baseUrl}/api/otel/v1/metrics/tokens?${params}`,
+      this.token,
+      this.userUid,
+    );
+    return {
+      total: Number(resp.total ?? 0),
+      prompt: Number(resp.prompt ?? 0),
+      completion: Number(resp.completion ?? 0),
+      by_service: Array.isArray(resp.by_service) ? resp.by_service : [],
+      window: resp.window,
+    };
   }
 
   /** Sum all values for one metric name, with optional service filter. */

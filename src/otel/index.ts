@@ -111,6 +111,8 @@ export type {
   FetchLogsOptions,
   FetchMetricsOptions,
   FetchMetricTotalOptions,
+  FetchTokenUsageOptions,
+  OtelTokenUsage,
 } from './client';
 
 // ── Views ─────────────────────────────────────────────────────────────────────
