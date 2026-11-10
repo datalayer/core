@@ -26,6 +26,7 @@ export * from './useLocation';
 export * from './useLocationHandles';
 export * from './useMcp';
 export * from './useNavigate';
+export * from './useKeptScroll';
 export * from './useOrganizationPlugins';
 export * from './useParams';
 export * from './useOnClickOutside';
