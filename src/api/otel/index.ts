@@ -17,3 +17,4 @@ export * as logs from './logs';
 export * as services from './services';
 export * as query from './query';
 export * as dashboards from './dashboards';
+export * as firewall from './firewall';
