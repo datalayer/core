@@ -21,6 +21,25 @@ type IAnySpace = Record<string, any>;
  */
 type ISpaceItem = Record<string, any>;
 
+/**
+ * Whether an update is about the entity the layout holds. An update naming
+ * another space or organization (by `uid`, else `id`) replaces the one held:
+ * merged over it, the fields the new one does not carry (an organization's
+ * handle, a team) stayed from the one left. An update naming none, or one
+ * naming the same, is merged onto what is held.
+ */
+const entityUid = (entity: unknown): string | undefined => {
+  const record = entity as Record<string, unknown> | undefined;
+  const uid = record?.uid ?? record?.id;
+  return typeof uid === 'string' && uid.trim() ? uid.trim() : undefined;
+};
+
+const sameEntity = (held: unknown, update: unknown): boolean => {
+  const heldUid = entityUid(held);
+  const updateUid = entityUid(update);
+  return !heldUid || !updateUid || heldUid === updateUid;
+};
+
 export type BannerDisplayVariant = 'danger' | 'info' | 'success' | 'warning';
 
 export type LeftSidebarVariant =
@@ -100,7 +119,6 @@ export type LayoutState = ILayoutState & {
   updateLayoutTeam: (team?: Partial<IAnyTeam>) => void;
 };
 
-
 /**
  * Name of the cookie holding the space last selected by the user.
  *
@@ -134,7 +152,11 @@ const readSpaceContextCookie = (): SpaceContextCookie | undefined => {
   }
   try {
     const parsed = JSON.parse(decodeURIComponent(match[1]));
-    if (!parsed || typeof parsed !== 'object' || typeof parsed.id !== 'string') {
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      typeof parsed.id !== 'string'
+    ) {
       return undefined;
     }
     return {
@@ -228,10 +250,12 @@ export const layoutStore = createStore<LayoutState>((set, get) => ({
     set((state: LayoutState) => {
       return {
         organization: organization
-          ? {
-              ...state.organization,
-              ...(organization as IAnyOrganization),
-            }
+          ? ({
+              ...(sameEntity(state.organization, organization)
+                ? state.organization
+                : undefined),
+              ...organization,
+            } as IAnyOrganization)
           : undefined,
       };
     }),
@@ -250,7 +274,7 @@ export const layoutStore = createStore<LayoutState>((set, get) => ({
     set((state: LayoutState) => {
       const next = space
         ? {
-            ...state.space,
+            ...(sameEntity(state.space, space) ? state.space : undefined),
             ...(space as IAnySpace),
           }
         : undefined;
