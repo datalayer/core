@@ -878,9 +878,19 @@ export function ShareAccessComponent({
   >(null);
   const [isSharingAccessConfirmed, setIsSharingAccessConfirmed] =
     useState(false);
+  // Why the sharing could not be read, said where the sharing would be: a
+  // toast is gone in a few seconds and leaves the form disabled, unexplained.
+  const [sharingLoadError, setSharingLoadError] = useState<string | null>(null);
 
   // ----- Refs -----
-  const hasLoadedForOpenRef = useRef(false);
+  // What the sharing was last asked from (the transport, or the URL): a load
+  // is started once per source, and started again when the source changes or
+  // when the load in flight was dropped before it answered.
+  const loadedSourceRef = useRef<ShareAccessTransport | string | null>(null);
+  const levelsRef = useRef(levels);
+  levelsRef.current = levels;
+  const resourceLabelRef = useRef(resourceLabel);
+  resourceLabelRef.current = resourceLabel;
   const hasHydratedSharingRef = useRef(false);
   const lastSavedSharingRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -973,7 +983,8 @@ export function ShareAccessComponent({
 
   useEffect(() => {
     if (!isOpen) {
-      hasLoadedForOpenRef.current = false;
+      loadedSourceRef.current = null;
+      setSharingLoadError(null);
       hasHydratedSharingRef.current = false;
       lastSavedSharingRef.current = null;
       if (autoSaveTimerRef.current) {
@@ -1000,16 +1011,21 @@ export function ShareAccessComponent({
       return;
     }
 
-    if (hasLoadedForOpenRef.current) {
+    const source = transport ?? requestUrl ?? null;
+    if (loadedSourceRef.current === source) {
       return;
     }
-    hasLoadedForOpenRef.current = true;
+    loadedSourceRef.current = source;
 
     let cancelled = false;
+    let settled = false;
+    const levels = levelsRef.current;
+    const resourceLabel = resourceLabelRef.current;
     const run = async () => {
       setIsLoading(true);
       setIsSharingAccessConfirmed(false);
       setSharingAccessMessage(null);
+      setSharingLoadError(null);
       try {
         const response = transport
           ? null
@@ -1083,8 +1099,10 @@ export function ShareAccessComponent({
           error instanceof Error
             ? error.message
             : `Unable to load ${resourceLabel.toLowerCase()} sharing.`;
+        setSharingLoadError(message);
         enqueueToastRef.current(message, { variant: 'error' });
       } finally {
+        settled = true;
         if (!cancelled) {
           setIsLoading(false);
         }
@@ -1093,16 +1111,23 @@ export function ShareAccessComponent({
     void run();
     return () => {
       cancelled = true;
+      // A load dropped before it answered never clears "Loading…" by itself
+      // and its answer is thrown away: the next run has to ask again. Before,
+      // the once-per-open guard stayed set, so any re-render that re-ran this
+      // effect mid-flight (the space's name arriving, say) left the form
+      // disabled on "Loading current sharing settings…" for good.
+      if (!settled && loadedSourceRef.current === source) {
+        loadedSourceRef.current = null;
+      }
     };
+    // Only what decides the request: the label and the levels are read
+    // through refs, so a parent's re-render does not drop a load in flight.
   }, [
     isOpen,
     canRequest,
     requestUrl,
     transport,
     token,
-    resourceLabel,
-    resourceName,
-    levels,
     mergePrincipalCacheEntry,
   ]);
 
@@ -1957,6 +1982,25 @@ export function ShareAccessComponent({
         >
           <Text sx={{ fontWeight: 600 }}>Sharing access is restricted</Text>
           <Text sx={{ color: 'fg.muted' }}>{sharingAccessMessage}</Text>
+        </Box>
+      )}
+      {sharingLoadError && (
+        <Box
+          role="alert"
+          px={3}
+          py={3}
+          borderRadius={2}
+          borderWidth={1}
+          borderStyle="solid"
+          borderColor="danger.muted"
+          bg="danger.subtle"
+          display="grid"
+          gap={1}
+        >
+          <Text sx={{ fontWeight: 600 }}>
+            The sharing settings could not be loaded
+          </Text>
+          <Text sx={{ color: 'fg.muted' }}>{sharingLoadError}</Text>
         </Box>
       )}
 
