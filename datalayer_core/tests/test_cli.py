@@ -21,7 +21,7 @@ TEST_DATALAYER_API_KEY = os.environ.get("TEST_DATALAYER_API_KEY")
     [
         (["--version"], "1."),
         (["--help"], "The Datalayer CLI application"),
-        (["about"], "About"),
+        (["about"], "https://datalayer.ai/docs"),
     ],
 )
 def test_cli(args: List[str], expected_output: str) -> None:
