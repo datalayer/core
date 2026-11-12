@@ -510,7 +510,65 @@ export const McpObservability = ({
 
       {pane === 'live' && (
         <Box display="grid" gap={3}>
-          {/* The engine first. A run that has not started is not slow — it is
+          {/* What is actually running first, which is what "live" means to
+              somebody who is not an operator, in a box as the engine's is
+              (the user, 12 November 2026). Polled rather than streamed: the
+              pane is refreshed by the hook itself every five seconds. */}
+          <Card border shadow="none" p={3} display="grid" gap={2}>
+            <Heading as="h3" sx={{ fontSize: 1 }}>
+              Running now
+            </Heading>
+            {live.isError ? (
+              <McpErrorBlankslate
+                state={errorState(live.error, 'The running calls')}
+                onRetry={() => live.refetch()}
+              />
+            ) : live.isPending ? (
+              <Box display="flex" justifyContent="center" py={4}>
+                <Spinner />
+              </Box>
+            ) : (live.data?.items.length ?? 0) === 0 ? (
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                Nothing of yours is running. A call that finishes inside its own
+                request never appears here — it is over before this pane could
+                draw it — and is found by its trace in Runs.
+              </Text>
+            ) : (
+              (live.data?.items ?? []).map(task => (
+                <Box
+                  key={task.uid}
+                  display="flex"
+                  gap={2}
+                  alignItems="center"
+                  flexWrap="wrap"
+                  py={1}
+                  borderBottom="1px solid"
+                  borderColor="border.muted"
+                >
+                  <Label size="small" variant="success">
+                    Working
+                  </Label>
+                  <Text sx={{ fontSize: 0 }}>{task.tool || 'Run'}</Text>
+                  <Text
+                    sx={{
+                      fontSize: 0,
+                      fontFamily: 'mono',
+                      color: 'accent.fg',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => onSelect({ task: task.uid })}
+                  >
+                    {task.uid}
+                  </Text>
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                    started {timeAgo(task.createdAt)}
+                  </Text>
+                </Box>
+              ))
+            )}
+          </Card>
+
+          {/* Then the engine. A run that has not started is not slow — it is
               waiting on something, and this says whether that something is
               the engine. */}
           {(() => {
@@ -570,63 +628,6 @@ export const McpObservability = ({
               </Card>
             );
           })()}
-
-          {/* Then what is actually running, which is what "live" means to
-              somebody who is not an operator. Polled rather than streamed:
-              the pane is refreshed by the hook itself every five seconds. */}
-          <Box display="grid" gap={2}>
-            <Heading as="h3" sx={{ fontSize: 1 }}>
-              Running now
-            </Heading>
-            {live.isError ? (
-              <McpErrorBlankslate
-                state={errorState(live.error, 'The running calls')}
-                onRetry={() => live.refetch()}
-              />
-            ) : live.isPending ? (
-              <Box display="flex" justifyContent="center" py={4}>
-                <Spinner />
-              </Box>
-            ) : (live.data?.items.length ?? 0) === 0 ? (
-              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                Nothing of yours is running. A call that finishes inside its own
-                request never appears here — it is over before this pane could
-                draw it — and is found by its trace in Runs.
-              </Text>
-            ) : (
-              (live.data?.items ?? []).map(task => (
-                <Box
-                  key={task.uid}
-                  display="flex"
-                  gap={2}
-                  alignItems="center"
-                  flexWrap="wrap"
-                  py={1}
-                  borderBottom="1px solid"
-                  borderColor="border.muted"
-                >
-                  <Label size="small" variant="success">
-                    Working
-                  </Label>
-                  <Text sx={{ fontSize: 0 }}>{task.tool || 'Run'}</Text>
-                  <Text
-                    sx={{
-                      fontSize: 0,
-                      fontFamily: 'mono',
-                      color: 'accent.fg',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => onSelect({ task: task.uid })}
-                  >
-                    {task.uid}
-                  </Text>
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                    started {timeAgo(task.createdAt)}
-                  </Text>
-                </Box>
-              ))
-            )}
-          </Box>
         </Box>
       )}
 

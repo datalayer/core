@@ -145,3 +145,25 @@ describe('engineQueues', () => {
     expect(queues.every(queue => queue.name)).toBe(true);
   });
 });
+
+describe('the live pane: Running now first, in a box as the engine is (12 November 2026)', () => {
+  it('draws Running now in a Card before the durable engine', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const source = readFileSync(
+      join(__dirname, '..', 'McpObservability.tsx'),
+      'utf8',
+    );
+    const running = source.indexOf('Running now');
+    const engine = source.indexOf('The durable engine');
+    expect(running).toBeGreaterThan(0);
+    expect(running).toBeLessThan(engine);
+    const before = source.slice(
+      source.lastIndexOf("{pane === 'live' && (", running),
+      running,
+    );
+    expect(before).toMatch(
+      /<Card border shadow="none" p=\{3\} display="grid" gap=\{2\}>\s*<Heading as="h3" sx=\{\{ fontSize: 1 \}\}>\s*$/,
+    );
+  });
+});
