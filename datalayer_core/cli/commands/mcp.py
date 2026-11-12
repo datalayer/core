@@ -109,6 +109,8 @@ def _client_registration_notes() -> str:
 app = typer.Typer(
     name="mcp",
     help="The agents connected to your account, their audit log and runs, and the MCP clients' configuration.",
+    # The one line a listing of this group among others shows.
+    short_help="The agents connected to your account, and the MCP clients' configuration.",
     invoke_without_command=True,
     no_args_is_help=True,
 )

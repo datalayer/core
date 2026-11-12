@@ -69,6 +69,8 @@ from datalayer_core.orchestration import (
 app = typer.Typer(
     name="executions",
     help="Executions: work delegated to agents over A2A and ACP — run, watch, steer, pause, resume, cancel, terminate, collect.",
+    # The one line a listing of this group among others shows.
+    short_help="Executions: work delegated to agents — run, watch, steer, collect.",
     no_args_is_help=True,
 )
 

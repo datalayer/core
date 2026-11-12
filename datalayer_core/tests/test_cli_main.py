@@ -155,6 +155,25 @@ def _plain(text: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
+def test_the_root_listing_gives_a_group_one_short_line() -> None:
+    # A group's long sentence is its own `--help`; among fifty commands it is
+    # listed by a short one, which fits a 120-column terminal on one line.
+    env = {"COLUMNS": "120", "NO_COLOR": "1", "TERM": "dumb"}
+    root = _plain(CliRunner().invoke(cli_main.app, ["--help"], env=env).stdout)
+    assert "Executions: work delegated to agents — run, watch, steer, collect." in root
+    assert "over A2A and ACP" not in root
+    assert "and the MCP clients' configuration." in root
+    assert "their audit log and runs" not in root
+    for group in (cli_main.executions_app, cli_main.mcp_app):
+        assert len(group.info.short_help) <= 80
+    executions = _plain(
+        CliRunner().invoke(cli_main.app, ["executions", "--help"], env=env).stdout
+    )
+    assert "over A2A and ACP" in executions
+    mcp = _plain(CliRunner().invoke(cli_main.app, ["mcp", "--help"], env=env).stdout)
+    assert "their audit log and runs" in mcp
+
+
 def test_contents_group_is_registered_with_shared_output_option() -> None:
     result = CliRunner().invoke(cli_main.app, ["contents", "--help"])
     assert result.exit_code == 0
