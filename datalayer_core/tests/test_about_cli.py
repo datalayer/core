@@ -6,6 +6,7 @@
 import base64
 import io
 import json
+from typing import Any
 
 import pytest
 from rich.console import Console
@@ -28,7 +29,7 @@ def _page(width: int, *, colour: bool = False, monkeypatch: pytest.MonkeyPatch) 
     return out.getvalue()
 
 
-def _token(claims: dict) -> str:
+def _token(claims: dict[str, Any]) -> str:
     body = base64.urlsafe_b64encode(json.dumps(claims).encode()).decode().rstrip("=")
     return f"header.{body}.signature"
 
