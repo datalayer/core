@@ -113,6 +113,8 @@ export type {
   FetchMetricTotalOptions,
   FetchTokenUsageOptions,
   OtelTokenUsage,
+  OtelLastReceived,
+  OtelAccountLastReceived,
 } from './client';
 
 // ── Views ─────────────────────────────────────────────────────────────────────

@@ -80,6 +80,32 @@ export interface OtelTokenUsage {
     completion: number;
   }>;
   window?: { start: number; end: number; hours: number };
+  /**
+   * When telemetry last reached the store, whatever the account: `at` in
+   * unix nanoseconds, from rows ingested since the service started
+   * (`ingest`) or from its newest stored file (`files`); `null` with the
+   * `reason` when nothing was ever stored or the time could not be read.
+   * Absent from a service that does not say it.
+   */
+  last_received?: OtelLastReceived;
+  /**
+   * The same for the asked account, known only from what arrived since the
+   * service started (`since`, unix nanoseconds): `at` is `null`, with a
+   * `reason`, until rows of the account arrive.
+   */
+  account_last_received?: OtelAccountLastReceived;
+}
+
+export interface OtelLastReceived {
+  at: number | null;
+  source: 'ingest' | 'files' | null;
+  reason: string | null;
+}
+
+export interface OtelAccountLastReceived {
+  at: number | null;
+  since: number;
+  reason: string | null;
 }
 
 export interface OtelClientOptions {
@@ -298,7 +324,9 @@ export class OtelClient {
   /**
    * The tokens agents counted over the last `hours` (24 by default): total,
    * prompt and completion, overall and per service, in one request — the
-   * service reads each counter's increase over the window in one scan.
+   * service reads each counter's increase over the window in one scan. The
+   * answer also says when telemetry last reached the store (`last_received`),
+   * so a total of 0 can be told from a store that stopped receiving.
    */
   async fetchTokenUsage(
     options: FetchTokenUsageOptions = {},
@@ -319,6 +347,8 @@ export class OtelClient {
       completion: Number(resp.completion ?? 0),
       by_service: Array.isArray(resp.by_service) ? resp.by_service : [],
       window: resp.window,
+      last_received: resp.last_received,
+      account_last_received: resp.account_last_received,
     };
   }
 
