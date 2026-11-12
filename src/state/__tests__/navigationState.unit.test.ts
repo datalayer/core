@@ -91,8 +91,12 @@ describe('where each shell was left', () => {
     expect(isRememberableRoute('/signin#next')).toBe(false);
     // The decks too: a host draws them beside the shell they were opened from.
     expect(isShellNeutralRoute('/decks/funding/seed')).toBe(true);
-    expect(viewForRoute('/decks', 'admin')).toBe('admin');
-    expect(isRememberableRoute('/decks')).toBe(false);
+    expect(viewForRoute('/decks/funding/seed', 'admin')).toBe('admin');
+    expect(isRememberableRoute('/decks/funding/seed')).toBe(false);
+    // And their list, at /presentations.
+    expect(isShellNeutralRoute('/presentations')).toBe(true);
+    expect(viewForRoute('/presentations', 'agentify')).toBe('agentify');
+    expect(isRememberableRoute('/presentations')).toBe(false);
     expect(viewForRoute('/settings/profile', 'home')).toBe('home');
     expect(viewForRoute('/docs/cli', 'agentify')).toBe('agentify');
     expect(viewForRoute('/docs', 'studio')).toBe('studio');
@@ -189,7 +193,12 @@ describe('where each shell was left', () => {
       '/contents?kind=notebook',
     ]) {
       expect(viewForRoute(route)).toBe('spaces');
+      // Whatever shell the reader came from: the layouts ask with one, and a
+      // shell-neutral `/decks` answered with it (the user, 12 November 2026).
+      expect(viewForRoute(route, 'home')).toBe('spaces');
     }
+    expect(isShellNeutralRoute('/decks')).toBe(false);
+    expect(isRememberableRoute('/decks')).toBe(true);
     // A presentation is not a Spaces page: only `/decks` itself is.
     expect(viewForRoute('/decks/funding/aws-partner')).not.toBe('spaces');
     expect(viewForRoute('/spacesx')).toBe('home');

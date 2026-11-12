@@ -336,19 +336,28 @@ export function isHostedAppRoute(route: string): boolean {
 
 /**
  * Whether a page belongs to no shell: the settings, the documentation, the
- * decks and the agentspecs catalogue (since 8 November 2026: reached from an
- * agent's picker on /agents/new, its env var's page swapped the Sessions
- * sidebar for the Studio's).
+ * presentations and the agentspecs catalogue (since 8 November 2026: reached
+ * from an agent's picker on /agents/new, its env var's page swapped the
+ * Sessions sidebar for the Studio's).
  *
  * They are read from whichever shell the reader is in — its sidebar stays
  * beside them and the header's selector does not move — so they are never a
  * shell's own page: opening one does not change the shell, and no shell
  * returns to one.
+ *
+ * The presentations are `/decks/<collection>/<slug>` and their list,
+ * `/presentations`. Bare `/decks` is not one of them: it is the selected
+ * space's decks table, a page of the Spaces shell (the user, 12 November
+ * 2026). Neutral, it took the current shell whenever one was given, and the
+ * Sessions sidebar stayed beside it.
  */
 export function isShellNeutralRoute(route: string): boolean {
   const path = pathOf(route);
-  return ['/settings', '/docs', '/decks', '/agentspecs'].some(
-    prefix => path === prefix || path.startsWith(`${prefix}/`),
+  return (
+    path.startsWith('/decks/') ||
+    ['/settings', '/docs', '/presentations', '/agentspecs'].some(
+      prefix => path === prefix || path.startsWith(`${prefix}/`),
+    )
   );
 }
 
