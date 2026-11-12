@@ -332,9 +332,9 @@ export function PrincipalSwitcherMenu({
                 flexShrink={0}
               >
                 {selectedPrincipalKind === 'organization' ? (
-                  <PeopleIcon size={16} />
-                ) : selectedPrincipalKind === 'team' ? (
                   <OrganizationIcon size={16} />
+                ) : selectedPrincipalKind === 'team' ? (
+                  <PeopleIcon size={16} />
                 ) : (
                   <PersonIcon size={16} />
                 )}
@@ -394,9 +394,9 @@ export function PrincipalSwitcherMenu({
                   flexShrink={0}
                 >
                   {selectedPrincipalKind === 'organization' ? (
-                    <PeopleIcon size={16} />
-                  ) : selectedPrincipalKind === 'team' ? (
                     <OrganizationIcon size={16} />
+                  ) : selectedPrincipalKind === 'team' ? (
+                    <PeopleIcon size={16} />
                   ) : (
                     <PersonIcon size={16} />
                   )}
@@ -514,7 +514,7 @@ export function PrincipalSwitcherMenu({
                       }}
                     >
                       <ActionList.LeadingVisual>
-                        <PeopleIcon />
+                        <OrganizationIcon />
                       </ActionList.LeadingVisual>
                       <Box
                         as="span"
@@ -569,7 +569,7 @@ export function PrincipalSwitcherMenu({
                       }}
                     >
                       <ActionList.LeadingVisual>
-                        <OrganizationIcon />
+                        <PeopleIcon />
                       </ActionList.LeadingVisual>
                       <Box
                         as="span"
