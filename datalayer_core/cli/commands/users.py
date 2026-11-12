@@ -9,20 +9,19 @@ from typing import Optional
 import requests
 import typer
 from rich.console import Console
+from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
 
 # Create a Typer app for user commands
-app = typer.Typer(
-    name="users", help="User management commands", invoke_without_command=True
-)
+app = typer.Typer(name="users", help="Manage users.", invoke_without_command=True)
 
 console = Console()
 
 
 @app.callback()
 def users_callback(ctx: typer.Context) -> None:
-    """User management commands."""
+    """Manage users."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
 
@@ -46,7 +45,7 @@ def create_user(
     api_key: Optional[str] = typer.Option(None, "--api-key", help="Datalayer API key."),
 ) -> None:
     """
-    Create an account: a platform administrator's command.
+    Create an account.
 
     The account is created as a verified member, with the handle, email and
     password given; the administrator vouches for it, so no confirmation mail
@@ -137,11 +136,89 @@ def _account_uid(client: DatalayerClient, account: str) -> str:
     return str(uid)
 
 
-# An account's credits: a platform administrator's commands, each its own verb
+def _listed(user: dict[str, object]) -> dict[str, object]:
+    """
+    The fields of an account that `ls` shows, table and JSON alike.
+
+    Who it is, never how to reach them: an email address is personal data,
+    and no listing of this command line prints one.
+    """
+    roles = user.get("roles_ss") or user.get("roles") or []
+    return {
+        "handle": str(user.get("handle_s") or user.get("handle") or ""),
+        "first_name": str(user.get("first_name_t") or user.get("first_name") or ""),
+        "last_name": str(user.get("last_name_t") or user.get("last_name") or ""),
+        "uid": str(user.get("uid") or ""),
+        "roles": [str(role) for role in roles] if isinstance(roles, list) else [],
+    }
+
+
+@app.command(name="ls")
+def users_ls(
+    query: str = typer.Argument(
+        "",
+        help="The start of a handle, a first name or a last name; everyone when omitted.",
+    ),
+    limit: int = typer.Option(25, "--limit", min=1, help="Maximum users to print."),
+    as_json: bool = typer.Option(False, "--json", help="Print the users as JSON."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Datalayer API key."),
+) -> None:
+    """
+    List users.
+
+    IAM searches the accounts whose handle, first name or last name starts
+    with the query, and answers what the caller may see of them. It has no
+    paging: the first `--limit` of its answer are printed, and a query
+    narrows it. A refusal is printed as IAM's sentence.
+    """
+    try:
+        client = DatalayerClient(api_key=api_key)
+        response = requests.post(
+            f"{client.urls.iam_url}/api/iam/v1/users/search",
+            headers=_iam_headers(client),
+            json={"query": query},
+            timeout=30,
+        )
+        if not response.ok:
+            _say_refusal(response)
+        body = response.json() or {}
+        found = (body.get("data") or {}).get("users") or body.get("users") or []
+        users = [_listed(user) for user in found[:limit]]
+        if as_json:
+            typer.echo(json.dumps(users, indent=2, sort_keys=True))
+            return
+        if not users:
+            console.print("[dim]No users.[/dim]")
+            return
+        table = Table(title="👤 Users")
+        table.add_column("Handle", style="cyan")
+        table.add_column("Name")
+        table.add_column("UID")
+        table.add_column("Roles")
+        for user in users:
+            table.add_row(
+                str(user["handle"]),
+                f"{user['first_name']} {user['last_name']}".strip(),
+                str(user["uid"]),
+                ", ".join(user["roles"]) or "-",  # type: ignore[arg-type]
+            )
+        console.print(table)
+        if len(found) > limit:
+            console.print(
+                f"[dim]{limit} of {len(found)} shown: raise --limit or give a query.[/dim]"
+            )
+    except typer.Exit:
+        raise
+    except requests.exceptions.RequestException as e:
+        console.print(f"[red]Request error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+# An account's credits, each its own verb
 # (`show`, `add`, `set`), so that no account's handle reads as one (3 November 2026).
 credits_app = typer.Typer(
     name="credits",
-    help="Show, add to or set an account's credits (platform administrators).",
+    help="Show, add to or set an account's credits.",
     no_args_is_help=True,
 )
 app.add_typer(credits_app, name="credits")
@@ -168,7 +245,9 @@ def credits_add(
     api_key: Optional[str] = API_KEY_OPTION,
 ) -> None:
     """
-    Add credits: the balance is read and set to the balance plus the amount.
+    Add credits to an account's balance.
+
+    The balance is read and set to the balance plus the amount.
     """
     if amount <= 0:
         console.print("[red]add takes a positive amount of credits.[/red]")
@@ -241,7 +320,7 @@ def dump_user(
         help="Datalayer API key.",
     ),
 ) -> None:
-    """Dump raw JSON response for a user by UID."""
+    """Dump the raw JSON response for a user by UID."""
     try:
         client = DatalayerClient(api_key=api_key)
 

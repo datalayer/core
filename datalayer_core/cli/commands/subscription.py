@@ -14,7 +14,7 @@ from datalayer_core.client.client import DatalayerClient
 
 app = typer.Typer(
     name="subscriptions",
-    help="Subscription and billing commands",
+    help="Manage subscriptions and billing.",
     invoke_without_command=True,
 )
 console = Console()
@@ -541,7 +541,7 @@ def subscription_stats(
         help="Optional user search query for scoped analytics.",
     ),
 ) -> None:
-    """Show subscription aggregates (platform_admin only)."""
+    """Show subscription aggregates."""
     try:
         client = DatalayerClient(api_key=api_key)
         if not _is_platform_admin(client):
@@ -628,7 +628,7 @@ def subscription_admin_users(
         help="Maximum users to print.",
     ),
 ) -> None:
-    """List users with subscription fields (platform_admin only)."""
+    """List users with subscription fields."""
     try:
         client = DatalayerClient(api_key=api_key)
         if not _is_platform_admin(client):
@@ -817,5 +817,5 @@ def subscription_root(
         help="Datalayer API key.",
     ),
 ) -> None:
-    """Show subscription status (root command)."""
+    """Show subscription status."""
     subscription_show(api_key=api_key)

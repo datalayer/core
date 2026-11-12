@@ -47,7 +47,7 @@ from datalayer_core.mixins.durable import WorkflowRun
 
 app = typer.Typer(
     name="durable",
-    help="Durable: the workflow engine behind orchestration, for troubleshooting directly.",
+    help="Troubleshoot the workflow engine behind orchestration.",
     no_args_is_help=True,
 )
 
@@ -203,7 +203,10 @@ def signal(
         None, "--payload", help="A JSON object, the signal's own payload."
     ),
 ) -> None:
-    """Tell a waiting run something. Already over answers so, not an error."""
+    """Tell a waiting run something.
+
+    Already over answers so, not an error.
+    """
     parsed = call(lambda: json.loads(payload) if payload else {})
     delivered = call(lambda: client().signal_durable_workflow(uid, name, parsed))
     console.print(
@@ -219,7 +222,10 @@ def cancel(
     uid: str = typer.Argument(..., help="The run to cancel."),
     reason: str = typer.Option("", "--reason", help="Why, kept on the run."),
 ) -> None:
-    """Stop a run. Already over answers so, not an error."""
+    """Stop a run.
+
+    Already over answers so, not an error.
+    """
     cancelled = call(lambda: client().cancel_durable_workflow(uid, reason=reason))
     console.print(
         "Cancelled." if cancelled else "Nothing was left running to cancel.",

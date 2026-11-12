@@ -14,7 +14,9 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for web commands
 app = typer.Typer(
-    name="web", help="Web application commands", invoke_without_command=True
+    name="web",
+    help="Launch the Datalayer web application.",
+    invoke_without_command=True,
 )
 
 console = Console()

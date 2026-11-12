@@ -42,7 +42,7 @@ from datalayer_core.orchestration import (
 
 app = typer.Typer(
     name="agents",
-    help="Agents: the workers work is delegated to, and their runtimes.",
+    help="Manage agents and their runtimes.",
     invoke_without_command=True,
 )
 

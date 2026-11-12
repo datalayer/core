@@ -33,7 +33,7 @@ dependencies = [
     # The local bridge: X25519 and ChaCha20-Poly1305 for the channel the
     # relay cannot read, and the client that dials the relay.
     "cryptography",
-    "datalayer_reactor>=1.3.6",
+    "datalayer_reactor>=1.3.7",
     "httpx",
     "jupyter-console",
     "jupyter-nbmodel-client",

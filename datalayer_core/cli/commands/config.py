@@ -22,7 +22,7 @@ from datalayer_core.base.user_config import (
 )
 
 # Create a Typer app for the config command
-app = typer.Typer(name="config", help="Configuration management commands")
+app = typer.Typer(name="config", help="Show and edit the configuration.")
 
 console = Console()
 

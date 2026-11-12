@@ -16,7 +16,7 @@ from datalayer_core.displays.usage import display_usage
 from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
-    name="usage", help="Usage and credits commands", invoke_without_command=True
+    name="usage", help="Show usage and manage credits.", invoke_without_command=True
 )
 console = Console(width=200)
 
@@ -910,5 +910,5 @@ def usage_root(
         help="Datalayer IAM server URL",
     ),
 ) -> None:
-    """Show credits usage and reservations (root command)."""
+    """Show credits usage and reservations."""
     usage_show(api_key=api_key, iam_url=iam_url)

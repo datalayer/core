@@ -281,6 +281,7 @@ def home_folder_list(
     cursor: str | None = typer.Option(None, "--cursor"),
     limit: int = typer.Option(100, "--limit", min=1, max=200),
 ) -> None:
+    """List Home Folder files."""
     page = _client().list_home_folder_objects(prefix=prefix, cursor=cursor, limit=limit)
     _render(page.model_dump(mode="json"), _context(ctx))
 
@@ -288,6 +289,7 @@ def home_folder_list(
 @home_folder_app.command(name="versions")
 @contents_command
 def home_folder_versions(ctx: typer.Context, path: str = typer.Argument(...)) -> None:
+    """List the versions of a Home Folder file."""
     client = _client()
     object_ = client.stat_home_folder_object(_home_folder_path(path))
     versions = client.list_home_folder_object_versions(object_.uid)
@@ -305,6 +307,7 @@ def home_folder_restore(
     # (audit 81). The option a command owns cannot be one the app reserves.
     version_uid: str = typer.Option(..., "--version-uid", "--to-version"),
 ) -> None:
+    """Restore a version of a Home Folder file."""
     client = _client()
     object_ = client.stat_home_folder_object(_home_folder_path(path))
     restored = client.restore_home_folder_object(
@@ -323,6 +326,7 @@ def upload_content(
     destination: str = typer.Argument(...),
     overwrite: bool = typer.Option(False, "--overwrite"),
 ) -> None:
+    """Upload a file to a source."""
     destination_path = _home_folder_path(destination)
     try:
         with contents_progress(f"Uploading {local_path.name}"):
@@ -344,6 +348,7 @@ def download_content(
     local_path: Path = typer.Argument(...),
     overwrite: bool = typer.Option(False, "--overwrite"),
 ) -> None:
+    """Download a file from a source."""
     if local_path.exists() and not overwrite:
         raise ContentsCommandError(
             f"Destination '{local_path}' exists; pass --overwrite to replace it"
@@ -450,6 +455,7 @@ def sync_folder(
 @app.command(name="sync-status")
 @contents_command
 def sync_status(ctx: typer.Context, session_uid: str) -> None:
+    """Show the status of a sync session."""
     session = _client().get_content_sync(session_uid)
     _render(session.model_dump(mode="json", exclude={"plan"}), _context(ctx))
 
@@ -459,6 +465,7 @@ def sync_status(ctx: typer.Context, session_uid: str) -> None:
 def sync_list(
     ctx: typer.Context, active: bool = typer.Option(False, "--active")
 ) -> None:
+    """List sync sessions."""
     sessions = _client().list_content_syncs(active=active)
     _render(
         [item.model_dump(mode="json", exclude={"plan"}) for item in sessions.items],
@@ -469,6 +476,7 @@ def sync_list(
 @app.command(name="sync-cancel")
 @contents_command
 def sync_cancel(ctx: typer.Context, session_uid: str) -> None:
+    """Cancel a sync session."""
     session = _client().cancel_content_sync(session_uid)
     _render(session.model_dump(mode="json", exclude={"plan"}), _context(ctx))
 
@@ -480,6 +488,7 @@ def sync_conflicts(
     session_uid: str,
     open_only: bool = typer.Option(True, "--open/--all"),
 ) -> None:
+    """List the conflicts of a sync session."""
     conflicts = _client().list_content_sync_conflicts(session_uid, open_only=open_only)
     _render([item.model_dump(mode="json") for item in conflicts.items], _context(ctx))
 
@@ -492,7 +501,10 @@ def sync_resolve(
     conflict_uid: str,
     use: str = typer.Option(..., "--use", help="local, remote or keep-both"),
 ) -> None:
-    """Decide a conflict; the decision is applied on the next `sync` of the folder."""
+    """Decide a sync conflict.
+
+    Decide a conflict; the decision is applied on the next `sync` of the folder.
+    """
     if use not in {"local", "remote", "keep-both"}:
         raise ContentsCommandError("--use must be local, remote or keep-both")
     session = _client().resolve_content_sync_conflict(
@@ -589,7 +601,10 @@ def list_mounts(
 @app.command(name="unmount")
 @contents_command
 def unmount_folder(ctx: typer.Context, bridge_uid: str = typer.Argument(...)) -> None:
-    """End a bridge session; the attachment is revoked with it and the mount goes away."""
+    """End a bridge session and its mount.
+
+    End a bridge session; the attachment is revoked with it and the mount goes away.
+    """
     try:
         session = _client().revoke_content_bridge(bridge_uid)
     except Exception as error:
@@ -604,6 +619,7 @@ app.add_typer(transfer_app)
 @transfer_app.command(name="status")
 @contents_command
 def transfer_status(ctx: typer.Context, transfer_uid: str) -> None:
+    """Show the status of a transfer."""
     transfer = _client().get_content_transfer(transfer_uid)
     _render(transfer.model_dump(mode="json"), _context(ctx))
 
@@ -611,6 +627,7 @@ def transfer_status(ctx: typer.Context, transfer_uid: str) -> None:
 @transfer_app.command(name="cancel")
 @contents_command
 def transfer_cancel(ctx: typer.Context, transfer_uid: str) -> None:
+    """Cancel a transfer."""
     transfer = _client().cancel_content_transfer(transfer_uid)
     _render(transfer.model_dump(mode="json"), _context(ctx))
 
@@ -656,6 +673,7 @@ def sandbox_list(
     sandbox_uid: str | None = typer.Argument(None),
     active: bool = typer.Option(False, "--active"),
 ) -> None:
+    """List the contents attached to a sandbox."""
     attachments = _client().list_content_attachments(
         sandbox_uid=sandbox_uid, active=active
     )
@@ -674,6 +692,7 @@ def sandbox_attach(
     delivery: str = typer.Option("mount", "--delivery"),
     optional: bool = typer.Option(False, "--optional"),
 ) -> None:
+    """Attach a source to a sandbox."""
     client = _client()
     try:
         attachment = _attach_source(
@@ -698,6 +717,7 @@ def sandbox_detach(
     sandbox_uid: str,
     attachment_uid: str,
 ) -> None:
+    """Detach a source from a sandbox."""
     try:
         client = _client()
         attachments = client.list_content_attachments(sandbox_uid=sandbox_uid)
@@ -718,6 +738,7 @@ app.add_typer(volumes_app)
 @volumes_app.command(name="list")
 @contents_command
 def volumes_list(ctx: typer.Context) -> None:
+    """List Volumes."""
     _render(
         _client()
         .list_content_sources(kind="volume", limit=200)
@@ -737,6 +758,7 @@ def volume_create(
     scope: str = typer.Option("user", "--scope"),
     space_uid: str | None = typer.Option(None, "--space"),
 ) -> None:
+    """Create a Volume."""
     if scope not in {"user", "space"}:
         raise ContentsCommandError("--scope must be user or space")
     if scope == "space" and not space_uid:
@@ -794,6 +816,7 @@ app.add_typer(datasets_app)
 @datasets_app.command(name="list")
 @contents_command
 def datasets_list(ctx: typer.Context) -> None:
+    """List Datasets."""
     _render(
         _client()
         .list_content_sources(kind="dataset", limit=200)
@@ -810,6 +833,7 @@ def dataset_create(
     description: str | None = typer.Option(None, "--description"),
     tag: list[str] | None = typer.Option(None, "--tag"),
 ) -> None:
+    """Create a Dataset."""
     created = _client().create_content_source(
         {
             "name": name,
@@ -831,6 +855,7 @@ def dataset_create(
 @datasets_app.command(name="revisions")
 @contents_command
 def dataset_revisions(ctx: typer.Context, source: str) -> None:
+    """List the revisions of a Dataset."""
     client = _client()
     uid = _resolve_source(client, source).value.source.uid
     _render(client.list_dataset_revisions(uid).model_dump(mode="json"), _context(ctx))
@@ -844,6 +869,7 @@ def dataset_create_revision(
     files: list[str] = typer.Option(..., "--file"),
     origin: str = typer.Option("home-folder", "--origin"),
 ) -> None:
+    """Create a revision of a Dataset."""
     selected = []
     for value in files:
         parts = value.split(":", 2)
@@ -902,6 +928,7 @@ app.add_typer(cloud_storage_app)
 @cloud_storage_app.command(name="list")
 @contents_command
 def cloud_storage_list(ctx: typer.Context) -> None:
+    """List Cloud Storage sources."""
     page = _client().list_content_sources(kind="cloud-storage", limit=200)
     _render(page.model_dump(mode="json"), _context(ctx))
 
@@ -922,6 +949,7 @@ def cloud_storage_create(
     mount_implementation: str | None = typer.Option(None, "--mount-implementation"),
     python_implementation: str | None = typer.Option(None, "--python-implementation"),
 ) -> None:
+    """Create a Cloud Storage source."""
     capabilities = ["browse", "transfer", "mount"]
     if not read_only:
         capabilities.append("sync")
@@ -1030,6 +1058,7 @@ def cloud_storage_attach(
     provider: str = typer.Option("datalayer", "--sandbox-provider"),
     access: str = typer.Option("automatic", "--access"),
 ) -> None:
+    """Attach a Cloud Storage source to a sandbox."""
     if access not in {"automatic", "mount", "python", "object-client"}:
         raise ContentsCommandError(
             "--access must be automatic, mount, python or object-client"
@@ -1051,7 +1080,7 @@ def cloud_storage_attach(
 
 operations_app = typer.Typer(
     name="operations",
-    help="Durable operations: what runs, what gave up, what to try again.",
+    help="Inspect and retry durable operations.",
 )
 app.add_typer(operations_app)
 
@@ -1074,6 +1103,7 @@ def operations_get(
 def operations_cancel(
     ctx: typer.Context, operation_uid: str = typer.Argument(...)
 ) -> None:
+    """Cancel an operation."""
     try:
         operation = _client().cancel_content_operation(operation_uid)
     except Exception as error:
@@ -1086,7 +1116,10 @@ def operations_cancel(
 def operations_dead_letter(
     ctx: typer.Context, rows: int = typer.Option(100, "--rows", min=1, max=1000)
 ) -> None:
-    """What gave up, and why: retries exhausted or quarantined. Platform administrators only."""
+    """List the operations that gave up, and why.
+
+    What gave up, and why: retries exhausted or quarantined.
+    """
     try:
         listed = _client().list_dead_letter_operations(rows=rows)
     except Exception as error:
@@ -1135,6 +1168,7 @@ app.add_typer(dataservers_app)
 @dataservers_app.command(name="list")
 @contents_command
 def dataservers_list(ctx: typer.Context) -> None:
+    """List Dataserver gateways."""
     page = _client().list_content_sources(kind="data-server", limit=200)
     _render(page.model_dump(mode="json"), _context(ctx))
 
@@ -1262,7 +1296,10 @@ def _dataserver_transition(ctx: typer.Context, source: str, action: str) -> None
 @dataservers_app.command(name="drain")
 @contents_command
 def dataservers_drain(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
-    """Stop routing new queries to the gateway; the ones running finish."""
+    """Stop routing new queries to a gateway.
+
+    Stop routing new queries to the gateway; the ones running finish.
+    """
     _dataserver_transition(ctx, source, "drain")
 
 
@@ -1305,6 +1342,7 @@ def _resolve_datasource(client: DatalayerClient, reference: str) -> str:
 @datasources_app.command(name="list")
 @contents_command
 def datasources_list(ctx: typer.Context) -> None:
+    """List Datasources."""
     page = _client().list_content_sources(kind="datasource", limit=200)
     _render(page.model_dump(mode="json"), _context(ctx))
 
@@ -1608,7 +1646,10 @@ def datasources_queries(ctx: typer.Context, source: str = typer.Argument(...)) -
 def datasources_cancel(
     ctx: typer.Context, query_uid: str = typer.Argument(...)
 ) -> None:
-    """Stop a running query; the cancellation reaches the connector."""
+    """Stop a running query.
+
+    Stop a running query; the cancellation reaches the connector.
+    """
     try:
         query = _client().cancel_datasource_query(query_uid)
     except Exception as error:
@@ -1650,6 +1691,7 @@ app.add_typer(mcp_app)
 @mcp_app.command(name="list")
 @contents_command
 def mcp_list(ctx: typer.Context) -> None:
+    """List MCP servers."""
     page = _client().list_content_sources(kind="mcp", limit=200)
     _render(page.model_dump(mode="json"), _context(ctx))
 
@@ -1958,6 +2000,7 @@ def mcp_approvals_list(
     ),
     source: str | None = typer.Option(None, "--source", help="Only one MCP source."),
 ) -> None:
+    """List the tool calls that wait on you."""
     client = _client()
     source_uid = _resolve_mcp_source(client, source) if source else None
     try:
@@ -2085,6 +2128,7 @@ def mcp_approvals_reject(
     approval_uid: str = typer.Argument(...),
     note: str | None = typer.Option(None, "--note"),
 ) -> None:
+    """Reject a tool call that waits on you."""
     try:
         decided = _client().reject_mcp_approval(approval_uid, note=note)
     except Exception as error:
@@ -2219,6 +2263,7 @@ app.add_typer(sharing_app)
 @sharing_app.command(name="show")
 @contents_command
 def sharing_show(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """Show who a source is shared with."""
     client = _client()
     resolved = _resolve_source(client, source)
     sharing = client.get_content_source_sharing(resolved.value.source.uid)
@@ -2234,6 +2279,7 @@ def sharing_grant(
     principal_kind: str = typer.Option(..., "--principal-kind"),
     access_level: str = typer.Option(..., "--access"),
 ) -> None:
+    """Share a source."""
     client = _client()
     resolved = _resolve_source(client, source)
     sharing = client.get_content_source_sharing(resolved.value.source.uid)
@@ -2271,6 +2317,7 @@ def sharing_revoke(
     principal_uid: str = typer.Argument(...),
     principal_kind: str = typer.Option(..., "--principal-kind"),
 ) -> None:
+    """Take a share of a source back."""
     client = _client()
     resolved = _resolve_source(client, source)
     sharing = client.get_content_source_sharing(resolved.value.source.uid)
@@ -2304,7 +2351,8 @@ def capture_dataset_file(
     destination: str = typer.Argument(..., help="The path inside the Dataset"),
     overwrite: bool = typer.Option(False, "--overwrite"),
 ) -> None:
-    """
+    """Capture a file into a Dataset.
+
     Capture a file into a Dataset — a result, or a file on a mounted Volume.
 
     Run where the file is, inside the sandbox: the bytes go up through the

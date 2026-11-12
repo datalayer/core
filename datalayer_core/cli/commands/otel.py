@@ -38,7 +38,7 @@ console = Console()
 # Create Typer app for otel commands
 app = typer.Typer(
     name="otel",
-    help="OpenTelemetry observability commands – query traces, metrics, logs.",
+    help="Query traces, metrics and logs.",
     invoke_without_command=True,
 )
 
@@ -456,7 +456,7 @@ def query(
 def admin_sql(
     sql: str = typer.Argument(
         ...,
-        help="Arbitrary SQL to execute (no user-scope filter). Platform admin only.",
+        help="Arbitrary SQL to execute (no user-scope filter).",
     ),
     base_url: Optional[str] = typer.Option(
         None, "--otel-url", help="OTEL service run URL."
@@ -468,11 +468,9 @@ def admin_sql(
         None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
-    """
-    Run an arbitrary SQL query as platform_admin (no user-scope filtering).
+    """Run an arbitrary SQL query without user-scope filtering.
 
     Useful for inspecting raw table contents across all accounts.
-    Requires the DATALAYER_API_KEY to belong to a platform_admin user.
     """
     import httpx
 
@@ -1526,16 +1524,15 @@ def system(
         None,
         "--api-key",
         "-t",
-        help="API key (or set DATALAYER_API_KEY). Must have platform_admin role.",
+        help="API key (or set DATALAYER_API_KEY).",
     ),
     json_output: bool = typer.Option(False, "--json", help="Output raw JSON."),
 ) -> None:
     """
-    Show system statistics (platform_admin only).
+    Show system statistics.
 
     Displays service memory/CPU, disk space, row counts per table,
-    and number of distinct users.  Requires a token with the
-    ``platform_admin`` role.
+    and number of distinct users.
     """
     import httpx
 

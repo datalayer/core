@@ -11,7 +11,7 @@ The `datalayer` command is itself a reactor *host* — it discovers extensions
 under the ``datalayer.cli`` entry-point group and lets them add their command
 groups (the sandboxes and agents arrive from agent-runtimes that way). This
 module is the symmetric half: the core's own command groups — auth, secrets,
-orgs, teams, config and the rest — packaged as an extension, so any *other*
+organizations, teams, config and the rest — packaged as an extension, so any *other*
 reactor CLI host can carry them. Install this distribution beside the
 ``reactor`` command and ``reactor login``, ``reactor secrets`` and the others
 are simply there.
@@ -63,7 +63,7 @@ _COMMAND_GROUPS: tuple[str, ...] = (
     "datalayer_core.cli.commands.contents",
     "datalayer_core.cli.commands.mcp",
     "datalayer_core.cli.commands.memberships",
-    "datalayer_core.cli.commands.orgs",
+    "datalayer_core.cli.commands.organizations",
     "datalayer_core.cli.commands.teams",
     "datalayer_core.cli.commands.otel",
     "datalayer_core.cli.commands.secrets",

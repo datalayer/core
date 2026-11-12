@@ -14,7 +14,7 @@ from datalayer_core.client.client import DatalayerClient
 from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
-    name="plans", help="Plan and subscription details", invoke_without_command=True
+    name="plans", help="Show plans and their details.", invoke_without_command=True
 )
 console = Console(width=200)
 
@@ -381,5 +381,5 @@ def plans_root(
         help="Datalayer IAM server URL",
     ),
 ) -> None:
-    """Show plans for the authenticated user and memberships (root command)."""
+    """Show plans for the authenticated user and memberships."""
     plans_show(api_key=api_key, iam_url=iam_url)

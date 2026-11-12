@@ -24,7 +24,9 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for auth commands
 app = typer.Typer(
-    name="auth", help="Authentication commands", invoke_without_command=True
+    name="auth",
+    help="Log in, log out and show who you are.",
+    invoke_without_command=True,
 )
 
 console = Console()
@@ -402,7 +404,7 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
 
 @app.command()
 def logout() -> None:
-    """Log out from Datalayer server."""
+    """Log out of a Datalayer server."""
     try:
         urls = DatalayerURLs.from_environment()
         auth = AuthenticationManager(urls.iam_url)
@@ -435,7 +437,7 @@ def whoami(
         help="Show only resolved Datalayer service URLs",
     ),
 ) -> None:
-    """Show current authenticated user."""
+    """Show the authenticated user."""
     try:
         urls = DatalayerURLs.from_environment()
 
@@ -693,9 +695,7 @@ def login_root(
 
 
 def logout_root() -> None:
-    """
-    Log out of Datalayer server.
-    """
+    """Log out of a Datalayer server."""
     logout()
 
 
@@ -716,9 +716,7 @@ def whoami_root(
         help="Show only resolved Datalayer service URLs",
     ),
 ) -> None:
-    """
-    Show current authenticated user.
-    """
+    """Show the authenticated user."""
     whoami(
         token=token,
         details=details,

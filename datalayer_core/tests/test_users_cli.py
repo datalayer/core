@@ -263,3 +263,113 @@ def test_credits_prints_iams_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
         users.app, ["credits", "add", "01M4BDHQWKVGT55RS5AQPC430T", "10"]
     )
     assert answer.exit_code == 1 and "Not a platform administrator." in answer.stdout
+
+
+_FOUND = {
+    "success": True,
+    "data": {
+        "users": [
+            {
+                "uid": "01ADA",
+                "handle_s": "ada",
+                "first_name_t": "Ada",
+                "last_name_t": "Lovelace",
+                "email_s": "ada@example.com",
+                "roles_ss": ["platform_member"],
+            },
+            {
+                "uid": "01ALAN",
+                "handle_s": "alan",
+                "first_name_t": "Alan",
+                "last_name_t": "Turing",
+                "email_s": "alan@example.com",
+                "roles_ss": ["platform_member", "platform_admin"],
+            },
+        ],
+        "total": 2,
+    },
+}
+
+
+def _searching(monkeypatch: pytest.MonkeyPatch, response: _Response) -> dict[str, Any]:
+    sent: dict[str, Any] = {}
+
+    def post(
+        url: str, headers: dict[str, str], json: dict[str, Any], timeout: int
+    ) -> _Response:
+        sent.update(url=url, headers=headers, json=json)
+        return response
+
+    monkeypatch.setattr(users, "DatalayerClient", _Client)
+    monkeypatch.setattr(users.requests, "post", post)
+    return sent
+
+
+def test_ls_lists_the_users_iam_finds_without_their_email(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sent = _searching(monkeypatch, _Response(200, _FOUND))
+
+    answer = CliRunner().invoke(users.app, ["ls"], env={"COLUMNS": "160"})
+
+    assert answer.exit_code == 0, answer.stdout
+    assert sent["url"] == "https://iam.test/api/iam/v1/users/search"
+    assert sent["json"] == {"query": ""}
+    for shown in ("ada", "Ada Lovelace", "01ADA", "alan", "platform_admin"):
+        assert shown in answer.stdout
+    assert "example.com" not in answer.stdout
+    assert "token-never-printed" not in answer.stdout
+
+
+def test_ls_takes_a_query_and_a_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent = _searching(monkeypatch, _Response(200, _FOUND))
+
+    answer = CliRunner().invoke(
+        users.app, ["ls", "a", "--limit", "1"], env={"COLUMNS": "160"}
+    )
+
+    assert answer.exit_code == 0, answer.stdout
+    assert sent["json"] == {"query": "a"}
+    assert "ada" in answer.stdout and "alan" not in answer.stdout
+    assert "1 of 2 shown" in answer.stdout
+
+
+def test_ls_json_carries_the_listed_fields_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import json
+
+    _searching(monkeypatch, _Response(200, _FOUND))
+
+    answer = CliRunner().invoke(users.app, ["ls", "--json"])
+
+    assert answer.exit_code == 0, answer.stdout
+    listed = json.loads(answer.stdout)
+    assert listed[0] == {
+        "first_name": "Ada",
+        "handle": "ada",
+        "last_name": "Lovelace",
+        "roles": ["platform_member"],
+        "uid": "01ADA",
+    }
+    assert "example.com" not in answer.stdout
+
+
+def test_ls_prints_iams_refusal_as_one_sentence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _searching(monkeypatch, _Response(403, {"detail": "Insufficient permissions"}))
+
+    answer = CliRunner().invoke(users.app, ["ls"])
+
+    assert answer.exit_code == 1
+    assert answer.stdout.strip() == "Insufficient permissions"
+
+
+def test_ls_says_when_nobody_matches(monkeypatch: pytest.MonkeyPatch) -> None:
+    _searching(monkeypatch, _Response(200, {"success": True, "data": {"users": []}}))
+
+    answer = CliRunner().invoke(users.app, ["ls", "zzz"])
+
+    assert answer.exit_code == 0
+    assert "No users." in answer.stdout

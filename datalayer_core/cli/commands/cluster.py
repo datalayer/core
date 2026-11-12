@@ -17,7 +17,7 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
     name="cluster",
-    help="Cluster visibility commands",
+    help="Show what runs on the cluster.",
     invoke_without_command=True,
 )
 

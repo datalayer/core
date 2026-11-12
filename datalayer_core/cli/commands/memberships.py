@@ -16,7 +16,7 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
     name="memberships",
-    help="List organization and team memberships for the authenticated user.",
+    help="List your organization and team memberships.",
     invoke_without_command=True,
 )
 

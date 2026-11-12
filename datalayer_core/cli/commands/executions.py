@@ -68,9 +68,9 @@ from datalayer_core.orchestration import (
 
 app = typer.Typer(
     name="executions",
-    help="Executions: work delegated to agents over A2A and ACP — run, watch, steer, pause, resume, cancel, terminate, collect.",
+    help="Work delegated to agents over A2A and ACP: run, watch, steer, pause, resume, cancel, terminate, collect.",
     # The one line a listing of this group among others shows.
-    short_help="Executions: work delegated to agents — run, watch, steer, collect.",
+    short_help="Run, watch and steer the work delegated to agents.",
     no_args_is_help=True,
 )
 
@@ -421,7 +421,10 @@ def pause(
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
-    """Ask an execution's worker to stop at its next checkpoint; nothing it did is lost."""
+    """Ask an execution's worker to stop at its next checkpoint.
+
+    Ask an execution's worker to stop at its next checkpoint; nothing it did is lost.
+    """
     command = call(
         lambda: ExecutionsPause(
             idempotency_key=_PENDING_KEY, execution_id=execution_id, reason=reason
@@ -498,7 +501,10 @@ def terminate(
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
-    """End an execution for good and release its worker; `cancel` stops it and keeps the worker."""
+    """End an execution for good and release its worker.
+
+    End an execution for good and release its worker; `cancel` stops it and keeps the worker.
+    """
     command = call(
         lambda: ExecutionsTerminate(
             idempotency_key=_PENDING_KEY,

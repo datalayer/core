@@ -15,7 +15,7 @@ from datalayer_core.models.api_key import ApiKeyType
 # Create a Typer app for API key commands
 app = typer.Typer(
     name="api-keys",
-    help="API key management commands",
+    help="Manage API keys.",
     invoke_without_command=True,
 )
 
@@ -185,7 +185,7 @@ def api_keys_list(
         help="Datalayer API key.",
     ),
 ) -> None:
-    """List all API keys (root command)."""
+    """List all API keys."""
     list_api_keys(api_key=api_key)
 
 
@@ -196,5 +196,5 @@ def api_keys_ls(
         help="Datalayer API key.",
     ),
 ) -> None:
-    """List all API keys (root command alias)."""
+    """List all API keys."""
     list_api_keys(api_key=api_key)

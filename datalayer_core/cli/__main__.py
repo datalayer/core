@@ -30,8 +30,8 @@ from datalayer_core.cli.commands.durable import app as durable_app
 from datalayer_core.cli.commands.executions import app as executions_app
 from datalayer_core.cli.commands.mcp import app as mcp_app
 from datalayer_core.cli.commands.memberships import app as memberships_app
-from datalayer_core.cli.commands.orgs import app as orgs_app
-from datalayer_core.cli.commands.orgs import orgs_ls
+from datalayer_core.cli.commands.organizations import app as organizations_app
+from datalayer_core.cli.commands.organizations import organizations_ls
 from datalayer_core.cli.commands.otel import app as otel_app
 from datalayer_core.cli.commands.plans import app as plans_app
 from datalayer_core.cli.commands.plans import plans_root
@@ -197,7 +197,7 @@ app.add_typer(durable_app)
 app.add_typer(executions_app)
 app.add_typer(mcp_app)
 app.add_typer(memberships_app)
-app.add_typer(orgs_app)
+app.add_typer(organizations_app)
 app.add_typer(teams_app)
 app.add_typer(otel_app)
 app.add_typer(secrets_app)
@@ -219,7 +219,7 @@ app.command(name="subscription")(subscription_root)
 # Add convenient aliases at root level
 app.command(name="secrets-ls")(secrets_ls)
 app.command(name="api-keys-ls")(api_keys_ls)
-app.command(name="orgs-ls")(orgs_ls)
+app.command(name="organizations-ls")(organizations_ls)
 app.command(name="teams-ls")(teams_ls)
 
 

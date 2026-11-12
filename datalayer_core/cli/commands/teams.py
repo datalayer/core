@@ -16,7 +16,7 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
     name="teams",
-    help="List teams for the authenticated user.",
+    help="List your teams.",
     invoke_without_command=True,
 )
 
@@ -111,7 +111,7 @@ def teams_ls(
         help="Print raw JSON teams response.",
     ),
 ) -> None:
-    """List the teams to which the authenticated user has access."""
+    """List your teams."""
     _run_teams_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
 
 
@@ -133,7 +133,7 @@ def teams_list(
         help="Print raw JSON teams response.",
     ),
 ) -> None:
-    """List the teams to which the authenticated user has access."""
+    """List your teams."""
     _run_teams_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
 
 
@@ -156,7 +156,7 @@ def teams_root(
         help="Print raw JSON teams response.",
     ),
 ) -> None:
-    """List the teams to which the authenticated user has access."""
+    """List your teams."""
     if ctx.invoked_subcommand is not None:
         return
     _run_teams_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)

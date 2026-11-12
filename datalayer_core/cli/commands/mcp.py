@@ -110,7 +110,7 @@ app = typer.Typer(
     name="mcp",
     help="The agents connected to your account, their audit log and runs, and the MCP clients' configuration.",
     # The one line a listing of this group among others shows.
-    short_help="The agents connected to your account, and the MCP clients' configuration.",
+    short_help="Manage the agents connected to your account and the MCP clients' configuration.",
     invoke_without_command=True,
     no_args_is_help=True,
 )
@@ -243,7 +243,10 @@ def toolsets_disable(
     session_uid: str = typer.Argument(..., help="The session, from `toolsets list`."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Revoke a session. Its tools stop working on the next call."""
+    """Revoke a toolset session.
+
+    Revoke a session. Its tools stop working on the next call.
+    """
     if not yes and not typer.confirm(f"Revoke {session_uid}?"):
         raise typer.Exit(0)
     session = _call(lambda: _client().disable_toolset(session_uid))
@@ -324,7 +327,10 @@ def sandboxes_share(
         help="Make these the whole grant at that level rather than adding to it.",
     ),
 ) -> None:
-    """Share a sandbox. They use it with `use_sandbox` and its name."""
+    """Share a sandbox.
+
+    They use it with `use_sandbox` and its name.
+    """
     who = _principals(user, team, organization, agent)
     if not any(who.values()):
         raise McpCommandError(
@@ -363,7 +369,10 @@ def sandboxes_unshare(
         [], "--agent", help="A service-agent uid to revoke; repeatable."
     ),
 ) -> None:
-    """Take a share back. Name nobody to revoke everybody at the level."""
+    """Take a share back.
+
+    Name nobody to revoke everybody at the level.
+    """
     sharing = _call(
         lambda: _client().unshare_runtime(
             runtime_name, level=level, **_principals(user, team, organization, agent)
@@ -504,7 +513,8 @@ def service_agents_create(
         "", "--team", help="A team's rather than the organization's."
     ),
 ) -> None:
-    """
+    """Create a service agent and print its key once.
+
     Create a service agent and print its key — once.
 
     IAM stores a hash of the key and has no way back, so this is the only
@@ -540,7 +550,10 @@ def service_agents_rotate(
     agent_uid: str = typer.Argument(..., help="From `service-agents list`."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Give the agent a new key. The old one stops working at once."""
+    """Give a service agent a new key.
+
+    Give the agent a new key. The old one stops working at once.
+    """
     if not yes and not typer.confirm(
         f"Rotate the key of {agent_uid}? Anything still using the old key "
         "stops working immediately."
@@ -564,7 +577,10 @@ def service_agents_revoke(
     agent_uid: str = typer.Argument(..., help="From `service-agents list`."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Stop the agent. It stays listed, because its audit rows name it."""
+    """Stop a service agent.
+
+    Stop the agent. It stays listed, because its audit rows name it.
+    """
     if not yes and not typer.confirm(f"Revoke {agent_uid}? Its key stops working."):
         raise typer.Exit(0)
     agent = _call(lambda: _client().revoke_service_agent(org_uid, agent_uid))
@@ -681,7 +697,10 @@ def tasks_describe(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> N
 @tasks_app.command(name="cancel")
 @mcp_command
 def tasks_cancel(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> None:
-    """Stop a task that is still going; a finished one is answered as it is."""
+    """Stop a task that is still going.
+
+    Stop a task that is still going; a finished one is answered as it is.
+    """
     task = _call(lambda: _client().cancel_mcp_task(task_uid))
     if _emit_machine(task, _context(ctx)):
         return
@@ -790,7 +809,10 @@ def bindings_terminate(
     binding_uid: str = typer.Argument(..., help="The handle, e.g. sb_…"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Release a handle; a sandbox binding's runtime is terminated with it."""
+    """Release a handle.
+
+    Release a handle; a sandbox binding's runtime is terminated with it.
+    """
     if not yes and not typer.confirm(f"Terminate {binding_uid}?"):
         raise typer.Exit(0)
     binding = _call(lambda: _client().terminate_mcp_binding(binding_uid))
@@ -844,7 +866,8 @@ def policy_get(
     org: str | None = typer.Option(None, "--org", help="An organization you own."),
     team: str | None = typer.Option(None, "--team", help="A team you own."),
 ) -> None:
-    """
+    """Show one layer's own rules.
+
     One layer's own rules — what it narrows, not what applies to you.
 
     `datalayer mcp policy` is the other question: every layer intersected,
@@ -989,7 +1012,10 @@ def alerts_list(
 @alerts_app.command(name="ack")
 @mcp_command
 def alerts_ack(ctx: typer.Context, alert_uid: str = typer.Argument(...)) -> None:
-    """Say you have seen one. Idempotent; the first acknowledgement stands."""
+    """Acknowledge an alert.
+
+    Say you have seen one. Idempotent; the first acknowledgement stands.
+    """
     alert = _call(lambda: _client().acknowledge_mcp_alert(alert_uid))
     if _emit_machine(alert, _context(ctx)):
         return
@@ -1071,7 +1097,10 @@ def alerts_unwatch(
     uid: str = typer.Argument(..., help="From `alerts rules`."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Remove a rule. What it watched is unwatched from the next check."""
+    """Remove a rule.
+
+    What it watched is unwatched from the next check.
+    """
     if not yes and not typer.confirm(
         f"Remove {uid}? What it watched becomes unwatched, and nothing will "
         "say so again."
@@ -1092,7 +1121,8 @@ def alerts_test(
     operator: str = typer.Option("gt", "--operator"),
     window: int = typer.Option(3600, "--window"),
 ) -> None:
-    """
+    """Show what a rule would see right now.
+
     What a rule would see right now. Records nothing, tells nobody.
 
     The answer worth having is not the number but whether the condition can
@@ -1199,10 +1229,11 @@ def forwarding(
 @app.command(name="jobs")
 @mcp_command
 def jobs(ctx: typer.Context) -> None:
-    """
+    """Show the gateway's periodic work on the replica that answers.
+
     The gateway's periodic work — retention, alerts — on the replica that answers.
 
-    Platform administrators only. The counts belong to whichever replica the
+    The counts belong to whichever replica the
     load balancer picked: only one holds each job's lease at a time, so a high
     `skipped` here is the scheduler working. Ask again to reach another
     replica; every replica skipping is the lease store refusing everybody.
@@ -1305,7 +1336,10 @@ def audit(
 def trace(
     ctx: typer.Context, task_uid: str = typer.Argument(..., help="The task (run) uid.")
 ) -> None:
-    """The spans of a run — gateway, policy, worker and what they called — as a tree."""
+    """Show the spans of a run as a tree.
+
+    The spans of a run — gateway, policy, worker and what they called — as a tree.
+    """
     answer = _call(lambda: _client().get_mcp_run_trace(task_uid))
     if _emit_machine(answer, _context(ctx)):
         return

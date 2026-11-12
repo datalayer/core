@@ -15,8 +15,8 @@ from datalayer_core.cli.commands.authn import _fetch_memberships
 from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
-    name="orgs",
-    help="List organizations for the authenticated user.",
+    name="organizations",
+    help="List your organizations.",
     invoke_without_command=True,
 )
 
@@ -58,7 +58,7 @@ def _print_organizations(memberships: list[dict[str, Any]]) -> None:
     console.print(table)
 
 
-def _run_orgs_ls(
+def _run_organizations_ls(
     iam_url: Optional[str],
     api_key: Optional[str],
     as_json: bool,
@@ -86,7 +86,7 @@ def _run_orgs_ls(
 
 
 @app.command(name="ls")
-def orgs_ls(
+def organizations_ls(
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -103,12 +103,12 @@ def orgs_ls(
         help="Print raw JSON organizations response.",
     ),
 ) -> None:
-    """List the organizations to which the authenticated user has access."""
-    _run_orgs_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
+    """List your organizations."""
+    _run_organizations_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
 
 
 @app.command(name="list")
-def orgs_list(
+def organizations_list(
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -125,12 +125,12 @@ def orgs_list(
         help="Print raw JSON organizations response.",
     ),
 ) -> None:
-    """List the organizations to which the authenticated user has access."""
-    _run_orgs_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
+    """List your organizations."""
+    _run_organizations_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
 
 
 @app.callback(invoke_without_command=True)
-def orgs_root(
+def organizations_root(
     ctx: typer.Context,
     iam_url: Optional[str] = typer.Option(
         None,
@@ -148,7 +148,7 @@ def orgs_root(
         help="Print raw JSON organizations response.",
     ),
 ) -> None:
-    """List the organizations to which the authenticated user has access."""
+    """List your organizations."""
     if ctx.invoked_subcommand is not None:
         return
-    _run_orgs_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
+    _run_organizations_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)

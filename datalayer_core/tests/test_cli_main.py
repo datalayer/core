@@ -4,6 +4,7 @@
 """Tests for CLI main argument normalization."""
 
 import re
+from typing import Any
 
 import pytest
 from typer.testing import CliRunner
@@ -160,7 +161,7 @@ def test_the_root_listing_gives_a_group_one_short_line() -> None:
     # listed by a short one, which fits a 120-column terminal on one line.
     env = {"COLUMNS": "120", "NO_COLOR": "1", "TERM": "dumb"}
     root = _plain(CliRunner().invoke(cli_main.app, ["--help"], env=env).stdout)
-    assert "Executions: work delegated to agents — run, watch, steer, collect." in root
+    assert "Run, watch and steer the work delegated to agents." in root
     assert "over A2A and ACP" not in root
     assert "and the MCP clients' configuration." in root
     assert "their audit log and runs" not in root
@@ -172,6 +173,51 @@ def test_the_root_listing_gives_a_group_one_short_line() -> None:
     assert "over A2A and ACP" in executions
     mcp = _plain(CliRunner().invoke(cli_main.app, ["mcp", "--help"], env=env).stdout)
     assert "their audit log and runs" in mcp
+
+
+def test_every_description_keeps_the_house_style() -> None:
+    # One sentence ending with a period, a capital, short enough not to wrap,
+    # not opening with the command's own name: at every level, so that a new
+    # command keeps the style. The long explanation is the command's --help.
+    from reactor.cli import help_style_violations
+
+    assert help_style_violations(cli_main.app) == []
+
+
+def test_no_description_says_who_may_run_the_command() -> None:
+    # The server enforces it and its refusal says so; the listing does not.
+    from typer.main import get_command
+
+    def lines(command: Any, path: str = "") -> list[str]:
+        found = []
+        for name, child in (getattr(command, "commands", None) or {}).items():
+            text = child.short_help or (child.help or "").split("\n\n")[0]
+            found.append(f"{path} {name}: {text}")
+            found += lines(child, f"{path} {name}")
+        return found
+
+    for line in lines(get_command(cli_main.app)):
+        lowered = line.lower()
+        for said in (
+            "administrator",
+            "platform_admin",
+            "admin only",
+            "root command",
+            "alias)",
+        ):
+            assert said not in lowered, line
+
+
+def test_organizations_are_listed_under_their_whole_name() -> None:
+    env = {"COLUMNS": "120", "NO_COLOR": "1", "TERM": "dumb"}
+    root = _plain(CliRunner().invoke(cli_main.app, ["--help"], env=env).stdout)
+    assert " organizations " in root and " organizations-ls " in root
+    assert " orgs " not in root and "orgs-ls" not in root
+    assert CliRunner().invoke(cli_main.app, ["orgs", "--help"]).exit_code != 0
+    assert (
+        CliRunner().invoke(cli_main.app, ["organizations", "ls", "--help"]).exit_code
+        == 0
+    )
 
 
 def test_contents_group_is_registered_with_shared_output_option() -> None:

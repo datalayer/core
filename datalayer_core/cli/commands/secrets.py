@@ -13,9 +13,7 @@ from datalayer_core.displays.secrets import display_secrets
 from datalayer_core.models.secret import SecretModel, SecretVariant
 
 # Create a Typer app for secret commands
-app = typer.Typer(
-    name="secrets", help="Secret management commands", invoke_without_command=True
-)
+app = typer.Typer(name="secrets", help="Manage secrets.", invoke_without_command=True)
 
 console = Console()
 
@@ -93,7 +91,10 @@ def get_secret(
         help="Datalayer API key.",
     ),
 ) -> None:
-    """Get one secret. Its value is hidden unless --show-value is explicit."""
+    """Get one secret.
+
+    Its value is hidden unless --show-value is explicit.
+    """
     try:
         client = DatalayerClient(api_key=api_key)
         selected = _resolve_secret(client, secret)
@@ -204,7 +205,7 @@ def secrets_list(
         help="Datalayer API key.",
     ),
 ) -> None:
-    """List all secrets (root command)."""
+    """List all secrets."""
     list_secrets(api_key=api_key)
 
 
@@ -215,5 +216,5 @@ def secrets_ls(
         help="Datalayer API key.",
     ),
 ) -> None:
-    """List all secrets (root command alias)."""
+    """List all secrets."""
     list_secrets(api_key=api_key)
