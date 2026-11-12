@@ -160,18 +160,29 @@ def test_the_root_listing_gives_a_group_one_short_line() -> None:
     # A group's long sentence is its own `--help`; among fifty commands it is
     # listed by a short one, which fits a 120-column terminal on one line.
     env = {"COLUMNS": "120", "NO_COLOR": "1", "TERM": "dumb"}
-    root = _plain(CliRunner().invoke(cli_main.app, ["--help"], env=env).stdout)
+    # Read as one line: a runner that ignores COLUMNS folds the listing at 80.
+    root = " ".join(
+        _plain(CliRunner().invoke(cli_main.app, ["--help"], env=env).stdout)
+        .replace("│", " ")
+        .split()
+    )
     assert "Run, watch and steer the work delegated to agents." in root
     assert "over A2A and ACP" not in root
     assert "and the MCP clients' configuration." in root
     assert "their audit log and runs" not in root
     for group in (cli_main.executions_app, cli_main.mcp_app):
         assert len(group.info.short_help) <= 80
-    executions = _plain(
-        CliRunner().invoke(cli_main.app, ["executions", "--help"], env=env).stdout
+    executions = " ".join(
+        _plain(
+            CliRunner().invoke(cli_main.app, ["executions", "--help"], env=env).stdout
+        ).split()
     )
     assert "over A2A and ACP" in executions
-    mcp = _plain(CliRunner().invoke(cli_main.app, ["mcp", "--help"], env=env).stdout)
+    mcp = " ".join(
+        _plain(
+            CliRunner().invoke(cli_main.app, ["mcp", "--help"], env=env).stdout
+        ).split()
+    )
     assert "their audit log and runs" in mcp
 
 
