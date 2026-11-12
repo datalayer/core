@@ -183,11 +183,15 @@ describe('where each shell was left', () => {
       '/notebooks/new',
       '/documents',
       '/cells',
+      '/spreadsheets',
+      '/decks',
       '/datasets',
       '/contents?kind=notebook',
     ]) {
       expect(viewForRoute(route)).toBe('spaces');
     }
+    // A presentation is not a Spaces page: only `/decks` itself is.
+    expect(viewForRoute('/decks/funding/aws-partner')).not.toBe('spaces');
     expect(viewForRoute('/spacesx')).toBe('home');
     expect(viewForRoute('/libraryx')).toBe('home');
     expect(viewForRoute('/sessions')).toBe('home');

@@ -391,7 +391,8 @@ export function viewForRoute(
   if (
     SPACES_SHELL_ROUTES.some(
       prefix => path === prefix || path.startsWith(`${prefix}/`),
-    )
+    ) ||
+    SPACES_SHELL_EXACT_ROUTES.includes(path)
   ) {
     return 'spaces';
   }
@@ -442,9 +443,18 @@ const SPACES_SHELL_ROUTES = [
   '/notebooks',
   '/documents',
   '/cells',
+  // The selected space's spreadsheets (the user, 12 November 2026).
+  '/spreadsheets',
   '/datasets',
   '/contents',
 ];
+
+/**
+ * The selected space's decks, `/decks` itself only (the user, 12 November
+ * 2026): `/decks/<collection>/<slug>` are presentations, drawn by their own
+ * page, not the Spaces shell's.
+ */
+const SPACES_SHELL_EXACT_ROUTES = ['/decks'];
 
 /**
  * `/<account>/<space>/<kind>[/…]` for the kinds a space shows beside the
