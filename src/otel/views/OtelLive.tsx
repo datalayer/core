@@ -415,12 +415,14 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
             }
           />
         </Box>
-        {/* WebSocket status indicator */}
-        <Box pr={2} flexShrink={0}>
-          <Label variant={wsConnected ? 'success' : 'secondary'} size="small">
-            {wsConnected ? '● Live' : '○ Polling'}
-          </Label>
-        </Box>
+        {/* Said only when the live connection is down and the view falls back to polling. */}
+        {wsConnected ? null : (
+          <Box pr={2} flexShrink={0}>
+            <Label variant="secondary" size="small">
+              ○ Polling
+            </Label>
+          </Box>
+        )}
       </Box>
 
       {/* ─── Timeline Range Slider ─── */}
