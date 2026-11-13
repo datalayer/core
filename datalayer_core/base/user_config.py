@@ -4,7 +4,7 @@
 """
 User configuration persistence for Datalayer Core.
 
-Stores user preferences (IAM URL, Runtimes URL, etc.) in ~/.datalayer/config.json.
+Stores user preferences (IAM URL, Runtimes URL, etc.) in ~/.datalayer/url.json.
 """
 
 import json
@@ -16,12 +16,12 @@ DEFAULT_IAM_URL = "https://prod1.datalayer.run"
 DEFAULT_RUNTIMES_URL = "https://r1.datalayer.run"
 
 CONFIG_DIR = Path.home() / ".datalayer"
-CONFIG_FILE = CONFIG_DIR / "config.json"
+CONFIG_FILE = CONFIG_DIR / "url.json"
 
 
 def _load_config() -> Dict[str, Any]:
     """
-    Load user configuration from ~/.datalayer/config.json.
+    Load user configuration from ~/.datalayer/url.json.
 
     Returns
     -------
@@ -39,7 +39,7 @@ def _load_config() -> Dict[str, Any]:
 
 def _save_config(config: Dict[str, Any]) -> None:
     """
-    Save user configuration to ~/.datalayer/config.json.
+    Save user configuration to ~/.datalayer/url.json.
 
     Parameters
     ----------
