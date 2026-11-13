@@ -69,6 +69,8 @@ import {
   asTeam,
   asToken,
   asUser,
+  usageRuntimeEngineOf,
+  type UsageRuntimeEngine,
 } from '../models';
 // Content/runtime model types live in @datalayer/agent-runtimes. The core cache
 // still fetches this data over raw HTTP, so the types are kept loose here to
@@ -8159,9 +8161,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const usePlatformUsages = (
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
+    /**
+     * Only the usage of one engine (`runtime_engine`), filtered by IAM:
+     * `kagent` for the usage page's KAgent tab. Every record otherwise.
+     */
+    filter?: { runtimeEngine?: UsageRuntimeEngine },
   ) => {
+    const runtimeEngine = filter?.runtimeEngine;
     return useQuery({
-      queryKey: ['usage', 'platform'],
+      queryKey: ['usage', 'platform', runtimeEngine ?? 'all'],
       queryFn: async () => {
         const parseUsageDate = (value: unknown): Date | undefined => {
           if (!value) {
@@ -8215,12 +8223,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             usagePeriodLabel: u.usage_period_label,
             usagePeriodStart: parseUsageDate(u.usage_period_start),
             usagePeriodEnd: parseUsageDate(u.usage_period_end),
+            runtimeEngine: usageRuntimeEngineOf(u.runtime_engine),
             metadata,
           };
         };
 
         const resp = await requestDatalayer({
-          url: `${configuration.iamUrl}/api/iam/v1/usage/platform`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/platform${
+            runtimeEngine
+              ? `?runtime_engine=${encodeURIComponent(runtimeEngine)}`
+              : ''
+          }`,
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface

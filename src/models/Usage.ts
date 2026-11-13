@@ -14,6 +14,22 @@ interface IResources {
   'nvidia.com/gpu'?: string;
 }
 
+/**
+ * What ran and hosted the agent a usage record is for (`runtime_engine`):
+ * a Datalayer runtime, kagent, or AWS AgentCore in an organization's AWS
+ * account. IAM records it from the launch; a record from before, or of a
+ * call with no agent runtime behind it, has none.
+ */
+export type UsageRuntimeEngine = 'datalayer' | 'kagent' | 'agentcore';
+
+/** The engine a raw record says, or `undefined` when it says none (or one not known). */
+export const usageRuntimeEngineOf = (
+  value: unknown,
+): UsageRuntimeEngine | undefined =>
+  value === 'datalayer' || value === 'kagent' || value === 'agentcore'
+    ? value
+    : undefined;
+
 export interface IRawUsage {
   account_uid: string;
   resource_uid: string;
@@ -32,6 +48,7 @@ export interface IRawUsage {
   usage_period_label?: string;
   usage_period_start?: string;
   usage_period_end?: string;
+  runtime_engine?: UsageRuntimeEngine | null;
   metadata: Map<string, string>;
 }
 
@@ -59,6 +76,7 @@ export const asUsage = (u: any) => {
     usagePeriodLabel,
     usagePeriodStart: usagePeriodStart ? new Date(usagePeriodStart) : undefined,
     usagePeriodEnd: usagePeriodEnd ? new Date(usagePeriodEnd) : undefined,
+    runtimeEngine: usageRuntimeEngineOf(u.runtime_engine),
     metadata: new Map(Object.entries(u.metadata ?? {})),
   } satisfies IUsage;
 };
@@ -81,5 +99,7 @@ export interface IUsage {
   usagePeriodLabel?: string;
   usagePeriodStart?: Date;
   usagePeriodEnd?: Date;
+  /** What ran and hosted its agent; absent on a record that says none. */
+  runtimeEngine?: UsageRuntimeEngine;
   metadata: Map<string, string>;
 }
