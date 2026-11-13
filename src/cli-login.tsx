@@ -14,7 +14,7 @@ import {
   createThemeStore,
 } from '@datalayer/primer-addons';
 import { SvgLinesLogo, SvgUsecasesHero } from '@datalayer/design';
-import { AppearanceControlsWithStore } from '@datalayer/primer-addons/lib/components/appearance';
+import { AppearanceControls } from '@datalayer/primer-addons/lib/components/appearance';
 import { ConfettiSuccess } from './components/confetti';
 import { formatFriendlyHandle } from './utils/Handles';
 import { SignInSimple } from './views/iam/SignInSimple';
@@ -134,7 +134,7 @@ function SignInCLIApp() {
           display="flex"
           justifyContent="flex-end"
         >
-          <AppearanceControlsWithStore useStore={useCliThemeStore} />
+          <AppearanceControls layout="inline" useStore={useCliThemeStore} />
         </Box>
         {content}
       </Box>

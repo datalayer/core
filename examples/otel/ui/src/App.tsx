@@ -24,7 +24,7 @@ import { TelescopeIcon } from '@primer/octicons-react';
 import { setupPrimerPortals } from '@datalayer/primer-addons/lib/utils/Portals';
 import {
   ThemedProvider,
-  AppearanceControlsWithStore,
+  AppearanceControls,
   useThemeStore,
 } from '@datalayer/primer-addons';
 import { useSimpleAuthStore as useAuthStore } from '@datalayer/core/lib/views/otel/simpleAuthStore';
@@ -183,7 +183,7 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
     >
       <OtelHeader
         token={token}
-        trailing={<AppearanceControlsWithStore useStore={useThemeStore} />}
+        trailing={<AppearanceControls layout="inline" useStore={useThemeStore} />}
         onNavigate={handleNavigate}
         onSignOut={handleLogout}
       />
