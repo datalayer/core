@@ -102,7 +102,7 @@ Use `agent-runtimes` for runtime workloads (`RuntimeClient`, `@datalayer`, snaps
 
 The [examples](./examples/README.md) show the Datalayer Client at work:
 
-- [OpenTelemetry observability](./examples/otel/README.md): instrument Datalayer usage with OpenTelemetry traces and metrics, with a small FastAPI service and a React UI to visualize them (`make` targets in [examples/otel](./examples/otel)).
+- [OpenTelemetry observability](./examples/otel/README.md): instrument Datalayer usage with OpenTelemetry traces and metrics, with a small FastAPI service and a React UI to visualize them (`make` targets in [examples/otel/Makefile](./examples/otel/Makefile)).
 
 For agents, chats and sandboxes built on the client, see the [Agent Runtimes examples](https://github.com/datalayer/agent-runtimes/tree/main/examples).
 

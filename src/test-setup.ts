@@ -76,7 +76,29 @@ vi.mock('@datalayer/jupyter-react', () => ({
   },
 }));
 
-vi.mock('@jupyter/web-components', () => ({}));
+// Jupyter's web components, stubbed whole: `@jupyter/react-components` calls
+// `provideJupyterDesignSystem().register(jpAccordion(), …)` as it loads, and a
+// fresh install (CI) resolves a version that does; an empty mock made every
+// suite importing it fail to load. Any export asked for is a function: the
+// design system registers nothing, each `jp*` component is a plain object.
+vi.mock('@jupyter/web-components', () => {
+  const designSystem = {
+    register: () => designSystem,
+    withPrefix: () => designSystem,
+    withShadowRootMode: () => designSystem,
+    withElementDisambiguation: () => designSystem,
+  };
+  const stub = (name: string) =>
+    name === 'provideJupyterDesignSystem' ? () => designSystem : () => ({});
+  return new Proxy(
+    {},
+    {
+      has: (_target, name) => typeof name === 'string' && name !== 'then',
+      get: (_target, name) =>
+        typeof name === 'string' && name !== 'then' ? stub(name) : undefined,
+    },
+  );
+});
 
 vi.mock('@jupyter/ydoc', () => ({
   YNotebook: class YNotebook {},
