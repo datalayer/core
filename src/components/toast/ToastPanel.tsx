@@ -59,25 +59,48 @@ export const ToastPanel = (): JSX.Element => {
       }
       onDismiss={close}
       details={
-        shown?.actions?.length ? (
-          <Box display="flex" gap={2} flexWrap="wrap" mt={2}>
-            {shown.actions.map(action => (
-              <Button
-                key={action.label}
-                size="small"
-                title={action.caption ?? action.label}
-                variant={BUTTON_VARIANTS[action.displayType ?? 'default']}
-                onClick={(event: MouseEvent) => {
-                  action.callback(event.nativeEvent);
-                  if (!event.nativeEvent.defaultPrevented) {
-                    close();
-                  }
+        shown?.detail || shown?.actions?.length ? (
+          <>
+            {shown?.detail ? (
+              // The technical detail: small, in monospace, whole, wrapped (never the message's type).
+              <Box
+                as="pre"
+                data-toast-detail
+                sx={{
+                  m: 0,
+                  mt: 1,
+                  fontFamily: 'mono',
+                  fontSize: 0,
+                  whiteSpace: 'pre-wrap',
+                  overflowWrap: 'anywhere',
+                  maxHeight: '12rem',
+                  overflowY: 'auto',
                 }}
               >
-                {action.label}
-              </Button>
-            ))}
-          </Box>
+                {shown.detail}
+              </Box>
+            ) : null}
+            {shown?.actions?.length ? (
+              <Box display="flex" gap={2} flexWrap="wrap" mt={2}>
+                {shown.actions.map(action => (
+                  <Button
+                    key={action.label}
+                    size="small"
+                    title={action.caption ?? action.label}
+                    variant={BUTTON_VARIANTS[action.displayType ?? 'default']}
+                    onClick={(event: MouseEvent) => {
+                      action.callback(event.nativeEvent);
+                      if (!event.nativeEvent.defaultPrevented) {
+                        close();
+                      }
+                    }}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </Box>
+            ) : null}
+          </>
         ) : undefined
       }
     />

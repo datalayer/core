@@ -25,6 +25,8 @@ export type QueuedToast = {
   id: string;
   variant: ToastVariant;
   message: string;
+  /** A technical detail drawn under the message, small and in monospace (a request's status, a server's words). */
+  detail?: string;
   actions?: ToastAction[];
   /** Milliseconds before it goes on its own; `false` stays until dismissed. */
   autoClose: number | false;
