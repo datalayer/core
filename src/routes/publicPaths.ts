@@ -58,6 +58,9 @@ export const PUBLIC_PATH_PREFIXES: readonly string[] = [
   '/tutorials',
   '/usecases',
   '/use-cases',
+  // Everything for visitors, signed out: the presentations at /visitors/decks
+  // and every deck under it (14 November 2026).
+  '/visitors',
 ];
 
 /**
