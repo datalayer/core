@@ -510,124 +510,137 @@ export const McpObservability = ({
 
       {pane === 'live' && (
         <Box display="grid" gap={3}>
-          {/* What is actually running first, which is what "live" means to
+          {/* What runs and the engine side by side on a wide screen, one under the other on a narrow one (the user, 14 November 2026). */}
+          <Box
+            display="grid"
+            gap={3}
+            gridTemplateColumns={['1fr', '1fr', 'repeat(2, minmax(0, 1fr))']}
+            alignItems="start"
+          >
+            {/* What is actually running first, which is what "live" means to
               somebody who is not an operator, in a box as the engine's is
               (the user, 12 November 2026). Polled rather than streamed: the
               pane is refreshed by the hook itself every five seconds. */}
-          <Card border shadow="none" p={3} display="grid" gap={2}>
-            <Heading as="h3" sx={{ fontSize: 1 }}>
-              Running now
-            </Heading>
-            {live.isError ? (
-              <McpErrorBlankslate
-                state={errorState(live.error, 'The running calls')}
-                onRetry={() => live.refetch()}
-              />
-            ) : live.isPending ? (
-              <Box display="flex" justifyContent="center" py={4}>
-                <Spinner />
-              </Box>
-            ) : (live.data?.items.length ?? 0) === 0 ? (
-              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                Nothing of yours is running. A call that finishes inside its own
-                request never appears here — it is over before this pane could
-                draw it — and is found by its trace in Runs.
-              </Text>
-            ) : (
-              (live.data?.items ?? []).map(task => (
-                <Box
-                  key={task.uid}
-                  display="flex"
-                  gap={2}
-                  alignItems="center"
-                  flexWrap="wrap"
-                  py={1}
-                  borderBottom="1px solid"
-                  borderColor="border.muted"
-                >
-                  <Label size="small" variant="success">
-                    Working
-                  </Label>
-                  <Text sx={{ fontSize: 0 }}>{task.tool || 'Run'}</Text>
-                  <Text
-                    sx={{
-                      fontSize: 0,
-                      fontFamily: 'mono',
-                      color: 'accent.fg',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => onSelect({ task: task.uid })}
-                  >
-                    {task.uid}
-                  </Text>
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                    started {timeAgo(task.createdAt)}
-                  </Text>
+            <Card border shadow="none" p={3} display="grid" gap={2}>
+              <Heading as="h3" sx={{ fontSize: 1 }}>
+                Running now
+              </Heading>
+              {live.isError ? (
+                <McpErrorBlankslate
+                  state={errorState(live.error, 'The running calls')}
+                  onRetry={() => live.refetch()}
+                />
+              ) : live.isPending ? (
+                <Box display="flex" justifyContent="center" py={4}>
+                  <Spinner />
                 </Box>
-              ))
-            )}
-          </Card>
+              ) : (live.data?.items.length ?? 0) === 0 ? (
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                  Nothing of yours is running. A call that finishes inside its
+                  own request never appears here — it is over before this pane
+                  could draw it — and is found by its trace in Runs.
+                </Text>
+              ) : (
+                (live.data?.items ?? []).map(task => (
+                  <Box
+                    key={task.uid}
+                    display="flex"
+                    gap={2}
+                    alignItems="center"
+                    flexWrap="wrap"
+                    py={1}
+                    borderBottom="1px solid"
+                    borderColor="border.muted"
+                  >
+                    <Label size="small" variant="success">
+                      Working
+                    </Label>
+                    <Text sx={{ fontSize: 0 }}>{task.tool || 'Run'}</Text>
+                    <Text
+                      sx={{
+                        fontSize: 0,
+                        fontFamily: 'mono',
+                        color: 'accent.fg',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => onSelect({ task: task.uid })}
+                    >
+                      {task.uid}
+                    </Text>
+                    <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                      started {timeAgo(task.createdAt)}
+                    </Text>
+                  </Box>
+                ))
+              )}
+            </Card>
 
-          {/* Then the engine. A run that has not started is not slow — it is
+            {/* Then the engine. A run that has not started is not slow — it is
               waiting on something, and this says whether that something is
               the engine. */}
-          {(() => {
-            const look = engineLook(engine.data, engine.isError);
-            const queues = engineQueues(engine.data);
-            return (
-              <Card border shadow="none" p={3} display="grid" gap={2}>
-                <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
-                  <Heading as="h3" sx={{ fontSize: 1 }}>
-                    The durable engine
-                  </Heading>
-                  <Label size="small" variant={look.variant}>
-                    {look.label}
-                  </Label>
-                  {engine.data?.engine && (
+            {(() => {
+              const look = engineLook(engine.data, engine.isError);
+              const queues = engineQueues(engine.data);
+              return (
+                <Card border shadow="none" p={3} display="grid" gap={2}>
+                  <Box
+                    display="flex"
+                    gap={2}
+                    alignItems="center"
+                    flexWrap="wrap"
+                  >
+                    <Heading as="h3" sx={{ fontSize: 1 }}>
+                      The durable engine
+                    </Heading>
+                    <Label size="small" variant={look.variant}>
+                      {look.label}
+                    </Label>
+                    {engine.data?.engine && (
+                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                        {engine.data.engine}
+                      </Text>
+                    )}
+                  </Box>
+                  {look.note && (
                     <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                      {engine.data.engine}
+                      {look.note}
                     </Text>
                   )}
-                </Box>
-                {look.note && (
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                    {look.note}
-                  </Text>
-                )}
-                {queues.length > 0 && (
-                  <Box display="grid" gap={1}>
-                    {queues.map(queue => (
-                      <Box
-                        key={queue.name}
-                        display="flex"
-                        gap={2}
-                        alignItems="center"
-                        fontSize={0}
-                      >
-                        <Text sx={{ fontFamily: 'mono' }}>{queue.name}</Text>
-                        {queue.served ? (
-                          <Text sx={{ color: 'fg.muted' }}>
-                            {queue.running > 0
-                              ? `${queue.running} running`
-                              : 'idle'}
-                          </Text>
-                        ) : (
-                          <Label size="small" variant="attention">
-                            nobody serves it
-                          </Label>
-                        )}
-                        {typeof queue.oldestSeconds === 'number' && (
-                          <Text sx={{ color: 'fg.muted' }}>
-                            oldest {durationLabel(queue.oldestSeconds * 1000)}
-                          </Text>
-                        )}
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-              </Card>
-            );
-          })()}
+                  {queues.length > 0 && (
+                    <Box display="grid" gap={1}>
+                      {queues.map(queue => (
+                        <Box
+                          key={queue.name}
+                          display="flex"
+                          gap={2}
+                          alignItems="center"
+                          fontSize={0}
+                        >
+                          <Text sx={{ fontFamily: 'mono' }}>{queue.name}</Text>
+                          {queue.served ? (
+                            <Text sx={{ color: 'fg.muted' }}>
+                              {queue.running > 0
+                                ? `${queue.running} running`
+                                : 'idle'}
+                            </Text>
+                          ) : (
+                            <Label size="small" variant="attention">
+                              nobody serves it
+                            </Label>
+                          )}
+                          {typeof queue.oldestSeconds === 'number' && (
+                            <Text sx={{ color: 'fg.muted' }}>
+                              oldest {durationLabel(queue.oldestSeconds * 1000)}
+                            </Text>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Card>
+              );
+            })()}
+          </Box>
         </Box>
       )}
 
