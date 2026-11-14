@@ -121,3 +121,13 @@ describe('the fade', () => {
     expect(SOURCE).toContain("'@media (prefers-reduced-motion: reduce)'");
   });
 });
+
+describe('a key that has not started', () => {
+  it('holds full and still while paused: no interval, the whole span left', () => {
+    expect(SOURCE).toContain('paused?: boolean;');
+    expect(SOURCE).toMatch(/if \(paused\) \{\s*return undefined;\s*\}/);
+    expect(SOURCE).toContain(
+      'const left = paused ? spanRef.current : Math.max(0, expiresAt - now);',
+    );
+  });
+});

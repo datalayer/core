@@ -52,6 +52,12 @@ export type AnonymousKeyTimerProps = {
   /** What the clock is counting, said beside it. */
   label?: string;
   /**
+   * Held full and still: a key that starts counting at the visitor's first
+   * question shows its whole time until then (the visitor's limited preview,
+   * 14 November 2026).
+   */
+  paused?: boolean;
+  /**
    * The share of the key still left when the clock starts warning, 0–1.
    *
    * A proportion rather than a number of seconds, because the service decides
@@ -110,6 +116,7 @@ export function AnonymousKeyTimer({
   expiresAt,
   grantedMs,
   label = 'Trial key',
+  paused = false,
   warnAt = DEFAULT_WARN_AT,
   dangerAt = DEFAULT_DANGER_AT,
   pulseAt = DEFAULT_PULSE_AT,
@@ -132,6 +139,9 @@ export function AnonymousKeyTimer({
      * DOM, and rewriting it on a tick that changes nothing is what made the
      * native tooltip flash while somebody was trying to read it.
      */
+    if (paused) {
+      return undefined;
+    }
     const timer = window.setInterval(() => {
       setNow(current => {
         const next = Date.now();
@@ -140,9 +150,9 @@ export function AnonymousKeyTimer({
       });
     }, 250);
     return () => window.clearInterval(timer);
-  }, [expiresAt]);
+  }, [expiresAt, paused]);
 
-  const left = Math.max(0, expiresAt - now);
+  const left = paused ? spanRef.current : Math.max(0, expiresAt - now);
 
   useEffect(() => {
     if (left > 0 || reported.current) {
