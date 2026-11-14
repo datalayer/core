@@ -39,6 +39,7 @@ describe('where each shell was left', () => {
 
   it('opens a shell never visited on its home page', () => {
     const { routeForView } = navigationStore.getState();
+    expect(routeForView('personal')).toBe('/personal');
     expect(routeForView('studio')).toBe('/studio');
     expect(routeForView('agentify')).toBe(NAVIGATION_VIEW_HOMES.agentify);
     expect(routeForView('admin')).toBe('/admin');
@@ -46,9 +47,9 @@ describe('where each shell was left', () => {
     expect(routeForView('home')).toBe('/platform');
   });
 
-  it('files the Studio, and the root it opens on, under its own shell', () => {
-    expect(viewForRoute('/')).toBe('studio');
-    expect(viewForRoute('/?tab=recent')).toBe('studio');
+  it('files the Studio under its own shell, and the root under the Personal shell', () => {
+    expect(viewForRoute('/')).toBe('personal');
+    expect(viewForRoute('/?tab=recent')).toBe('personal');
     expect(viewForRoute('/studio')).toBe('studio');
     expect(viewForRoute('/studio/apps/new?from=template')).toBe('studio');
     expect(viewForRoute('/studios')).toBe('home');
@@ -87,7 +88,7 @@ describe('where each shell was left', () => {
     // And a shell's own page stays its shell's with one.
     expect(viewForRoute('/studio#apps')).toBe('studio');
     expect(viewForRoute('/admin#users', 'studio')).toBe('admin');
-    expect(viewForRoute('/#top')).toBe('studio');
+    expect(viewForRoute('/#top')).toBe('personal');
     expect(isRememberableRoute('/signin#next')).toBe(false);
     // The decks too: a host draws them beside the shell they were opened from.
     expect(isShellNeutralRoute('/decks/funding/seed')).toBe(true);
@@ -123,10 +124,31 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/power')).toBe('home');
     expect(isRememberableRoute('/')).toBe(true);
     expect(isRememberableRoute('/power')).toBe(true);
-    // Opening the root is being in the Studio, and coming back returns there.
+    // Opening the root is being in the Personal shell, and coming back returns there.
     navigationStore.getState().rememberRoute('/');
+    expect(navigationStore.getState().view).toBe('personal');
+    expect(navigationStore.getState().routeForView('personal')).toBe('/');
+    expect(navigationStore.getState().routeForView('studio')).toBe('/studio');
+  });
+
+  it('files the Personal shell and returns to the page it was left on', () => {
+    expect(NAVIGATION_VIEW_HOMES.personal).toBe('/personal');
+    expect(viewForRoute('/personal')).toBe('personal');
+    expect(viewForRoute('/personal/marketer')).toBe('personal');
+    expect(viewForRoute('/personal/aws-steward?x=1')).toBe('personal');
+    expect(viewForRoute('/personalx')).toBe('home');
+    const state = navigationStore.getState();
+    state.rememberRoute('/personal/accountant');
+    expect(navigationStore.getState().view).toBe('personal');
+    state.rememberRoute('/studio/scenes');
     expect(navigationStore.getState().view).toBe('studio');
-    expect(navigationStore.getState().routeForView('studio')).toBe('/');
+    // Switching back to Personal comes back to the Accountant, not its Home.
+    expect(navigationStore.getState().routeForView('personal')).toBe(
+      '/personal/accountant',
+    );
+    expect(navigationStore.getState().routeForView('studio')).toBe(
+      '/studio/scenes',
+    );
   });
 
   it('returns to the page a shell was left on', () => {
@@ -317,10 +339,10 @@ describe('what the last visit left', () => {
   beforeEach(forgetBrowser);
   afterEach(forgetBrowser);
 
-  it('opens on the Studio for a reader who never chose a shell', async () => {
+  it('opens on the Personal shell for a reader who never chose one', async () => {
     const state = await open();
-    expect(state.view).toBe('studio');
-    expect(state.routeForView(state.view)).toBe('/studio');
+    expect(state.view).toBe('personal');
+    expect(state.routeForView(state.view)).toBe('/personal');
     expect(state.lastRouteByView).toEqual({});
   });
 
@@ -336,8 +358,10 @@ describe('what the last visit left', () => {
     expect((await open()).view).toBe('agentify');
     document.cookie = `${SHELL_COOKIE}=research; path=/`;
     expect((await open()).view).toBe('research');
+    document.cookie = `${SHELL_COOKIE}=personal; path=/`;
+    expect((await open()).view).toBe('personal');
     document.cookie = `${SHELL_COOKIE}=power; path=/`;
-    expect((await open()).view).toBe('studio');
+    expect((await open()).view).toBe('personal');
   });
 
   it('drops the root an earlier version wrote down as the Power shell page', async () => {
@@ -398,7 +422,7 @@ describe('what the last visit left', () => {
     }
     forgetBrowser();
     localStorage.setItem(STORAGE_KEY, '{"lastRouteByView":"/studio"}');
-    expect((await open()).view).toBe('studio');
+    expect((await open()).view).toBe('personal');
   });
 });
 
