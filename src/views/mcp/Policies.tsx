@@ -28,7 +28,8 @@
 
 import type { JSX } from 'react';
 import { useMemo, useState } from 'react';
-import { Heading, Label, Link, Select, Spinner, Text } from '@primer/react';
+import { Heading, Label, Link, Select, Text } from '@primer/react';
+import { PolicySkeleton } from './PolicySkeleton';
 import { Blankslate, Table } from '@primer/react/experimental';
 import { Box, Card } from '@datalayer/primer-addons';
 import { ShieldCheckIcon } from '@primer/octicons-react';
@@ -329,9 +330,7 @@ export const Policies = ({
       )}
 
       {policy.isPending && !policy.data ? (
-        <Box display="flex" justifyContent="center" py={6}>
-          <Spinner />
-        </Box>
+        <PolicySkeleton rows={5} what="Loading the policies" />
       ) : rows.length === 0 && tools.length === 0 ? (
         <Blankslate border spacious>
           <Blankslate.Visual>

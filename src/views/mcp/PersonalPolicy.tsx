@@ -37,7 +37,8 @@
 
 import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Flash, Heading, Spinner, Text } from '@primer/react';
+import { Button, Flash, Heading, Text } from '@primer/react';
+import { PolicySkeleton } from './PolicySkeleton';
 import { Box } from '@datalayer/primer-addons';
 import { McpErrorBlankslate } from '../../components/mcp';
 import {
@@ -219,11 +220,7 @@ export const PersonalPolicy = ({
   }
 
   if (layer.isPending && layer.data === undefined) {
-    return (
-      <Box display="flex" justifyContent="center" py={5}>
-        <Spinner />
-      </Box>
-    );
+    return <PolicySkeleton />;
   }
 
   return (
