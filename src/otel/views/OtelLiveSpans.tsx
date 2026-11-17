@@ -304,9 +304,14 @@ export const OtelLiveSpans: React.FC<OtelLiveSpansProps> = ({
           Export
         </Button>
       </Box>
+      {/* Beside the list only while a span is open: with none, the list
+          takes the whole width (the user, 17 November 2026: the Agent
+          Inspector's table filled three fifths of its dialog). */}
       <Box
-        display={side ? 'grid' : 'block'}
-        gridTemplateColumns={side ? 'minmax(0, 3fr) minmax(0, 2fr)' : undefined}
+        display={side && selectedSpan ? 'grid' : 'block'}
+        gridTemplateColumns={
+          side && selectedSpan ? 'minmax(0, 3fr) minmax(0, 2fr)' : undefined
+        }
       >
         <Box maxHeight={maxHeight} overflowY="auto" minWidth={0}>
           <OtelTracesList
