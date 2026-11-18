@@ -212,6 +212,9 @@ export const FACE_EMOJIS: ReadonlyArray<string> = [
   '📁',
   '📧',
   '🤗',
+  // The seed agents' faces in the chat: the Shopper and Terra.
+  '🛍️',
+  '🌏',
 ];
 // fluent-emoji:end
 

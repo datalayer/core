@@ -200,4 +200,6 @@ export const FLUENT_EMOJI_LOADERS: Readonly<
   '1f4c1': () => import('./svg/1f4c1'),
   '1f4e7': () => import('./svg/1f4e7'),
   '1f917': () => import('./svg/1f917'),
+  '1f6cd': () => import('./svg/1f6cd'),
+  '1f30f': () => import('./svg/1f30f'),
 };
