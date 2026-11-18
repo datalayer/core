@@ -37,11 +37,16 @@ import { registerSessionState } from '../sessionEnd';
 /**
  * The shells of the signed-in application.
  *
- * `personal` is the person's own space — their Home and the agents put in
+ * `agents` is the person's own space — their Home and the agents put in
  * front of them (a Marketer, an Accountant, the Steward for AWS) — at
- * `/personal`: where a reader lands after signing in, what the root opens,
+ * `/agents`: where a reader lands after signing in, what the root opens,
  * and the default for somebody who has not chosen (the user, 14 November
- * 2026). `studio` is where an agentic UI application is composed, validated
+ * 2026; it was `personal`, at `/personal`, until 18 November 2026: a cookie
+ * still saying `personal` names no shell and is ignored). Its pages are
+ * `/agents` itself, `/agents/integrations` and the categories with their
+ * agents (`/agents/personal/shopper`); the person's running agents, at
+ * `/agents/runtimes` and `/agents/<runtime>`, and the other `/agents/…`
+ * pages stay the Platform's. `studio` is where an agentic UI application is composed, validated
  * and shipped, at `/studio`. `home` is the whole platform, shown as *Power*, at `/power`: the key
  * is kept so a cookie written before the Studio existed still names the
  * shell it meant. `agentify` is the business cases; `admin` is the
@@ -55,7 +60,7 @@ import { registerSessionState } from '../sessionEnd';
  * signed in, at `/research/papers/…` beside them).
  */
 export type NavigationView =
-  | 'personal'
+  | 'agents'
   | 'studio'
   | 'home'
   | 'spaces'
@@ -66,8 +71,8 @@ export type NavigationView =
 
 /** The shells, and where each one opens when it has not been visited. */
 export const NAVIGATION_VIEW_HOMES: Record<NavigationView, string> = {
-  // The person's own space: its Home (14 November 2026).
-  personal: '/personal',
+  // The person's own space: its Home (14 November 2026; `/agents` since 18 November 2026).
+  agents: '/agents',
   studio: '/studio',
   // Not `/`: the root is the Studio's, so the Platform shell has an address
   // of its own to be sent to. It was `/power` until 2026-10-09, when the
@@ -146,7 +151,7 @@ type Persisted = {
 };
 
 const isView = (value: unknown): value is NavigationView =>
-  value === 'personal' ||
+  value === 'agents' ||
   value === 'studio' ||
   value === 'home' ||
   value === 'spaces' ||
@@ -229,7 +234,7 @@ function restore(): Persisted {
  *
  * What is in storage was written by whichever version ran last, under that
  * version's rules. Before the Power shell had an address of its own, its
- * page could be the root — which is now the Personal shell's, and would send Power
+ * page could be the root — which is now the Agents shell's, and would send Power
  * to it — and an earlier version filed pages under the shell the
  * toggle named. Such a page is dropped here rather than carried, so the next
  * write does not put it back.
@@ -388,6 +393,31 @@ export function isShellNeutralRoute(route: string): boolean {
  * the sidebar and the header stay where they were. Without it the settings
  * read as the Studio's and the documentation as Power's, as they once were.
  */
+/** The Agents shell's categories, each with its agents beneath: `/agents/personal/shopper`. */
+export const AGENTS_SHELL_CATEGORIES = [
+  'personal',
+  'business',
+  'technology',
+] as const;
+
+/**
+ * Whether a path is the Agents shell's: the root, `/agents` itself,
+ * `/agents/integrations`, and each category with its agents. Every other
+ * `/agents/…` page — the person's running agents at `/agents/runtimes` and
+ * `/agents/<runtime>`, the monitoring — is the Platform's.
+ */
+export function isAgentsShellPath(path: string): boolean {
+  if (path === '/' || path === '/agents' || path === '/agents/') {
+    return true;
+  }
+  const rest = path.startsWith('/agents/') ? path.slice('/agents/'.length) : '';
+  const first = rest.split('/')[0];
+  return (
+    first === 'integrations' ||
+    (AGENTS_SHELL_CATEGORIES as readonly string[]).includes(first)
+  );
+}
+
 export function viewForRoute(
   route: string,
   current?: NavigationView,
@@ -396,10 +426,10 @@ export function viewForRoute(
   if (current && isShellNeutralRoute(route)) {
     return current;
   }
-  // The root is the Personal shell's: what a signed-in reader opens on
+  // The root is the Agents shell's: what a signed-in reader opens on
   // (the user, 14 November 2026; it was the Studio's until then).
-  if (path === '/' || path === '/personal' || path.startsWith('/personal/')) {
-    return 'personal';
+  if (isAgentsShellPath(path)) {
+    return 'agents';
   }
   // The Studio. The settings and the agentspecs catalogue are read from it,
   // with its sidebar beside them, when no shell is current.
@@ -505,9 +535,9 @@ function isRouteOfView(route: unknown, view: NavigationView): route is string {
 const initial = restore();
 
 export const navigationStore = createStore<NavigationState>((set, get) => ({
-  // The Personal shell, for a reader who never chose (14 November 2026; the
+  // The Agents shell, for a reader who never chose (14 November 2026; the
   // Studio until then): a cookie that names another shell is honoured.
-  view: initial.view ?? 'personal',
+  view: initial.view ?? 'agents',
   lastRouteByView: initial.lastRouteByView ?? {},
   tabsByView: initial.tabsByView ?? {},
   requestedRoute: undefined,
@@ -548,7 +578,7 @@ export const navigationStore = createStore<NavigationState>((set, get) => ({
     // shell the toggle named rather than the one the route belonged to, so a
     // reader can still have `/items` written down as Agentify's page. Going
     // "to Agentify" must never land on a Home page — nor Power on the root,
-    // which was its page before it had `/power` and is now the Personal shell's.
+    // which was its page before it had `/power` and is now the Agents shell's.
     const remembered = get().lastRouteByView[view];
     return isRouteOfView(remembered, view)
       ? remembered

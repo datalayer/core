@@ -18,6 +18,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetSessionState } from '../sessionEnd';
 import {
+  isAgentsShellPath,
   NAVIGATION_VIEW_HOMES,
   isHostedAppRoute,
   isRememberableRoute,
@@ -39,7 +40,7 @@ describe('where each shell was left', () => {
 
   it('opens a shell never visited on its home page', () => {
     const { routeForView } = navigationStore.getState();
-    expect(routeForView('personal')).toBe('/personal');
+    expect(routeForView('agents')).toBe('/agents');
     expect(routeForView('studio')).toBe('/studio');
     expect(routeForView('agentify')).toBe(NAVIGATION_VIEW_HOMES.agentify);
     expect(routeForView('admin')).toBe('/admin');
@@ -48,8 +49,8 @@ describe('where each shell was left', () => {
   });
 
   it('files the Studio under its own shell, and the root under the Personal shell', () => {
-    expect(viewForRoute('/')).toBe('personal');
-    expect(viewForRoute('/?tab=recent')).toBe('personal');
+    expect(viewForRoute('/')).toBe('agents');
+    expect(viewForRoute('/?tab=recent')).toBe('agents');
     expect(viewForRoute('/studio')).toBe('studio');
     expect(viewForRoute('/studio/apps/new?from=template')).toBe('studio');
     expect(viewForRoute('/studios')).toBe('home');
@@ -88,7 +89,7 @@ describe('where each shell was left', () => {
     // And a shell's own page stays its shell's with one.
     expect(viewForRoute('/studio#apps')).toBe('studio');
     expect(viewForRoute('/admin#users', 'studio')).toBe('admin');
-    expect(viewForRoute('/#top')).toBe('personal');
+    expect(viewForRoute('/#top')).toBe('agents');
     expect(isRememberableRoute('/signin#next')).toBe(false);
     // The decks too: a host draws them beside the shell they were opened from.
     expect(isShellNeutralRoute('/decks/funding/seed')).toBe(true);
@@ -124,27 +125,36 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/power')).toBe('home');
     expect(isRememberableRoute('/')).toBe(true);
     expect(isRememberableRoute('/power')).toBe(true);
-    // Opening the root is being in the Personal shell, and coming back returns there.
+    // Opening the root is being in the Agents shell, and coming back returns there.
     navigationStore.getState().rememberRoute('/');
-    expect(navigationStore.getState().view).toBe('personal');
-    expect(navigationStore.getState().routeForView('personal')).toBe('/');
+    expect(navigationStore.getState().view).toBe('agents');
+    expect(navigationStore.getState().routeForView('agents')).toBe('/');
     expect(navigationStore.getState().routeForView('studio')).toBe('/studio');
   });
 
-  it('files the Personal shell and returns to the page it was left on', () => {
-    expect(NAVIGATION_VIEW_HOMES.personal).toBe('/personal');
-    expect(viewForRoute('/personal')).toBe('personal');
-    expect(viewForRoute('/personal/marketer')).toBe('personal');
-    expect(viewForRoute('/personal/aws-steward?x=1')).toBe('personal');
-    expect(viewForRoute('/personalx')).toBe('home');
+  it('files the Agents shell and returns to the page it was left on', () => {
+    expect(NAVIGATION_VIEW_HOMES.agents).toBe('/agents');
+    expect(viewForRoute('/agents')).toBe('agents');
+    expect(viewForRoute('/agents/personal/shopper')).toBe('agents');
+    expect(viewForRoute('/agents/technology/aws-steward?x=1')).toBe('agents');
+    expect(viewForRoute('/agents/business')).toBe('agents');
+    expect(viewForRoute('/agents/integrations')).toBe('agents');
+    // The person's running agents and the other `/agents/…` pages stay the Platform's.
+    expect(viewForRoute('/agents/runtimes')).toBe('home');
+    expect(viewForRoute('/agents/rt-123')).toBe('home');
+    expect(viewForRoute('/agents/monitoring/usage')).toBe('home');
+    expect(viewForRoute('/agentsx')).toBe('home');
+    // `/personal` is gone: no shell claims it.
+    expect(viewForRoute('/personal')).toBe('home');
+    expect(isAgentsShellPath('/agents/personalx')).toBe(false);
     const state = navigationStore.getState();
-    state.rememberRoute('/personal/accountant');
-    expect(navigationStore.getState().view).toBe('personal');
+    state.rememberRoute('/agents/business/accountant');
+    expect(navigationStore.getState().view).toBe('agents');
     state.rememberRoute('/studio/scenes');
     expect(navigationStore.getState().view).toBe('studio');
-    // Switching back to Personal comes back to the Accountant, not its Home.
-    expect(navigationStore.getState().routeForView('personal')).toBe(
-      '/personal/accountant',
+    // Switching back to Agents comes back to the Accountant, not its Home.
+    expect(navigationStore.getState().routeForView('agents')).toBe(
+      '/agents/business/accountant',
     );
     expect(navigationStore.getState().routeForView('studio')).toBe(
       '/studio/scenes',
@@ -153,10 +163,12 @@ describe('where each shell was left', () => {
 
   it('returns to the page a shell was left on', () => {
     const state = navigationStore.getState();
-    state.rememberRoute('/agents');
+    state.rememberRoute('/agents/runtimes');
     state.setView('agentify');
     state.rememberRoute('/agentify/tutor/lessons');
-    expect(navigationStore.getState().routeForView('home')).toBe('/agents');
+    expect(navigationStore.getState().routeForView('home')).toBe(
+      '/agents/runtimes',
+    );
     expect(navigationStore.getState().routeForView('agentify')).toBe(
       '/agentify/tutor/lessons',
     );
@@ -173,10 +185,10 @@ describe('where each shell was left', () => {
   it('files a page under the shell its route names, and moves the view there', () => {
     // The toggle said Agentify; the reader went Home through a sidebar link.
     navigationStore.getState().setView('agentify');
-    navigationStore.getState().rememberRoute('/agents');
+    navigationStore.getState().rememberRoute('/agents/runtimes');
     const state = navigationStore.getState();
     expect(state.view).toBe('home');
-    expect(state.lastRouteByView.home).toBe('/agents');
+    expect(state.lastRouteByView.home).toBe('/agents/runtimes');
     expect(state.lastRouteByView.agentify).toBeUndefined();
     // So the toggle can take them to Agentify: it is not "already there".
     expect(viewForRoute('/agentify/tutor?tab=home')).toBe('agentify');
@@ -226,7 +238,7 @@ describe('where each shell was left', () => {
     expect(viewForRoute('/spacesx')).toBe('home');
     expect(viewForRoute('/libraryx')).toBe('home');
     expect(viewForRoute('/sessions')).toBe('home');
-    expect(viewForRoute('/agents')).toBe('home');
+    expect(viewForRoute('/agents/runtimes')).toBe('home');
     expect(NAVIGATION_VIEW_HOMES.spaces).toBe('/spaces');
     navigationStore.setState({ lastRouteByView: {} });
     expect(navigationStore.getState().routeForView('spaces')).toBe('/spaces');
@@ -339,10 +351,10 @@ describe('what the last visit left', () => {
   beforeEach(forgetBrowser);
   afterEach(forgetBrowser);
 
-  it('opens on the Personal shell for a reader who never chose one', async () => {
+  it('opens on the Agents shell for a reader who never chose one', async () => {
     const state = await open();
-    expect(state.view).toBe('personal');
-    expect(state.routeForView(state.view)).toBe('/personal');
+    expect(state.view).toBe('agents');
+    expect(state.routeForView(state.view)).toBe('/agents');
     expect(state.lastRouteByView).toEqual({});
   });
 
@@ -358,10 +370,13 @@ describe('what the last visit left', () => {
     expect((await open()).view).toBe('agentify');
     document.cookie = `${SHELL_COOKIE}=research; path=/`;
     expect((await open()).view).toBe('research');
+    document.cookie = `${SHELL_COOKIE}=agents; path=/`;
+    expect((await open()).view).toBe('agents');
+    // `personal`, the shell's name until 18 November 2026, names no shell now.
     document.cookie = `${SHELL_COOKIE}=personal; path=/`;
-    expect((await open()).view).toBe('personal');
+    expect((await open()).view).toBe('agents');
     document.cookie = `${SHELL_COOKIE}=power; path=/`;
-    expect((await open()).view).toBe('personal');
+    expect((await open()).view).toBe('agents');
   });
 
   it('drops the root an earlier version wrote down as the Power shell page', async () => {
@@ -422,7 +437,7 @@ describe('what the last visit left', () => {
     }
     forgetBrowser();
     localStorage.setItem(STORAGE_KEY, '{"lastRouteByView":"/studio"}');
-    expect((await open()).view).toBe('personal');
+    expect((await open()).view).toBe('agents');
   });
 });
 
