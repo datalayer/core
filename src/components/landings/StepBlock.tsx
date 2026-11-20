@@ -3,15 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import {
-  AnimationProvider,
-  Stack,
-  Heading,
-  Text,
-  Animate,
-  Prose,
-} from '@primer/react-brand';
+import { Heading, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { IconProps } from '@primer/octicons-react';
+import clsx from 'clsx';
 
 import styles from './../../../style/animation/Animation.module.css';
 
@@ -25,45 +20,35 @@ type IStepBlockProps = {
 export const StepBlock = (props: IStepBlockProps) => {
   const { date, title, description, StepIcon: BlockIcon } = props;
   return (
-    <AnimationProvider staggerDelayIncrement={200}>
-      <div className={styles.TimelineBarExample}>
-        <Stack direction="horizontal" padding="none" justifyContent="center">
-          <Stack
-            direction="vertical"
-            className={styles.TimelineBarExample__end}
+    <div className={styles.TimelineBarExample}>
+      <Box className={styles.TimelineBarExample__row}>
+        <Box className={styles.TimelineBarExample__end}>
+          <Heading as="h1" className={styles.TimelineBarExample__slideIn}>
+            {date}
+          </Heading>
+          <Text
+            as="p"
+            className={clsx(
+              styles.TimelineBarExample__text,
+              styles.TimelineBarExample__slideIn,
+              styles['TimelineBarExample__slideIn--delayed'],
+            )}
           >
-            <Heading as="h1" size="6" animate="slide-in-right">
-              {date}
-            </Heading>
-            <Text
-              className={styles.TimelineBarExample__text}
-              as="p"
-              size="600"
-              animate="slide-in-right"
-            >
-              <Text
-                className={styles.TimelineBarExample__highlightedText}
-                size="600"
-              >
-                {title}
-              </Text>{' '}
-              <Prose html={description} />
-            </Text>
-            <BlockIcon size={100} colored />
-            {/* <Button variant="subtle" size="large" as="a" href="https://datalayer.io">Datalayer</Button> */}
-          </Stack>
-          <div className={styles.TimelineBarExample__start}>
-            <Animate
-              className={styles.TimelineBarExample__line}
-              animate={{ variant: 'fill-in-top' }}
-            />
-            <span className={styles.TimelineBarExample__icon}>
-              <BlockIcon size={24} fill="white" />
-            </span>
-          </div>
-        </Stack>
-      </div>
-    </AnimationProvider>
+            <Text className={styles.TimelineBarExample__highlightedText}>
+              {title}
+            </Text>{' '}
+            {description}
+          </Text>
+          <BlockIcon size={100} colored />
+        </Box>
+        <div className={styles.TimelineBarExample__start}>
+          <span className={styles.TimelineBarExample__line} />
+          <span className={styles.TimelineBarExample__icon}>
+            <BlockIcon size={24} fill="white" />
+          </span>
+        </div>
+      </Box>
+    </div>
   );
 };
 

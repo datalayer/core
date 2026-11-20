@@ -21,17 +21,12 @@ import React, {
   type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Button, ButtonGroup, Text } from '@primer/react';
 import {
-  Button,
-  ButtonGroup,
-  ButtonSizes,
-  ButtonVariants,
-  Text,
-  TextProps,
-  ThemeProvider,
-  useWindowSize,
-} from '@primer/react-brand';
-import { ChevronDownIcon, ChevronUpIcon } from '@primer/octicons-react';
+  ArrowRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '@primer/octicons-react';
 import { BaseProps } from '@datalayer/primer-addons';
 import { default as clsx } from 'clsx';
 import { useId } from '../../hooks';
@@ -40,13 +35,8 @@ import {
   useOnClickOutside,
   useProvidedRefOrCreate,
   useContainsFocus,
+  useWindowSize,
 } from '../../hooks';
-
-/**
- * Design tokens
- */
-import '@primer/brand-primitives/lib/design-tokens/css/tokens/functional/components/sub-nav/base.css';
-import '@primer/brand-primitives/lib/design-tokens/css/tokens/functional/components/sub-nav/colors-with-modes.css';
 
 /** * Main Stylesheet (as a CSS Module) */
 import styles from './SubNav.module.css';
@@ -348,7 +338,7 @@ const _SubNavRoot = memo(
                     aria-controls={idForLinkContainer}
                   >
                     {activeLinklabel && (
-                      <span className="visually-hidden">
+                      <span className={styles['visually-hidden']}>
                         Navigation menu. Current page:{' '}
                       </span>
                     )}
@@ -360,7 +350,7 @@ const _SubNavRoot = memo(
                       )}
                     >
                       {activeLinklabel && (
-                        <Text as="span" size="200">
+                        <Text as="span" size="medium">
                           {activeLinklabel}
                         </Text>
                       )}
@@ -398,14 +388,14 @@ const _SubNavRoot = memo(
                     <li className={styles['SubNav__action-container']}></li>
                   )}
                   {LinkChildren}
-                  <ButtonGroup buttonSize="small">
+                  <ButtonGroup>
                     <Button
-                      href="#"
+                      size="small"
                       onClick={e => {
                         window.location.assign('https://datalayer.ai');
                       }}
-                      hasArrow={true}
-                      variant="subtle"
+                      trailingVisual={ArrowRightIcon}
+                      variant="invisible"
                     >
                       Login
                     </Button>
@@ -453,7 +443,7 @@ const SubNavHeading = ({
 type SubNavLinkProps = {
   href: string;
   'data-testid'?: string;
-  variant?: TextProps['variant'];
+  variant?: 'default' | 'muted';
   _subMenuVariant?: SubMenuVariants;
 } & PropsWithChildren<React.HTMLProps<HTMLAnchorElement>> &
   BaseProps<HTMLAnchorElement>;
@@ -521,14 +511,14 @@ const SubNavLinkWithSubmenu = forwardRef<HTMLDivElement, SubNavLinkProps>(
         >
           <Text
             as="span"
-            size="200"
+            size="medium"
             weight="semibold"
-            className={styles['SubNav__link-label']}
-            variant={
+            className={clsx(
+              styles['SubNav__link-label'],
               ariaCurrent === 'page' || variant === 'default'
-                ? 'default'
-                : 'muted'
-            }
+                ? styles['SubNav__link-label--default']
+                : styles['SubNav__link-label--muted'],
+            )}
           >
             {label}
           </Text>
@@ -641,14 +631,14 @@ const SubNavLink = forwardRef<
       >
         <Text
           as="span"
-          size="100"
+          size="small"
           weight="semibold"
-          className={styles['SubNav__link-label']}
-          variant={
+          className={clsx(
+            styles['SubNav__link-label'],
             ariaCurrent === 'page' || variant === 'default'
-              ? 'default'
-              : 'muted'
-          }
+              ? styles['SubNav__link-label--default']
+              : styles['SubNav__link-label--muted'],
+          )}
         >
           {children}
         </Text>
@@ -727,21 +717,23 @@ function SubMenu({
       context.portalRef.current,
     );
   } else {
-    const Tag = isLarge ? ThemeProvider : React.Fragment;
+    // At large widths the dropdown is always drawn in the light colour mode.
+    const lightMode = isLarge
+      ? { 'data-color-mode': 'light', 'data-light-theme': 'light' }
+      : {};
 
     return (
-      <Tag {...(isLarge ? { colorMode: 'light' } : {})}>
-        <ul
-          className={clsx(
-            styles['SubNav__sub-menu'],
-            styles[`SubNav__sub-menu--${variant}`],
-            className,
-          )}
-          {...props}
-        >
-          {children}
-        </ul>
-      </Tag>
+      <ul
+        className={clsx(
+          styles['SubNav__sub-menu'],
+          styles[`SubNav__sub-menu--${variant}`],
+          className,
+        )}
+        {...lightMode}
+        {...props}
+      >
+        {children}
+      </ul>
     );
   }
 }
@@ -754,11 +746,11 @@ type SubNavActionProps = {
   /**
    * Optional sizes for the button.
    */
-  size?: (typeof ButtonSizes)[number];
+  size?: 'small' | 'medium' | 'large';
   /**
    * Optional sizes for the button.
    */
-  variant?: (typeof ButtonVariants)[number];
+  variant?: 'default' | 'primary' | 'invisible' | 'danger';
 } & Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>;
 
 function _SubNavAction({
@@ -774,7 +766,6 @@ function _SubNavAction({
       as="a"
       href={href}
       variant={variant}
-      hasArrow={false}
       data-testid={testIds.action}
       size={size}
       {...rest}
@@ -786,7 +777,6 @@ function _SubNavAction({
 
 /**
  * Use SubNav to display a secondary navigation beneath a primary header.
- * @see https://primer.style/brand/components/SubNav
  */
 export const SubNav = Object.assign(_SubNavRoot, {
   Heading: SubNavHeading,

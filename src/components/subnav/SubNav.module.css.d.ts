@@ -42,5 +42,8 @@ declare const styles: {
   readonly 'SubNav__heading-label': string;
   readonly 'SubNav__link--expanded': string;
   readonly 'fade-in-down': string;
+  readonly 'SubNav__link-label--default': string;
+  readonly 'SubNav__link-label--muted': string;
+  readonly 'visually-hidden': string;
 };
 export = styles;

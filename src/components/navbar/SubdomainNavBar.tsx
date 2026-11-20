@@ -13,14 +13,13 @@ import React, {
   useEffect,
 } from 'react';
 import clsx from 'clsx';
-import { SearchIcon, XIcon, LinkExternalIcon } from '@primer/octicons-react';
 import {
-  Button,
-  FormControl,
-  Text,
-  TextInput,
-  Label,
-} from '@primer/react-brand';
+  ArrowRightIcon,
+  SearchIcon,
+  XIcon,
+  LinkExternalIcon,
+} from '@primer/octicons-react';
+import { Button, FormControl, Text, TextInput, Label } from '@primer/react';
 import { CircleYellowIcon } from '@datalayer/icons-react';
 import { NavigationVisbilityObserver } from './NavigationVisbilityObserver';
 import { useCoreStore } from '../../state';
@@ -33,11 +32,6 @@ import {
 } from '../../hooks';
 import { useRunStore } from '../../state';
 import { useId } from '../../hooks';
-
-/**
- * Design tokens
- */
-import '@primer/brand-primitives/lib/design-tokens/css/tokens/functional/components/subdomain-nav-bar/colors-with-modes.css';
 
 /** * Main Stylesheet (as a CSS Module) */
 import styles from './SubdomainNavBar.module.css';
@@ -202,7 +196,7 @@ function Root({
           variant="primary"
           className={clsx(
             styles['SubdomainNavBar-skip-to-content'],
-            !startOfContentButtonFocused && 'visually-hidden',
+            !startOfContentButtonFocused && styles['visually-hidden'],
           )}
           onFocus={setStartOfContentButtonFocusedTrue}
           onBlur={setStartOfContentButtonFocusedFalse}
@@ -247,10 +241,8 @@ function Root({
                 </li>
                 {isDev && (
                   <li>
-                    <Label
-                      leadingVisual={<CircleYellowIcon />}
-                      color="green-blue"
-                    >
+                    <Label variant="success" style={{ gap: 4 }}>
+                      <CircleYellowIcon />
                       DEV
                     </Label>
                   </li>
@@ -664,7 +656,7 @@ const SearchInternal = (
               onSubmit={onSubmit}
               role="search"
             >
-              <FormControl fullWidth size="medium">
+              <FormControl>
                 <FormControl.Label visuallyHidden>Search</FormControl.Label>
                 <TextInput
                   ref={ref}
@@ -676,7 +668,7 @@ const SearchInternal = (
                   placeholder={`Search ${title}`}
                   onChange={onChange}
                   defaultValue={searchTerm}
-                  invisible
+                  block
                   leadingVisual={<SearchIcon size={16} />}
                   aria-activedescendant={
                     activeDescendant === -1
@@ -735,7 +727,7 @@ const SearchInternal = (
 
                       <Text
                         as="p"
-                        size="200"
+                        size="medium"
                         id={`subdomainnavbar-search-result-item-desc${index}`}
                         className={
                           styles['SubdomainNavBar-search-result-item-desc']
@@ -745,7 +737,7 @@ const SearchInternal = (
                       </Text>
                       <div>
                         <Text
-                          size="100"
+                          size="small"
                           className={
                             styles['SubdomainNavBar-search-result-item-desc']
                           }
@@ -755,7 +747,7 @@ const SearchInternal = (
                         {result.category && (
                           <>
                             <Text
-                              size="100"
+                              size="small"
                               className={
                                 styles[
                                   'SubdomainNavBar-search-result-item-desc'
@@ -766,7 +758,7 @@ const SearchInternal = (
                               •{' '}
                             </Text>
                             <Text
-                              size="100"
+                              size="small"
                               className={
                                 styles[
                                   'SubdomainNavBar-search-result-item-desc'
@@ -787,7 +779,7 @@ const SearchInternal = (
               aria-live="polite"
               aria-atomic="true"
               data-testid={testIds.liveRegion}
-              className="visually-hidden"
+              className={styles['visually-hidden']}
             >
               {`${searchResults?.length} suggestions.`}
               {liveRegion && <span>&nbsp;</span>}
@@ -803,14 +795,15 @@ const Search = forwardRef(SearchInternal);
 
 type CTAActionProps = {
   hasArrow?: boolean;
-  size?: string;
+  size?: 'small' | 'medium' | 'large';
 } & React.HTMLAttributes<HTMLAnchorElement>;
 
 function PrimaryAction({
   children,
+  hasArrow = false,
+  size = 'small',
   ...rest
 }: PropsWithChildren<CTAActionProps>) {
-  const { hasArrow = false, size = 'small' } = rest;
   return (
     <Button
       as="a"
@@ -818,7 +811,7 @@ function PrimaryAction({
       className={clsx(styles['SubdomainNavBar-cta-button'])}
       variant="primary"
       size={size}
-      hasArrow={hasArrow}
+      trailingVisual={hasArrow ? ArrowRightIcon : undefined}
       {...rest}
     >
       {children}
@@ -828,9 +821,10 @@ function PrimaryAction({
 
 function SecondaryAction({
   children,
+  hasArrow = false,
+  size = 'small',
   ...rest
 }: PropsWithChildren<CTAActionProps>) {
-  const { hasArrow = false, size = 'small' } = rest;
   return (
     <Button
       as="a"
@@ -840,7 +834,7 @@ function SecondaryAction({
         styles['SubdomainNavBar-cta-button--secondary'],
       )}
       size={size}
-      hasArrow={hasArrow}
+      trailingVisual={hasArrow ? ArrowRightIcon : undefined}
       {...rest}
     >
       {children}

@@ -3,15 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Button } from '@primer/react-brand';
+import { Button } from '@primer/react';
 import { MoveToTopIcon } from '@primer/octicons-react';
 
 export const ToTopBranded = () => {
   return (
     <div style={{ position: 'fixed', bottom: '50px', left: '100px' }}>
       <Button
-        leadingVisual={<MoveToTopIcon />}
-        hasArrow={false}
+        leadingVisual={MoveToTopIcon}
         size="small"
         onClick={e => window.scrollTo(0, 0)}
       >

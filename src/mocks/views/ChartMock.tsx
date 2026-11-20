@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Heading } from '@primer/react-brand';
+import { Heading } from '@primer/react';
 import { lazyWithPreload, WithSuspense } from '../../utils';
 import { HorizontalCenter } from '../../components/display';
 import { CHART_4 } from './ChartMockOptions';
@@ -21,7 +21,7 @@ export const ChartMock = (props: Props) => {
   const { title } = props;
   return (
     <HorizontalCenter>
-      <Heading size="3">{title}</Heading>
+      <Heading as="h3">{title}</Heading>
       <ReactEcharts
         option={CHART_4}
         style={{ width: '600px', height: '300px' }}

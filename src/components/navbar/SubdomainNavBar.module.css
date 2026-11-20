@@ -9,15 +9,13 @@
   position: relative;
   z-index: 90;
   font-weight: 550;
-  background: var(--brand-SubdomainNavBar-canvas-default);
+  background: var(--bgColor-default);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   transition:
-    background-color var(--brand-animation-duration-fast)
-      var(--brand-animation-easing-default),
-    border-color var(--brand-animation-duration-fast)
-      var(--brand-animation-easing-default);
+    background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   height: 75px;
 }
 
@@ -69,12 +67,12 @@
   padding: 0;
   margin: 0;
   max-width: 340px;
-  color: var(--brand-color-text-default);
+  color: var(--fgColor-default);
   padding: var(--base-size-16) 0;
 }
 
 .SubdomainNavBar-logo-mark {
-  color: var(--brand-color-text-default);
+  color: var(--fgColor-default);
   position: relative;
 }
 
@@ -83,10 +81,10 @@
   left: calc(-32px + 5px);
   opacity: 0;
   transition:
-    opacity var(--brand-animation-duration-fast),
-    transform var(--brand-animation-duration-fast) ease;
+    opacity 0.3s,
+    transform 0.3s ease;
   transform: translateX(5px);
-  color: var(--brand-color-text-muted);
+  color: var(--fgColor-muted);
 }
 
 .SubdomainNavBar-logo-mark:hover .SubdomainNavBar-back-arrow {
@@ -95,7 +93,7 @@
 }
 
 .SubdomainNavBar-title-separator {
-  color: var(--brand-color-text-muted);
+  color: var(--fgColor-muted);
   font-weight: var(--base-text-weight-semibold);
   font-size: var(--base-size-32);
   line-height: 29px;
@@ -107,11 +105,11 @@
 }
 
 .SubdomainNavBar-title {
-  font-family: var(--brand-heading-fontFamily);
+  font-family: var(--fontStack-sansSerif, inherit);
   font-weight: var(--base-text-weight-semibold);
   font-size: var(--base-size-24);
   line-height: var(--base-size-32);
-  color: var(--brand-color-text-default);
+  color: var(--fgColor-default);
   text-decoration: none;
   padding-right: var(--base-size-16);
   white-space: nowrap;
@@ -162,11 +160,11 @@
     right: 0;
     bottom: 0;
     z-index: 2;
-    background-color: var(--brand-color-canvas-default);
+    background-color: var(--bgColor-default);
     width: 100vw;
     height: calc(100vh - 75px);
     animation: fade-in-down 500ms;
-    animation-timing-function: var(--brand-animation-easing-default);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .SubdomainNavBar-menu-wrapper--close {
@@ -221,7 +219,7 @@
     animation-duration: 500ms;
     animation-delay: calc(var(--animation-order) * 80ms);
     animation-fill-mode: both;
-    animation-timing-function: var(--brand-animation-easing-default);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
 
@@ -251,8 +249,8 @@
   flex-direction: row;
   align-items: center;
   gap: var(--base-size-8);
-  color: var(--brand-color-text-default);
-  font-family: var(--brand-heading-fontFamily);
+  color: var(--fgColor-default);
+  font-family: var(--fontStack-sansSerif, inherit);
   font-weight: var(--base-text-weight-normal);
   font-size: var(--base-size-20);
   line-height: var(--base-size-20);
@@ -281,7 +279,7 @@
 
 @media screen and (min-width: 48rem) {
   .SubdomainNavBar-link {
-    font-family: var(--brand-heading-fontFamily);
+    font-family: var(--fontStack-sansSerif, inherit);
     font-weight: var(--base-text-weight-semibold);
     font-size: var(--base-size-16);
     line-height: var(--base-size-16);
@@ -295,11 +293,11 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background-color: var(--brand-SubdomainNavBar-border-nav-default);
+    background-color: var(--borderColor-default);
     opacity: 0;
     transition:
-      opacity var(--brand-animation-duration-fast),
-      transform var(--brand-animation-duration-fast);
+      opacity 0.3s,
+      transform 0.3s;
     opacity: 1;
     transform: scale(0);
     transform-origin: center;
@@ -313,14 +311,14 @@
   }
 
   .SubdomainNavBar-link:active::after {
-    background-color: var(--brand-SubdomainNavBar-border-nav-pressed);
+    background-color: var(--borderColor-emphasis);
     transform: scale(0.6);
   }
 
   .SubdomainNavBar-overflow-menu-item .SubdomainNavBar-link {
-    transition: background-color var(--brand-animation-easing-default) 250ms;
-    background-color: var(--brand-SubdomainNavBar-canvas-overflow-default);
-    color: var(--brand-SubdomainNavBar-fg-overflow-default);
+    transition: background-color cubic-bezier(0.16, 1, 0.3, 1) 250ms;
+    background-color: var(--overlay-bgColor);
+    color: var(--fgColor-default);
   }
 
   .SubdomainNavBar-overflow-menu-item .SubdomainNavBar-link::after {
@@ -328,12 +326,12 @@
   }
 
   .SubdomainNavBar-overflow-menu-item .SubdomainNavBar-link:hover {
-    background-color: var(--brand-SubdomainNavBar-canvas-overflow-hover);
+    background-color: var(--bgColor-muted);
   }
 
   .SubdomainNavBar-overflow-menu-item .SubdomainNavBar-link:focus,
   .SubdomainNavBar-overflow-menu-item .SubdomainNavBar-link:focus-visible {
-    box-shadow: inset 0px 0px 0px 2px var(--brand-color-focus);
+    box-shadow: inset 0px 0px 0px 2px var(--focus-outlineColor);
     outline: none;
   }
 }
@@ -363,12 +361,12 @@
   position: absolute;
   right: 0;
   top: var(--base-size-48);
-  background-color: var(--base-color-scale-white-0);
-  border-radius: var(--brand-borderRadius-large);
+  background-color: var(--overlay-bgColor);
+  border-radius: var(--borderRadius-large, 12px);
   animation:
     fade-in-down 0.25s,
     enlarge-shadow 250ms forwards;
-  animation-timing-function: var(--brand-animation-easing-default);
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0px 8px 24px rgba(1, 4, 9, 0.15);
   overflow: hidden;
 }
@@ -401,17 +399,17 @@
   cursor: pointer;
   appearance: none;
   background-color: transparent;
-  border: var(--brand-borderWidth-thick) solid transparent;
-  color: var(--brand-color-text-default);
-  width: calc(48px - var(--brand-borderWidth-thick));
-  height: calc(48px - var(--brand-borderWidth-thick));
+  border: var(--borderWidth-thick, 2px) solid transparent;
+  color: var(--fgColor-default);
+  width: calc(48px - var(--borderWidth-thick, 2px));
+  height: calc(48px - var(--borderWidth-thick, 2px));
   display: flex;
   align-items: center;
   justify-content: center;
   transition:
-    border 250ms var(--brand-animation-easing-default),
+    border 250ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 250ms ease;
-  border-radius: var(--brand-borderRadius-medium);
+  border-radius: var(--borderRadius-medium, 6px);
   box-shadow: 0 0 0 2px transparent;
 }
 
@@ -429,15 +427,15 @@
 .SubdomainNavBar-menu-button-bar {
   width: 22px;
   height: 2px;
-  background-color: var(--brand-color-text-default);
+  background-color: var(--fgColor-default);
   margin: var(--base-size-4) auto;
-  border-radius: var(--brand-borderRadius-large);
+  border-radius: var(--borderRadius-large, 12px);
   display: block;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .SubdomainNavBar-menu-button-bar {
-    transition-timing-function: var(--brand-animation-easing-default);
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
     transition-duration: 500ms;
     transition-property: opacity, transform;
   }
@@ -470,13 +468,12 @@
 @media screen and (min-width: 48rem) {
   .SubdomainNavBar-search-button:hover,
   .SubdomainNavBar-menu-button:hover {
-    border: var(--brand-borderWidth-thick) solid
-      var(--brand-SubdomainNavBar-border-button-hover);
+    border: var(--borderWidth-thick, 2px) solid var(--borderColor-default);
   }
 
   .SubdomainNavBar-search-button:active,
   .SubdomainNavBar-menu-button:active {
-    box-shadow: 0 0 0 1px var(--brand-SubdomainNavBar-border-button-hover);
+    box-shadow: 0 0 0 1px var(--borderColor-default);
   }
 
   .SubdomainNavBar-mobile-menu-button {
@@ -522,7 +519,7 @@
     animation-duration: 500ms;
     animation-delay: calc(10 * 80ms);
     animation-fill-mode: both;
-    animation-timing-function: var(--brand-animation-easing-default);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .SubdomainNavBar-inner-container--search-open
@@ -567,13 +564,13 @@
     top: 0;
     left: 0;
     right: 0;
-    background: var(--brand-SubdomainNavBar-canvas-search);
+    background: var(--bgColor-default);
     -webkit-backdrop-filter: blur(100px);
     backdrop-filter: blur(100px);
     height: 100vh;
     width: 100vw;
-    animation: fade-in-down var(--brand-animation-duration-fast);
-    animation-timing-function: var(--brand-animation-easing-default);
+    animation: fade-in-down 0.3s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
 
@@ -585,7 +582,7 @@
     width: 100vw;
     left: 0;
     right: 0;
-    background-color: var(--brand-SubdomainNavBar-canvas-search);
+    background-color: var(--bgColor-default);
   }
 }
 
@@ -597,7 +594,7 @@
 
 .SubdomainNavBar-search-dialog-control-area {
   height: 74px;
-  background: var(--brand-SubdomainNavBar-canvas-default);
+  background: var(--bgColor-default);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   padding: var(--base-size-12) var(--base-size-28);
@@ -621,8 +618,8 @@
 .SubdomainNavBar-search-results-container {
   animation: fade-in-down 500ms;
   padding: var(--base-size-24);
-  background-color: var(--base-color-scale-white-0);
-  border-radius: var(--brand-borderRadius-large);
+  background-color: var(--overlay-bgColor);
+  border-radius: var(--borderRadius-large, 12px);
   box-shadow: 0px 8px 24px rgba(1, 4, 9, 0.15);
   max-height: 514px;
   height: 70vh;
@@ -641,38 +638,37 @@
 
 .SubdomainNavBar-search-results-heading {
   display: block;
-  font-weight: var(--brand-heading-weight-600);
+  font-weight: var(--base-text-weight-semibold, 600);
   font-size: var(--base-size-20);
   line-height: var(--base-size-24);
   margin-bottom: var(--base-size-20);
   padding: 0 var(--base-size-8);
-  color: var(--base-color-scale-black-0);
+  color: #010409;
 }
 
 .SubdomainNavBar-search-result-item {
   padding: var(--base-size-16) var(--base-size-8);
-  border-bottom: solid var(--brand-borderWidth-thin, 1px)
-    var(--brand-SubdomainNavBar-search-results-border-default, #b7bfc7);
+  border-bottom: solid var(--borderWidth-thin, 1px) var(--borderColor-default);
 }
 
 .SubdomainNavBar-search-result-item[aria-selected='true'] a {
-  outline: var(--brand-color-focus) auto var(--brand-borderWidth-thick);
+  outline: var(--focus-outlineColor) auto var(--borderWidth-thick, 2px);
 }
 
 .SubdomainNavBar-search-result-item-container {
-  letter-spacing: var(--brand-heading-letterSpacing-400);
-  font-size: var(--brand-text-size-400);
+  letter-spacing: -0.01em;
+  font-size: 1.25rem;
 }
 
 .SubdomainNavBar-search-result-item-container a {
   display: block;
-  color: var(--base-color-scale-black-0);
+  color: #010409;
   text-decoration: none;
   margin: 0 0 var(--base-size-12);
   font-size: var(--base-size-16);
-  font-weight: var(--brand-heading-weight-400);
-  font-family: var(--brand-heading-fontFamily);
-  line-height: var(--brand-text-lineHeight-400);
+  font-weight: var(--base-text-weight-semibold, 600);
+  font-family: var(--fontStack-sansSerif, inherit);
+  line-height: 1.3;
 }
 
 .SubdomainNavBar-search-result-item-container a:hover {
@@ -680,7 +676,7 @@
 }
 
 .SubdomainNavBar-search-result-item-desc {
-  color: var(--base-color-scale-black-0);
+  color: #010409;
 }
 
 .SubdomainNavBar-skip-to-content {
@@ -734,4 +730,16 @@
   100% {
     opacity: 1;
   }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

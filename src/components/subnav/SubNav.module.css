@@ -28,13 +28,13 @@
 
 .SubNav__heading {
   font-weight: var(--base-text-weight-semibold);
-  color: var(--brand-color-text-default);
-  font-family: var(--brand-heading-fontFamily);
+  color: var(--fgColor-default);
+  font-family: var(--fontStack-sansSerif, inherit);
   text-decoration: none;
 }
 
 .SubNav__heading:hover {
-  color: var(--brand-color-text-muted);
+  color: var(--fgColor-muted);
   text-decoration: none !important; /* dotcom override */
 }
 
@@ -50,8 +50,8 @@
 }
 
 .SubNav--has-shadow {
-  box-shadow: var(--brand-SubNav-shadow);
-  background-color: var(--brand-color-canvas-default);
+  box-shadow: var(--shadow-resting-medium);
+  background-color: var(--bgColor-default);
 }
 
 .SubNav--full-width {
@@ -87,7 +87,7 @@
 .SubNav__heading-separator {
   position: relative;
   top: var(--base-size-2);
-  color: var(--brand-color-text-muted);
+  color: var(--fgColor-muted);
 }
 
 /*
@@ -103,24 +103,21 @@
 .SubNav__anchor-menu-container {
   opacity: 0;
   background-color: transparent;
-  transform: translateY(var(--brand-animation-variant-slideInDown-distance));
+  transform: translateY(-0.9375rem);
   transition:
-    opacity var(--brand-animation-duration-default)
-      var(--brand-animation-easing-default),
-    background-color var(--brand-animation-duration-default)
-      var(--brand-animation-easing-default);
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .SubNav__anchor-menu-outer-container--stuck .SubNav__anchor-menu-container {
   transform: translateY(0);
   opacity: 1;
-  background-color: var(--brand-color-canvas-default);
+  background-color: var(--bgColor-default);
 }
 
 .SubNav__anchor-menu-outer-container {
   height: 0;
-  transition: height var(--brand-animation-duration-default)
-    var(--brand-animation-easing-default);
+  transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .SubNav__anchor-menu-outer-container--stuck {
@@ -130,14 +127,11 @@
 .SubNav__sub-menu--anchor {
   opacity: 0;
   visibility: hidden;
-  transform: translateY(var(--brand-animation-variant-slideInDown-distance));
+  transform: translateY(-0.9375rem);
   transition:
-    opacity var(--brand-animation-duration-default)
-      var(--brand-animation-easing-default),
-    height var(--brand-animation-duration-default)
-      var(--brand-animation-easing-default),
-    transform var(--brand-animation-duration-default)
-      var(--brand-animation-easing-default);
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .SubNav__anchor-menu-outer-container--stuck .SubNav__sub-menu--anchor {
@@ -161,7 +155,7 @@
 }
 
 .SubNav__sub-menu--anchor .SubNav__link--is-in-view .SubNav__link-label {
-  color: var(--brand-color-text-default);
+  color: var(--fgColor-default);
 }
 
 .SubNav__sub-menu--anchor .SubNav__link--is-in-view .SubNav__link-label::after,
@@ -175,13 +169,13 @@
 
 .SubNav__sub-menu--anchor .SubNav__link--is-in-view .SubNav__link-label::after,
 .SubNav__link:active .SubNav__link-label::after {
-  border-color: var(--brand-color-text-default);
+  border-color: var(--fgColor-default);
   transform: scale(0.9, 1);
 }
 
 .SubNav__link[data-active='true'] .SubNav__link-label::after,
 .SubNav__sub-menu--anchor .SubNav__link--is-in-view .SubNav__link-label::after {
-  border-color: var(--brand-color-text-default);
+  border-color: var(--fgColor-default);
   opacity: 1;
 }
 
@@ -194,7 +188,7 @@
 
 .SubNav__link:hover .SubNav__link-label::after,
 .SubNav__link[aria-current]:not([aria-current='false']) * {
-  color: var(--brand-SubNav-color-link-active);
+  color: var(--fgColor-default);
   text-decoration: none !important; /* dotcom override */
 }
 
@@ -206,11 +200,11 @@
   width: 100%;
   height: 2px;
   border-width: 2px;
-  border-bottom: var(--base-size-2) solid var(--brand-color-text-muted);
+  border-bottom: var(--base-size-2) solid var(--fgColor-muted);
   transition:
-    opacity var(--brand-animation-duration-fast),
-    transform var(--brand-animation-duration-fast),
-    border-color var(--brand-animation-duration-fast);
+    opacity 0.3s,
+    transform 0.3s,
+    border-color 0.3s;
   opacity: 1;
   transform: scale(0);
   transform-origin: center;
@@ -218,17 +212,16 @@
 
 .SubNav__link[aria-current]:not([aria-current='false'])
   .SubNav__link-label::after {
-  border-color: var(--brand-color-text-default);
+  border-color: var(--fgColor-default);
 }
 
 .SubNav__link:hover .SubNav__link-label {
-  transition: color var(--brand-animation-duration-fast)
-    var(--brand-animation-easing-default);
-  color: var(--brand-SubNav-color-link-active);
+  transition: color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--fgColor-default);
 }
 
 .SubNav__link:hover .SubNav__link-label::after {
-  border-color: var(--brand-color-text-default);
+  border-color: var(--fgColor-default);
 }
 
 /*
@@ -255,7 +248,7 @@
     content: '';
     z-index: -1;
     position: fixed;
-    background-color: var(--base-color-scale-black-0);
+    background-color: #010409;
     opacity: 0;
     visibility: hidden;
     top: 0;
@@ -270,10 +263,8 @@
     opacity: 0.3;
     visibility: visible;
     transition:
-      visibility var(--brand-animation-duration-default)
-        var(--brand-animation-easing-default),
-      opacity var(--brand-animation-duration-default)
-        var(--brand-animation-easing-default);
+      visibility 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .SubNav__heading {
@@ -290,8 +281,8 @@
   }
 
   .SubNav--open::before {
-    background-color: var(--brand-color-canvas-default);
-    animation: fade-in 0.3s var(--brand-animation-easing-glide) forwards;
+    background-color: var(--bgColor-default);
+    animation: fade-in 0.3s cubic-bezier(0.33, 1, 0.68, 1) forwards;
   }
 
   .SubNav__header-container {
@@ -330,13 +321,13 @@
   }
 
   .SubNav__links-overlay--open .SubNav__link:hover .SubNav__link-label {
-    color: var(--brand-color-text-default);
+    color: var(--fgColor-default);
   }
 
   .SubNav__links-overlay--open
     .SubNav__link--has-sub-menu:hover
     .SubNav__link-label {
-    color: var(--brand-color-text-muted);
+    color: var(--fgColor-muted);
   }
 
   .SubNav__overlay-toggle {
@@ -375,14 +366,14 @@
   .SubNav__links-overlay--open
     .SubNav__link[aria-current]:not([aria-current='false'])
     * {
-    color: var(--brand-SubNav-color-link-active);
+    color: var(--fgColor-default);
   }
 
   .SubNav__links-overlay--open .SubNav__link,
   .SubNav__links-overlay--open .SubNav__action-container {
     display: block;
     padding: var(--base-size-8) 0;
-    animation: fade-in 0.3s var(--brand-animation-easing-glide) forwards;
+    animation: fade-in 0.3s cubic-bezier(0.33, 1, 0.68, 1) forwards;
   }
 
   .SubNav__links-overlay--open .SubNav__link--has-sub-menu {
@@ -405,7 +396,7 @@
   }
 
   .SubNav__sub-menu--dropdown .SubNav__link:hover .SubNav__link-label {
-    color: var(--brand-color-text-default) !important;
+    color: var(--fgColor-default) !important;
   }
 
   .SubNav__anchor-menu-container {
@@ -427,17 +418,13 @@
     top: 0;
     bottom: 0;
     width: var(--base-size-32);
-    background: linear-gradient(
-      to left,
-      var(--brand-color-canvas-default),
-      transparent
-    );
+    background: linear-gradient(to left, var(--bgColor-default), transparent);
     pointer-events: none;
     z-index: 100;
   }
 
   .SubNav__link-label {
-    font-size: var(--brand-text-size-200);
+    font-size: 1rem;
     font-weight: var(--base-text-weight-semibold);
     padding-block-end: var(--base-size-6);
   }
@@ -449,9 +436,9 @@
   }
 
   .SubNav__sub-menu--anchor .SubNav__link-label {
-    font-size: var(--brand-text-size-100);
-    line-height: var(--brand-text-lineHeight-100);
-    letter-spacing: var(--brand-text-letterSpacing-100);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
   }
 
   .SubNav__sub-menu--anchor .SubNav__sub-menu-list {
@@ -480,7 +467,7 @@
 }
 
 .SubNav__overlay-toggle-icon {
-  fill: var(--brand-color-text-default);
+  fill: var(--fgColor-default);
 }
 
 .SubNav__overlay-toggle-content {
@@ -567,14 +554,14 @@
 
   .SubNav__link {
     text-decoration: none !important; /* dotcom override */
-    transition: color 0.2s var(--brand-animation-easing-glide);
+    transition: color 0.2s cubic-bezier(0.33, 1, 0.68, 1);
     position: relative;
     padding: var(--base-size-4) 0;
   }
 
   .SubNav__link-label {
-    font-size: var(--brand-text-size-100);
-    line-height: var(--brand-text-lineHeight-100);
+    font-size: 0.875rem;
+    line-height: 1.5;
   }
 
   .SubNav__link--has-sub-menu {
@@ -594,10 +581,10 @@
 
   .SubNav__sub-menu.SubNav__sub-menu--dropdown {
     background-clip: padding-box;
-    background-color: var(--brand-SubNav-color-subMenu-bgColor);
+    background-color: var(--overlay-bgColor);
     border: var(--borderWidth-thin, max(1px, 0.0625rem)) solid
       var(--borderColor-default, var(--color-border-default));
-    border-radius: var(--brand-borderRadius-xlarge, 0.375rem);
+    border-radius: var(--borderRadius-medium, 6px);
     box-shadow: var(--shadow-floating-legacy, var(--color-shadow-large));
     left: 0;
     list-style: none;
@@ -607,8 +594,8 @@
     position: absolute;
     top: 100%;
     z-index: 9998;
-    transition-timing-function: var(--brand-animation-easing-glide);
-    transition-duration: var(--brand-animation-duration-fast);
+    transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+    transition-duration: 0.3s;
     transition-property: opacity, transform;
     left: calc(var(--base-size-4) / 4 * -16);
     visibility: hidden;
@@ -618,14 +605,14 @@
     display: flex;
     flex-direction: column;
     gap: var(--base-size-8);
-    width: var(--brand-SubNav-width-subMenu);
+    width: 18.75rem;
   }
 
   .SubNav__link--expanded .SubNav__sub-menu.SubNav__sub-menu--dropdown {
     visibility: visible;
     opacity: 1;
     transform: scale(1) translateY(0) translateX(-8px);
-    box-shadow: var(--brand-SubNav-shadow);
+    box-shadow: var(--shadow-resting-medium);
   }
 
   .SubNav__sub-menu-toggle {
@@ -644,7 +631,7 @@
   }
 
   .SubNav__sub-menu--dropdown .SubNav__link:hover .SubNav__link-label {
-    color: var(--brand-color-text-default) !important;
+    color: var(--fgColor-default) !important;
   }
 
   .SubNav__sub-menu--dropdown .SubNav__link-label::after {
@@ -685,8 +672,8 @@
 
   .SubNav__sub-menu-icon {
     display: inline-block !important;
-    fill: var(--brand-color-text-muted);
-    transition: transform var(--brand-animation-duration-fast);
+    fill: var(--fgColor-muted);
+    transition: transform 0.3s;
   }
 
   .SubNav__link--has-sub-menu:hover .SubNav__sub-menu-icon {
@@ -714,4 +701,24 @@
   100% {
     opacity: 1;
   }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.SubNav__link-label--default {
+  color: var(--fgColor-default);
+}
+
+.SubNav__link-label--muted {
+  color: var(--fgColor-muted);
 }
