@@ -267,40 +267,6 @@ import {
 />
 ```
 
-### Navigation & Layout
-
-#### Navigation Bar
-
-```tsx
-import { SubdomainNavBar } from '@datalayer/core';
-
-<SubdomainNavBar
-  user={currentUser}
-  organization={currentOrg}
-  navigation={[
-    { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Notebooks', href: '/notebooks' },
-    { label: 'Runtimes', href: '/runtimes' },
-  ]}
-  onSignOut={handleSignOut}
-/>;
-```
-
-#### Sub Navigation
-
-```tsx
-import { SubNav } from '@datalayer/core';
-
-<SubNav
-  items={[
-    { key: 'overview', label: 'Overview', href: '/overview' },
-    { key: 'settings', label: 'Settings', href: '/settings' },
-    { key: 'members', label: 'Members', href: '/members' },
-  ]}
-  activeKey="overview"
-/>;
-```
-
 ### Forms & Inputs
 
 #### Context Selectors

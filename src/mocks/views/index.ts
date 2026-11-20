@@ -4,7 +4,6 @@
  */
 
 export * from './ActionMenuMock';
-export * from './ChartMock';
 export * from './ChartMockOptions';
 export * from './DashboardMock';
 export * from './FormMock';

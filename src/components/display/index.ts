@@ -15,5 +15,4 @@ export * from './NavLink';
 export * from './NotebookSkeleton';
 export * from './BusyDots';
 export * from './Placeholder';
-export * from './ToTopBranded';
 export * from './VisuallyHidden';
