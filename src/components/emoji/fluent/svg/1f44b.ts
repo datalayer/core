@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+/*
  * 👋 waving hand — Fluent Emoji, Flat, by Microsoft (MIT,
  * see ../LICENSE). Written by scripts/generate-fluent-emoji.py: do not edit.
  */
