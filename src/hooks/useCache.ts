@@ -4112,13 +4112,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (_, contactId) => {
-        // Remove detail cache
+        // The deleted contact's queries go, never fetched again.
         queryClient.removeQueries({
           queryKey: queryKeys.contacts.detail(contactId),
         });
-        // Invalidate all contact queries
+        // The others are marked stale, not refetched now: the deleted contact's page
+        // is still mounted until it navigates, and a refetch while it is asked for the
+        // contact that is gone ("the contact can not be found", 21 November 2026).
+        // The list is fetched again by the page that shows it.
         queryClient.invalidateQueries({
           queryKey: queryKeys.contacts.all(),
+          refetchType: 'none',
         });
       },
     });
