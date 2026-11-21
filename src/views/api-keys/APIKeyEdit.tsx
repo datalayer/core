@@ -72,12 +72,16 @@ export const APIKeyEdit = ({
   const [keyValueVisible, setKeyValueVisible] = useState(false);
   const [keyValueCopied, setKeyValueCopied] = useState(false);
   const [keyValueLoading, setKeyValueLoading] = useState(false);
+  // The server's sentence when it has no value to give (a 404), kept under
+  // the field as well as toasted.
+  const [keyValueMissing, setKeyValueMissing] = useState<string>();
   const resetKeyValueMutation = useRef(apiKeyValueMutation.reset);
   resetKeyValueMutation.current = apiKeyValueMutation.reset;
   const forgetKeyValue = useCallback(() => {
     setKeyValue(undefined);
     setKeyValueVisible(false);
     setKeyValueCopied(false);
+    setKeyValueMissing(undefined);
     resetKeyValueMutation.current();
   }, []);
   useEffect(() => {
@@ -116,10 +120,12 @@ export const APIKeyEdit = ({
       setKeyValue(value);
       return value;
     } catch (error: any) {
-      enqueueToast(
-        error?.message || 'The API key value could not be revealed.',
-        { variant: 'error' },
-      );
+      const message =
+        error?.message || 'The API key value could not be revealed.';
+      if (error?.status === 404) {
+        setKeyValueMissing(message);
+      }
+      enqueueToast(message, { variant: 'error' });
       return undefined;
     } finally {
       setKeyValueLoading(false);
@@ -346,6 +352,11 @@ export const APIKeyEdit = ({
                 }
                 sx={{ overflow: 'visible' }}
               />
+              {keyValueMissing && (
+                <FormControl.Validation variant="error">
+                  {keyValueMissing}
+                </FormControl.Validation>
+              )}
               <FormControl.Caption>
                 Fetched only when you reveal or copy it, and hidden again when
                 you leave this page.

@@ -189,6 +189,24 @@ describe('APIKeyEdit value', () => {
     expect(valueInput().type).toBe('password');
   });
 
+  it("shows the server's sentence when the value was not kept (404)", async () => {
+    const sentence =
+      "This key's value was not kept when it was created; create a new key to have one you can copy.";
+    mocks.fetchValue.mockRejectedValue(
+      Object.assign(new Error(sentence), { status: 404 }),
+    );
+    await render();
+    await click(button('Reveal API key'));
+    expect(mocks.toast).toHaveBeenCalledWith(sentence, { variant: 'error' });
+    expect(mocks.toast).not.toHaveBeenCalledWith(
+      'The API key value could not be revealed.',
+      expect.anything(),
+    );
+    // Inline under the field too, and the value stays masked.
+    expect(container.textContent).toContain(sentence);
+    expect(valueInput().type).toBe('password');
+  });
+
   it('forgets the value when the page is left', async () => {
     await render();
     await click(button('Reveal API key'));

@@ -4300,10 +4300,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const resp = await requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/api-keys/${tokenId}/value`,
           method: 'GET',
+          // The page says why in its own words, the server's sentence first.
+          notifyOnError: false,
         });
         if (!resp?.success || typeof resp.value !== 'string' || !resp.value) {
-          throw new Error(
-            resp?.message || 'The API key value is not available.',
+          // A 404 carries the server's sentence (an unknown key, or one
+          // whose value was not kept at its creation), shown as it is.
+          throw Object.assign(
+            new Error(resp?.message || 'The API key value is not available.'),
+            { status: resp?.status },
           );
         }
         return resp.value;
