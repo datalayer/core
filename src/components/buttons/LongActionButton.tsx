@@ -45,9 +45,10 @@ export function LongActionButton(props: ILongActionButtonProps): JSX.Element {
     }
   }, [onClick, setInternalInProgress]);
   return (
+    // The label is Primer's tooltip already; a `title` beside it added the
+    // browser's own tooltip a second later (the user, 21 November 2026).
     <IconButton
       aria-label={label}
-      title={label}
       disabled={disabled || internalInProgress || inProgress}
       icon={
         internalInProgress || inProgress ? () => <Spinner size="small" /> : icon

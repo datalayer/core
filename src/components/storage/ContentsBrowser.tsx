@@ -491,7 +491,6 @@ const ConnectedContentsBrowser = (
           <IconButton
             variant="invisible"
             aria-label={'Refresh contents browser.'}
-            title={'Refresh contents browser.'}
             icon={SyncIcon}
             onClick={refreshView}
             disabled={mock}

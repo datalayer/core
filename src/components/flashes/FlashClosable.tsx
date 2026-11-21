@@ -106,7 +106,6 @@ export const FlashClosable = ({
         <Box alignSelf="start" marginLeft="close">
           <IconButton
             aria-label="Dismiss flash message"
-            title="Dismiss"
             onClick={onClose}
             variant="invisible"
             icon={XIcon}
