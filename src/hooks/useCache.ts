@@ -4287,6 +4287,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Reveal a token's value, on demand (the user, 21 November 2026).
+   *
+   * A mutation, not a query: the value is fetched only when the person asks
+   * (reveal or copy), never on a page's load, and never kept in the query
+   * cache. IAM answers it to the key's owner from a browser session only; an
+   * API-key caller is refused with 403.
+   */
+  const useTokenValue = () => {
+    return useMutation({
+      mutationFn: async (tokenId: string): Promise<string> => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamUrl}/api/iam/v1/api-keys/${tokenId}/value`,
+          method: 'GET',
+        });
+        if (!resp?.success || typeof resp.value !== 'string' || !resp.value) {
+          throw new Error(
+            resp?.message || 'The API key value is not available.',
+          );
+        }
+        return resp.value;
+      },
+      // The value is not kept in the mutation cache once the page is left.
+      gcTime: 0,
+    });
+  };
+
+  /**
    * Update token
    */
   const useUpdateToken = () => {
@@ -11202,6 +11229,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
     // Tokens
     useToken,
+    useTokenValue,
     useTokens,
     useCreateToken,
     useUpdateToken,

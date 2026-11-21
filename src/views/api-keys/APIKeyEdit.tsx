@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   PageHeader,
@@ -15,6 +15,12 @@ import {
   Textarea,
   Label,
 } from '@primer/react';
+import {
+  CheckIcon,
+  CopyIcon,
+  EyeClosedIcon,
+  EyeIcon,
+} from '@primer/octicons-react';
 import { Box } from '@datalayer/primer-addons';
 import { BoringAvatar } from '../../components/avatars';
 import { IIAMToken as IAPIKey } from '../../models';
@@ -52,11 +58,96 @@ export const APIKeyEdit = ({
     useUpdateToken: useUpdateAPIKey,
     useToken: useAPIKey,
     useDeleteToken: useDeleteAPIKey,
+    useTokenValue: useAPIKeyValue,
   } = useCache();
 
   const getAPIKeyQuery = useAPIKey(apiKeyId!);
   const updateAPIKeyMutation = useUpdateAPIKey();
   const deleteAPIKeyMutation = useDeleteAPIKey();
+  const apiKeyValueMutation = useAPIKeyValue();
+
+  // The key's value, fetched only when reveal or copy is pressed (the user,
+  // 21 November 2026), never on load; forgotten when the page is left.
+  const [keyValue, setKeyValue] = useState<string>();
+  const [keyValueVisible, setKeyValueVisible] = useState(false);
+  const [keyValueCopied, setKeyValueCopied] = useState(false);
+  const [keyValueLoading, setKeyValueLoading] = useState(false);
+  const resetKeyValueMutation = useRef(apiKeyValueMutation.reset);
+  resetKeyValueMutation.current = apiKeyValueMutation.reset;
+  const forgetKeyValue = useCallback(() => {
+    setKeyValue(undefined);
+    setKeyValueVisible(false);
+    setKeyValueCopied(false);
+    resetKeyValueMutation.current();
+  }, []);
+  useEffect(() => {
+    // Another key, or this page left: the value goes with it.
+    forgetKeyValue();
+    return forgetKeyValue;
+  }, [apiKeyId, forgetKeyValue]);
+  useEffect(() => {
+    // Leaving the browser tab leaves the page too.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        forgetKeyValue();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [forgetKeyValue]);
+  useEffect(() => {
+    if (!keyValueCopied) {
+      return;
+    }
+    const timer = window.setTimeout(() => setKeyValueCopied(false), 1800);
+    return () => window.clearTimeout(timer);
+  }, [keyValueCopied]);
+  const fetchKeyValue = useCallback(async (): Promise<string | undefined> => {
+    if (keyValue) {
+      return keyValue;
+    }
+    if (!apiKeyId) {
+      return undefined;
+    }
+    setKeyValueLoading(true);
+    try {
+      const value = await apiKeyValueMutation.mutateAsync(apiKeyId);
+      setKeyValue(value);
+      return value;
+    } catch (error: any) {
+      enqueueToast(
+        error?.message || 'The API key value could not be revealed.',
+        { variant: 'error' },
+      );
+      return undefined;
+    } finally {
+      setKeyValueLoading(false);
+    }
+  }, [keyValue, apiKeyId, apiKeyValueMutation, enqueueToast]);
+  const toggleKeyValue = useCallback(async () => {
+    if (keyValueVisible) {
+      setKeyValueVisible(false);
+      return;
+    }
+    if (await fetchKeyValue()) {
+      setKeyValueVisible(true);
+    }
+  }, [keyValueVisible, fetchKeyValue]);
+  const copyKeyValue = useCallback(async () => {
+    const value = await fetchKeyValue();
+    if (!value) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(value);
+      setKeyValueCopied(true);
+      enqueueToast('API key copied to the clipboard.', { variant: 'success' });
+    } catch {
+      setKeyValueCopied(false);
+      enqueueToast('The API key could not be copied.', { variant: 'error' });
+    }
+  }, [fetchKeyValue, enqueueToast]);
 
   const [apiKey, setAPIKey] = useState<IAPIKey>();
   const [formValues, setFormValues] = useState<FormData>({
@@ -128,7 +219,16 @@ export const APIKeyEdit = ({
             variant: 'success',
           });
           setAPIKey(updatedAPIKey);
+        } else {
+          enqueueToast(resp.message || 'The API key could not be updated.', {
+            variant: 'error',
+          });
         }
+      },
+      onError: (error: any) => {
+        enqueueToast(error?.message || 'The API key could not be updated.', {
+          variant: 'error',
+        });
       },
       onSettled: () => {
         runStore.layout().hideBackdrop();
@@ -207,6 +307,49 @@ export const APIKeyEdit = ({
                   Description must have more than 2 characters.
                 </FormControl.Validation>
               )}
+            </FormControl>
+            <FormControl>
+              <FormControl.Label>Value</FormControl.Label>
+              <TextInput
+                block
+                monospace
+                readOnly
+                aria-busy={keyValueLoading}
+                type={keyValueVisible ? 'text' : 'password'}
+                value={keyValueVisible && keyValue ? keyValue : ''}
+                placeholder={'\u2022'.repeat(24)}
+                trailingAction={
+                  <>
+                    <TextInput.Action
+                      onClick={toggleKeyValue}
+                      icon={keyValueVisible ? EyeClosedIcon : EyeIcon}
+                      aria-label={
+                        keyValueVisible ? 'Hide API key' : 'Reveal API key'
+                      }
+                      disabled={keyValueLoading}
+                      sx={{ color: 'var(--fgColor-muted)' }}
+                    />
+                    <TextInput.Action
+                      onClick={copyKeyValue}
+                      icon={keyValueCopied ? CheckIcon : CopyIcon}
+                      aria-label={
+                        keyValueCopied ? 'API key copied' : 'Copy API key'
+                      }
+                      disabled={keyValueLoading}
+                      sx={{
+                        color: keyValueCopied
+                          ? 'var(--fgColor-success)'
+                          : 'var(--fgColor-muted)',
+                      }}
+                    />
+                  </>
+                }
+                sx={{ overflow: 'visible' }}
+              />
+              <FormControl.Caption>
+                Fetched only when you reveal or copy it, and hidden again when
+                you leave this page.
+              </FormControl.Caption>
             </FormControl>
             <FormControl>
               <FormControl.Label>Expiration date</FormControl.Label>
