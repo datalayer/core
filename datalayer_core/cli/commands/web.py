@@ -9,7 +9,6 @@ from typing import Optional
 import typer
 from rich.console import Console
 
-from datalayer_core.base.serverapplication import launch_new_instance
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for web commands
@@ -60,6 +59,10 @@ def web_start(
         console.print("[yellow]Press Ctrl+C to stop the server[/yellow]")
 
         # Launch the Jupyter server
+        # Imported when the web application starts, never for the CLI to start:
+        # it is jupyter_server, about 1 s of every `datalayer` command.
+        from datalayer_core.base.serverapplication import launch_new_instance
+
         launch_new_instance()
 
     except KeyboardInterrupt:

@@ -18,7 +18,6 @@ import typer
 from rich.console import Console
 
 from datalayer_core.authn import AuthenticationManager
-from datalayer_core.authn.server.http_server import get_token
 from datalayer_core.utils.network import find_http_port
 from datalayer_core.utils.urls import DatalayerURLs
 
@@ -377,7 +376,11 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
         # Launch browser
         _launch_browser(port)
 
-        # Get token from HTTP server
+        # Get token from HTTP server. Imported for the browser login alone: the
+        # server it starts is a Jupyter one, and imported at the top it made
+        # every `datalayer` command load jupyter_server first (about 1 s).
+        from datalayer_core.authn.server.http_server import get_token
+
         result = get_token(server_url, port)
 
         if result is None:

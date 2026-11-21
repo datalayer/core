@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 
 from datalayer_core.__version import __version__
 from datalayer_core.base import paths
-from datalayer_core.base.serverapplication import DatalayerExtensionApp
 from datalayer_core.client import DatalayerClient
 from datalayer_core.contents import Contents, HomeFolder, contents
 from datalayer_core.mcp import Mcp, mcp
@@ -22,6 +21,11 @@ def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
     List[Dict[str, Any]]
         List of extension point configurations for Jupyter server.
     """
+    # Imported here, when Jupyter asks: at the top it put jupyter_server, and
+    # the jsonschema format grammars under it, in front of every `datalayer`
+    # command — about 1 s of each CLI start, before its first request.
+    from datalayer_core.base.serverapplication import DatalayerExtensionApp
+
     return [
         {
             "module": "datalayer_core",
