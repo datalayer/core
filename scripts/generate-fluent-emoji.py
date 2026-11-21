@@ -117,12 +117,17 @@ def main() -> None:
 
     def read(path: str) -> tuple[str, dict]:
         name = "meta/" + path.split("/")[1] + ".json"
-        return path.split("/")[1], json.loads(cached(args.cache, name, RAW + urllib.parse.quote(path)))
+        return path.split("/")[1], json.loads(
+            cached(args.cache, name, RAW + urllib.parse.quote(path))
+        )
 
     with concurrent.futures.ThreadPoolExecutor(16) as pool:
         folders = dict(pool.map(read, metadata))
     by_key = {
-        key_of([int(code, 16) for code in meta.get("unicode", "").split()]): (folder, meta)
+        key_of([int(code, 16) for code in meta.get("unicode", "").split()]): (
+            folder,
+            meta,
+        )
         for folder, meta in folders.items()
     }
 
@@ -148,7 +153,9 @@ def main() -> None:
         flat = [p for p in flat if p.endswith(".svg")]
         if len(flat) != 1:
             raise SystemExit(f"{folder}: {len(flat)} Flat drawings, not one")
-        svg = cached(args.cache, f"svg/{key}.svg", RAW + urllib.parse.quote(flat[0])).decode("utf-8")
+        svg = cached(
+            args.cache, f"svg/{key}.svg", RAW + urllib.parse.quote(flat[0])
+        ).decode("utf-8")
         svg = re.sub(r"\s*\n\s*", " ", svg.strip())
         # In single quotes, as prettier writes a string with no quote of its own.
         quoted = "'" + svg.replace("\\", "\\\\").replace("'", "\\'") + "'"

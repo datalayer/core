@@ -501,7 +501,8 @@ def sync_resolve(
     conflict_uid: str,
     use: str = typer.Option(..., "--use", help="local, remote or keep-both"),
 ) -> None:
-    """Decide a sync conflict.
+    """
+    Decide a sync conflict.
 
     Decide a conflict; the decision is applied on the next `sync` of the folder.
     """
@@ -601,7 +602,8 @@ def list_mounts(
 @app.command(name="unmount")
 @contents_command
 def unmount_folder(ctx: typer.Context, bridge_uid: str = typer.Argument(...)) -> None:
-    """End a bridge session and its mount.
+    """
+    End a bridge session and its mount.
 
     End a bridge session; the attachment is revoked with it and the mount goes away.
     """
@@ -1116,7 +1118,8 @@ def operations_cancel(
 def operations_dead_letter(
     ctx: typer.Context, rows: int = typer.Option(100, "--rows", min=1, max=1000)
 ) -> None:
-    """List the operations that gave up, and why.
+    """
+    List the operations that gave up, and why.
 
     What gave up, and why: retries exhausted or quarantined.
     """
@@ -1296,7 +1299,8 @@ def _dataserver_transition(ctx: typer.Context, source: str, action: str) -> None
 @dataservers_app.command(name="drain")
 @contents_command
 def dataservers_drain(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
-    """Stop routing new queries to a gateway.
+    """
+    Stop routing new queries to a gateway.
 
     Stop routing new queries to the gateway; the ones running finish.
     """
@@ -1646,7 +1650,8 @@ def datasources_queries(ctx: typer.Context, source: str = typer.Argument(...)) -
 def datasources_cancel(
     ctx: typer.Context, query_uid: str = typer.Argument(...)
 ) -> None:
-    """Stop a running query.
+    """
+    Stop a running query.
 
     Stop a running query; the cancellation reaches the connector.
     """
@@ -2351,7 +2356,8 @@ def capture_dataset_file(
     destination: str = typer.Argument(..., help="The path inside the Dataset"),
     overwrite: bool = typer.Option(False, "--overwrite"),
 ) -> None:
-    """Capture a file into a Dataset.
+    """
+    Capture a file into a Dataset.
 
     Capture a file into a Dataset — a result, or a file on a mounted Volume.
 

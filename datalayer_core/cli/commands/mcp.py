@@ -243,7 +243,8 @@ def toolsets_disable(
     session_uid: str = typer.Argument(..., help="The session, from `toolsets list`."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Revoke a toolset session.
+    """
+    Revoke a toolset session.
 
     Revoke a session. Its tools stop working on the next call.
     """
@@ -327,7 +328,8 @@ def sandboxes_share(
         help="Make these the whole grant at that level rather than adding to it.",
     ),
 ) -> None:
-    """Share a sandbox.
+    """
+    Share a sandbox.
 
     They use it with `use_sandbox` and its name.
     """
@@ -369,7 +371,8 @@ def sandboxes_unshare(
         [], "--agent", help="A service-agent uid to revoke; repeatable."
     ),
 ) -> None:
-    """Take a share back.
+    """
+    Take a share back.
 
     Name nobody to revoke everybody at the level.
     """
@@ -513,7 +516,8 @@ def service_agents_create(
         "", "--team", help="A team's rather than the organization's."
     ),
 ) -> None:
-    """Create a service agent and print its key once.
+    """
+    Create a service agent and print its key once.
 
     Create a service agent and print its key — once.
 
@@ -550,7 +554,8 @@ def service_agents_rotate(
     agent_uid: str = typer.Argument(..., help="From `service-agents list`."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Give a service agent a new key.
+    """
+    Give a service agent a new key.
 
     Give the agent a new key. The old one stops working at once.
     """
@@ -577,7 +582,8 @@ def service_agents_revoke(
     agent_uid: str = typer.Argument(..., help="From `service-agents list`."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Stop a service agent.
+    """
+    Stop a service agent.
 
     Stop the agent. It stays listed, because its audit rows name it.
     """
@@ -697,7 +703,8 @@ def tasks_describe(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> N
 @tasks_app.command(name="cancel")
 @mcp_command
 def tasks_cancel(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> None:
-    """Stop a task that is still going.
+    """
+    Stop a task that is still going.
 
     Stop a task that is still going; a finished one is answered as it is.
     """
@@ -809,7 +816,8 @@ def bindings_terminate(
     binding_uid: str = typer.Argument(..., help="The handle, e.g. sb_…"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Release a handle.
+    """
+    Release a handle.
 
     Release a handle; a sandbox binding's runtime is terminated with it.
     """
@@ -866,7 +874,8 @@ def policy_get(
     org: str | None = typer.Option(None, "--org", help="An organization you own."),
     team: str | None = typer.Option(None, "--team", help="A team you own."),
 ) -> None:
-    """Show one layer's own rules.
+    """
+    Show one layer's own rules.
 
     One layer's own rules — what it narrows, not what applies to you.
 
@@ -1012,7 +1021,8 @@ def alerts_list(
 @alerts_app.command(name="ack")
 @mcp_command
 def alerts_ack(ctx: typer.Context, alert_uid: str = typer.Argument(...)) -> None:
-    """Acknowledge an alert.
+    """
+    Acknowledge an alert.
 
     Say you have seen one. Idempotent; the first acknowledgement stands.
     """
@@ -1097,7 +1107,8 @@ def alerts_unwatch(
     uid: str = typer.Argument(..., help="From `alerts rules`."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
 ) -> None:
-    """Remove a rule.
+    """
+    Remove a rule.
 
     What it watched is unwatched from the next check.
     """
@@ -1121,7 +1132,8 @@ def alerts_test(
     operator: str = typer.Option("gt", "--operator"),
     window: int = typer.Option(3600, "--window"),
 ) -> None:
-    """Show what a rule would see right now.
+    """
+    Show what a rule would see right now.
 
     What a rule would see right now. Records nothing, tells nobody.
 
@@ -1229,7 +1241,8 @@ def forwarding(
 @app.command(name="jobs")
 @mcp_command
 def jobs(ctx: typer.Context) -> None:
-    """Show the gateway's periodic work on the replica that answers.
+    """
+    Show the gateway's periodic work on the replica that answers.
 
     The gateway's periodic work — retention, alerts — on the replica that answers.
 
@@ -1336,7 +1349,8 @@ def audit(
 def trace(
     ctx: typer.Context, task_uid: str = typer.Argument(..., help="The task (run) uid.")
 ) -> None:
-    """Show the spans of a run as a tree.
+    """
+    Show the spans of a run as a tree.
 
     The spans of a run — gateway, policy, worker and what they called — as a tree.
     """

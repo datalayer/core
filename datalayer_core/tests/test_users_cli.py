@@ -229,11 +229,12 @@ def test_credits_set_writes_the_balance(monkeypatch: pytest.MonkeyPatch) -> None
         "get",
         lambda url, **kwargs: _Response(200, {"credits": {"credits": 12.5}}),
     )
-    monkeypatch.setattr(
-        users.requests,
-        "put",
-        lambda url, **kwargs: written.append(kwargs["json"]) or _Response(200, {}),
-    )
+
+    def put(url: str, **kwargs: Any) -> _Response:
+        written.append(kwargs["json"])
+        return _Response(200, {})
+
+    monkeypatch.setattr(users.requests, "put", put)
     answer = CliRunner().invoke(
         users.app, ["credits", "set", "01M4BDHQWKVGT55RS5AQPC430T", "1000"]
     )

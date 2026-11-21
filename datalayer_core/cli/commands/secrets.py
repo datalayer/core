@@ -91,7 +91,8 @@ def get_secret(
         help="Datalayer API key.",
     ),
 ) -> None:
-    """Get one secret.
+    """
+    Get one secret.
 
     Its value is hidden unless --show-value is explicit.
     """

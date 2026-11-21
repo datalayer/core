@@ -4,6 +4,7 @@
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+import re
 from typing import Any
 
 import pytest
@@ -60,13 +61,16 @@ def test_create_accepts_the_current_iam_response(
 
 
 def test_create_requires_an_expiration_date() -> None:
+    # Typer forces a styled terminal under GITHUB_ACTIONS whatever NO_COLOR
+    # says, so the error is read with its ANSI escapes removed.
     answer = CliRunner().invoke(
         api_keys.app,
         ["create", "slack-local", "Temporary Slack adapter key"],
+        env={"COLUMNS": "120", "NO_COLOR": "1", "TERM": "dumb"},
     )
 
     assert answer.exit_code != 0
-    assert "--expiration-date" in answer.stderr
+    assert "--expiration-date" in re.sub(r"\x1b\[[0-9;]*m", "", answer.stderr)
 
 
 def test_create_removes_metadata_when_iam_omits_the_one_time_value(
