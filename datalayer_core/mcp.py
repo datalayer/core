@@ -86,6 +86,8 @@ METRIC_CATALOG: tuple[str, ...] = (
     "mcp.limit.unenforced",
     "mcp.forwards",
     "mcp.workers",
+    # A gateway replica: file descriptors open, and the limit.
+    "mcp.process.fds",
     "mcp.worker_start_seconds",
     "mcp.bindings",
     "mcp.sandbox.lost",

@@ -468,7 +468,8 @@ def admin_sql(
         None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
-    """Run an arbitrary SQL query without user-scope filtering.
+    """
+    Run an arbitrary SQL query without user-scope filtering.
 
     Useful for inspecting raw table contents across all accounts.
     """

@@ -203,7 +203,8 @@ def signal(
         None, "--payload", help="A JSON object, the signal's own payload."
     ),
 ) -> None:
-    """Tell a waiting run something.
+    """
+    Tell a waiting run something.
 
     Already over answers so, not an error.
     """
@@ -222,7 +223,8 @@ def cancel(
     uid: str = typer.Argument(..., help="The run to cancel."),
     reason: str = typer.Option("", "--reason", help="Why, kept on the run."),
 ) -> None:
-    """Stop a run.
+    """
+    Stop a run.
 
     Already over answers so, not an error.
     """

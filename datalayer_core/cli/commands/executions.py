@@ -421,7 +421,8 @@ def pause(
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
-    """Ask an execution's worker to stop at its next checkpoint.
+    """
+    Ask an execution's worker to stop at its next checkpoint.
 
     Ask an execution's worker to stop at its next checkpoint; nothing it did is lost.
     """
@@ -501,7 +502,8 @@ def terminate(
     account: Optional[str] = account_option(),
     output: OutputFormat = output_option(),
 ) -> None:
-    """End an execution for good and release its worker.
+    """
+    End an execution for good and release its worker.
 
     End an execution for good and release its worker; `cancel` stops it and keeps the worker.
     """

@@ -563,7 +563,9 @@ class McpMixin:
         )
         return dict((response.json() or {}).get("principal") or {})
 
-    def revoke_service_principal(self, uid: str, *, org_uid: str = "") -> dict[str, Any]:
+    def revoke_service_principal(
+        self, uid: str, *, org_uid: str = ""
+    ) -> dict[str, Any]:
         """Stop the principal, keeping it readable for its audit."""
         suffix = f"?org_uid={org_uid}" if org_uid else ""
         response = self._fetch(  # type: ignore[attr-defined]
