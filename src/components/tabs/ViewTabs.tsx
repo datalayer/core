@@ -26,7 +26,7 @@
 
 import type { ElementType, JSX, KeyboardEvent, ReactNode } from 'react';
 import { useCallback, useRef } from 'react';
-import { Button, CounterLabel } from '@primer/react';
+import { Button } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 
 export type ViewTab<T extends string = string> = {
@@ -118,6 +118,9 @@ export function ViewTabs<T extends string>({
             disabled={tab.disabled}
             title={tab.title}
             leadingVisual={tab.leadingVisual}
+            // Primer's own counter: its colours follow the button's variant, so it reads on the
+            // open tab's primary background in every theme (a CounterLabel child stayed dark on it).
+            count={tab.count}
             data-tab={tab.id}
             onClick={tab.disabled ? undefined : () => onChange(tab.id)}
             onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) =>
@@ -125,9 +128,6 @@ export function ViewTabs<T extends string>({
             }
           >
             {tab.label}
-            {typeof tab.count === 'number' ? (
-              <CounterLabel sx={{ ml: 1 }}>{tab.count}</CounterLabel>
-            ) : null}
           </Button>
         );
       })}
