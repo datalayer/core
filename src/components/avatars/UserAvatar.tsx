@@ -8,7 +8,7 @@
  *
  * Drawn by primer-addons' `EntityAvatar`, so its ground, shape and ring are
  * the theme's — a person's emoji, chosen icon or photograph, or a themed,
- * colormoded {@link AlienIcon} placeholder, so every consumer (profile,
+ * coloured {@link AlienIcon} placeholder, so every consumer (profile,
  * sidebar, principal overlay, …) shares the same look, in every theme.
  */
 import type { JSX } from 'react';
@@ -143,7 +143,8 @@ export const UserAvatar = ({
       ring={ring}
       {...iconGround}
     >
-      <AlienIcon size={iconSize ?? Math.round(size * 0.48)} themed colormode />
+      {/* The alien in its own colours, in every theme (the user, 24 November 2026). */}
+      <AlienIcon size={iconSize ?? Math.round(size * 0.48)} colored />
     </EntityAvatar>
   );
 };
