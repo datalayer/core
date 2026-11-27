@@ -8,6 +8,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import {
   ChosenAvatar,
+  PrincipalAvatarPicker,
   PRINCIPAL_AVATAR_ICONS,
   PRINCIPAL_AVATAR_ICON_NAMES,
   parsePrincipalAvatar,
@@ -23,6 +24,12 @@ const iconOf = (name: string) =>
   PRINCIPAL_AVATAR_ICONS.find(option => option.name === name)?.Icon;
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+// Primer's Dialog observes its size; jsdom has no ResizeObserver.
+(globalThis as any).ResizeObserver ??= class {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+};
 
 let container: HTMLDivElement;
 let root: Root;
@@ -127,5 +134,37 @@ describe('an avatar is kept prefixed by what it is', () => {
       console.error = error;
     }
     expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('the Choose an Avatar dialog', () => {
+  /** Open the dialog for `value`, and name the kind it opens on. */
+  async function openingKind(value?: string): Promise<string | undefined> {
+    await act(async () => {
+      root.render(
+        <PrincipalAvatarPicker value={value} onChange={() => undefined} />,
+      );
+    });
+    await settle();
+    await act(async () => {
+      container.querySelector('button')?.click();
+    });
+    await settle();
+    const kinds = document.querySelector('[aria-label="Avatar kind"]');
+    return Array.from(kinds?.querySelectorAll('button') ?? [])
+      .find(button => button.getAttribute('aria-current') === 'true')
+      ?.textContent?.trim();
+  }
+
+  it('opens on Emoji when nothing is chosen', async () => {
+    expect(await openingKind()).toBe('Emoji');
+  });
+
+  it('opens on Emoji when an emoji is chosen', async () => {
+    expect(await openingKind('emoji:🚀')).toBe('Emoji');
+  });
+
+  it('opens on Icons when an icon is chosen', async () => {
+    expect(await openingKind('@datalayer/icons-react:RobotIcon')).toBe('Icons');
   });
 });

@@ -938,10 +938,11 @@ export function PrincipalAvatarPicker({
   // The colour a chosen avatar is drawn in (`UserAvatar`'s `--datalayer-icon-fg`):
   // the icons are offered as they will look.
   const palette = useColorPalette();
-  // The tab the dialog opens on: what is chosen, the icons when nothing is.
-  const [tab, setTab] = useState<'emoji' | 'icons'>(
-    chosen?.kind === 'emoji' ? 'emoji' : 'icons',
-  );
+  // The tab the dialog opens on: the icons when an icon is chosen, the emoji
+  // otherwise (nothing chosen yet included).
+  const openingTab = (): 'emoji' | 'icons' =>
+    chosen && chosen.kind !== 'emoji' ? 'icons' : 'emoji';
+  const [tab, setTab] = useState<'emoji' | 'icons'>(openingTab);
   const choose = (next: string) => {
     onChange(next);
     setOpen(false);
@@ -959,7 +960,7 @@ export function PrincipalAvatarPicker({
         type="button"
         disabled={disabled}
         onClick={() => {
-          setTab(chosen?.kind === 'emoji' ? 'emoji' : 'icons');
+          setTab(openingTab());
           setOpen(true);
         }}
         leadingVisual={
