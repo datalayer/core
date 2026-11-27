@@ -43,6 +43,21 @@ export type ItemAccessLevel = 'view' | 'update' | 'execute';
 type PrincipalKind = 'personal' | 'team' | 'organization' | 'agent';
 
 /**
+ * The kinds the dialog searches, in IAM's words (`/principals/search` takes
+ * `user`, `team`, `organization`). The dialog's `personal` is IAM's `user`:
+ * sent as `personal`, IAM dropped it and answered no user at all, only teams
+ * and organizations (the user, 27 November 2026). An agent is not searched there.
+ */
+export function iamPrincipalTypesOf(kinds: readonly PrincipalKind[]): string[] {
+  const types = kinds
+    .map(kind => (kind === 'personal' ? 'user' : kind))
+    .filter(
+      type => type === 'user' || type === 'team' || type === 'organization',
+    );
+  return Array.from(new Set(types));
+}
+
+/**
  * One level the dialog offers, and what it is called. A resource whose
  * service grants other levels than view, update and execute names its own —
  * a benchmark's Reviewer and Runner, for one.
@@ -1272,7 +1287,7 @@ export function ShareAccessComponent({
             },
             body: JSON.stringify({
               query,
-              principalTypes: [...principalKinds],
+              principalTypes: iamPrincipalTypesOf(principalKinds),
             }),
             signal: controller.signal,
           });
