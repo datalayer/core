@@ -32,8 +32,8 @@ import { Box } from '@datalayer/primer-addons';
 export type ViewTab<T extends string = string> = {
   id: T;
   label: ReactNode;
-  /** Shown beside the label, as a counter. */
-  count?: number;
+  /** Shown beside the label, as a counter: a number, or words such as `24+` when more are not counted. */
+  count?: number | string;
   /** Not openable now; `title` says why. */
   disabled?: boolean;
   /** A tooltip: why a tab is disabled, or what it shows. */
