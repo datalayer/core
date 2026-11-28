@@ -25,7 +25,7 @@
  */
 
 import type { ElementType, JSX, KeyboardEvent, ReactNode } from 'react';
-import { useCallback, useRef } from 'react';
+import { Fragment, useCallback, useRef } from 'react';
 import { Button } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 
@@ -40,6 +40,11 @@ export type ViewTab<T extends string = string> = {
   title?: string;
   /** An icon before the label, as Primer's Button draws a leading visual. */
   leadingVisual?: ElementType;
+  /**
+   * A rule after this tab, setting it apart from those after it (an *All*
+   * before the kinds it gathers; the user, 28 November 2026).
+   */
+  separatorAfter?: boolean;
 };
 
 export type ViewTabsProps<T extends string> = {
@@ -105,30 +110,44 @@ export function ViewTabs<T extends string>({
       {tabs.map(tab => {
         const selected = tab.id === value;
         return (
-          <Button
-            key={tab.id}
-            ref={(node: HTMLButtonElement | null) => {
-              refs.current.set(tab.id, node);
-            }}
-            size="small"
-            role="tab"
-            aria-selected={selected}
-            tabIndex={selected ? 0 : -1}
-            variant={selected ? 'primary' : 'invisible'}
-            disabled={tab.disabled}
-            title={tab.title}
-            leadingVisual={tab.leadingVisual}
-            // Primer's own counter: its colours follow the button's variant, so it reads on the
-            // open tab's primary background in every theme (a CounterLabel child stayed dark on it).
-            count={tab.count}
-            data-tab={tab.id}
-            onClick={tab.disabled ? undefined : () => onChange(tab.id)}
-            onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) =>
-              onKeyDown(event, tab.id)
-            }
-          >
-            {tab.label}
-          </Button>
+          <Fragment key={tab.id}>
+            <Button
+              ref={(node: HTMLButtonElement | null) => {
+                refs.current.set(tab.id, node);
+              }}
+              size="small"
+              role="tab"
+              aria-selected={selected}
+              tabIndex={selected ? 0 : -1}
+              variant={selected ? 'primary' : 'invisible'}
+              disabled={tab.disabled}
+              title={tab.title}
+              leadingVisual={tab.leadingVisual}
+              // Primer's own counter: its colours follow the button's variant, so it reads on the
+              // open tab's primary background in every theme (a CounterLabel child stayed dark on it).
+              count={tab.count}
+              data-tab={tab.id}
+              onClick={tab.disabled ? undefined : () => onChange(tab.id)}
+              onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) =>
+                onKeyDown(event, tab.id)
+              }
+            >
+              {tab.label}
+            </Button>
+            {tab.separatorAfter ? (
+              <Box
+                as="span"
+                role="separator"
+                aria-orientation="vertical"
+                alignSelf="stretch"
+                width="1px"
+                mx={1}
+                my={1}
+                bg="border.default"
+                data-tab-separator=""
+              />
+            ) : null}
+          </Fragment>
         );
       })}
     </Box>
